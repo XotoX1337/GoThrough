@@ -8,30 +8,45 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 
 > Inspired by Zygor Guides for WoW — but for any game, community-driven, and open source.
 
-## Features (planned)
+## Features
 
-- 🗂 Game-agnostic YAML/JSON config format
-- 🪟 Always-on-top overlay window
-- ✅ Manual step progression (keyboard shortcut or click)
-- 💾 Persistent progress (resume where you left off)
-- 🔍 Optional OCR-based auto-detection (screen capture polling)
-- 🧩 Extendable trigger system (`manual` → `ocr` → `memory`)
+- Game-agnostic YAML config format
+- Semi-transparent always-on-top overlay (HUD-style)
+- Manual step progression via click
+- Extendable trigger system (`manual` → `ocr` → `memory`)
 
-## Planned Stack
+## Stack
 
 | Component | Technology |
 |---|---|
 | Language | Go 1.21+ |
 | CLI | [Cobra](https://github.com/spf13/cobra) |
-| Overlay UI | [Fyne](https://fyne.io) or [Wails](https://wails.io) |
+| Overlay UI | [Wails v2](https://wails.io) |
 | Config format | YAML |
-| Screen capture | [mss](https://github.com/ztrue/screenshot) or Win32 GDI |
-| OCR | [gosseract](https://github.com/otiai10/gosseract) (Tesseract binding) |
-| Image processing | [gocv](https://gocv.io) (OpenCV binding) |
+| Screen capture | Win32 GDI or `ztrue/screenshot` *(v0.5)* |
+| OCR | [gosseract](https://github.com/otiai10/gosseract) *(v0.5)* |
+| Image processing | [gocv](https://gocv.io) *(v0.5)* |
+
+## Requirements
+
+- Go 1.21+
+- [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation): `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
+- GCC (Windows: [MinGW via Scoop](https://scoop.sh) — `scoop install mingw`)
+- WebView2 Runtime (pre-installed on Windows 10/11)
+
+## Build & Run
+
+```bash
+wails build -s                                              # build → build/bin/GoThrough.exe
+./build/bin/GoThrough.exe run configs/gothic2/chapter1.yaml # run a walkthrough
+make run                                                    # shortcut: build + run
+```
+
+> `-s` skips Wails' npm pipeline — assets are embedded directly via `//go:embed`.
 
 ## Config Format
 
-Walkthroughs are defined as YAML files. Example:
+Walkthroughs are defined as YAML files:
 
 ```yaml
 game: Gothic 2
@@ -52,42 +67,38 @@ steps:
     description: "Follow the southern path to the city gate."
     trigger:
       type: manual
-
-  - id: 3
-    title: "Talk to the Gate Guard"
-    description: "Speak to the guard at the city gate to enter."
-    trigger:
-      type: manual
 ```
 
 ### Trigger types
 
 | Type | Description | Status |
 |---|---|---|
-| `manual` | User clicks "Done" or presses a hotkey | Planned v1 |
-| `ocr` | Screen capture + text recognition | Planned v2 |
+| `manual` | User clicks Next or presses a hotkey | v0.1+ |
+| `ocr` | Screen capture + text recognition | v0.5 |
 | `memory` | Read game memory (game-specific) | Future |
 
-## Project Structure (planned)
+## Project Structure
 
 ```
 GoThrough/
 ├── cmd/               # Cobra CLI commands
 ├── config/            # YAML config loader & validator
 ├── engine/            # Step management & progress tracking
-├── overlay/           # UI overlay window
-├── capture/           # Screen capture & OCR (v2)
+├── overlay/           # Wails UI window
+│   ├── app.go         # Go backend (bound to frontend)
+│   ├── overlay.go     # Wails app setup
+│   └── frontend/      # HTML/CSS/JS HUD
 ├── configs/           # Community walkthrough YAML files
 │   └── gothic2/
 │       └── chapter1.yaml
-├── CONTEXT.md
-└── README.md
+├── scripts/           # Dev scripts
+└── Makefile
 ```
 
 ## Roadmap
 
-- [ ] v0.1 — Config loader + step engine (no UI)
-- [ ] v0.2 — Basic overlay window (manual progression)
+- [x] v0.1 — Config loader + step engine (no UI)
+- [x] v0.2 — Basic overlay window (manual progression)
 - [ ] v0.3 — Always-on-top + hotkey support
 - [ ] v0.4 — Progress persistence
 - [ ] v0.5 — OCR trigger support
@@ -95,8 +106,4 @@ GoThrough/
 
 ## Community Configs
 
-The `configs/` directory is meant to grow into a community-maintained library of walkthrough configs for any game. If you write one, open a PR.
-
-## Credits
-
-Built with Go. Name inspired by Gothic 2 + the concept of a walkthrough guide. Get it? **Go**Through. 😄
+The `configs/` directory is meant to grow into a community-maintained library of walkthrough configs. If you write one, open a PR.

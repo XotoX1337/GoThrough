@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 GoThrough is a game-agnostic walkthrough overlay platform written in Go. Inspired by Zygor Guides (WoW addon) — but open source and for any game. Users load a YAML walkthrough config and follow steps via an always-on-top overlay without alt-tabbing.
 
 **GitHub:** https://github.com/XotoX1337/GoThrough  
-**Status:** Pre-implementation (planning phase). No Go source files exist yet. Start with v0.1.
+**Status:** v0.2 done — Wails overlay window working.
 
 ## Tech Stack
 
@@ -15,7 +15,7 @@ GoThrough is a game-agnostic walkthrough overlay platform written in Go. Inspire
 |---|---|
 | Language | Go 1.21+ |
 | CLI | [Cobra](https://github.com/spf13/cobra) |
-| Overlay UI | Fyne or Wails (TBD — see open questions) |
+| Overlay UI | [Wails v2](https://wails.io) |
 | Config format | YAML |
 | Screen capture | Win32 GDI or `ztrue/screenshot` |
 | OCR (v2) | gosseract (Tesseract C-binding) |
@@ -63,10 +63,19 @@ steps:
 
 Trigger types: `manual` (v1), `ocr` (v2), `memory` (future).
 
+## Build
+
+```bash
+wails build -s        # production build → build/bin/GoThrough.exe
+wails dev             # dev mode with hot reload (requires frontend served separately)
+```
+
+Note: `-s` skips Wails' npm frontend pipeline — we embed assets directly via `//go:embed`.
+
 ## Roadmap
 
-- [ ] v0.1 — Config loader + step engine (no UI)
-- [ ] v0.2 — Basic overlay window (manual progression)
+- [x] v0.1 — Config loader + step engine (no UI)
+- [x] v0.2 — Basic overlay window (manual progression)
 - [ ] v0.3 — Always-on-top + hotkey support
 - [ ] v0.4 — Progress persistence
 - [ ] v0.5 — OCR trigger support
@@ -74,7 +83,6 @@ Trigger types: `manual` (v1), `ocr` (v2), `memory` (future).
 
 ## Open Design Decisions
 
-- **Overlay UI:** Fyne vs Wails — not yet decided
 - **Always-on-top on Windows:** Win32 API directly or via UI framework?
 - **Screenshot approach for DirectX games (Gothic 2):** GDI, DWM, or third-party lib?
 - **Progress persistence:** Simple JSON file or SQLite?
