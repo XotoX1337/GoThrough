@@ -11,9 +11,20 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 ## Features
 
 - Game-agnostic YAML config format
-- Semi-transparent always-on-top overlay (HUD-style)
-- Manual step progression via click
+- Semi-transparent always-on-top overlay (HUD-style), anchored top-right
+- Quest-checklist sidebar: click any step to jump to it
+- Global hotkeys that work while the game has focus (next/prev/hide/quit)
+- Movable, resizable, lockable window (drag only when unlocked, clamped to screen)
 - Extendable trigger system (`manual` → `ocr` → `memory`)
+
+### Hotkeys
+
+| Hotkey | Action |
+|---|---|
+| `Ctrl+Alt+→` | Next step |
+| `Ctrl+Alt+←` | Previous step |
+| `Ctrl+Alt+H` | Toggle overlay visibility |
+| `Ctrl+Alt+Q` | Quit |
 
 ## Stack
 
@@ -117,7 +128,7 @@ GoThrough/
 
 - [x] v0.1 — Config loader + step engine (no UI)
 - [x] v0.2 — Basic overlay window (manual progression)
-- [ ] v0.3 — Always-on-top + hotkey support
+- [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(in-game verification pending)*
 - [ ] v0.4 — Progress persistence
 - [ ] v0.5 — OCR trigger support
 - [ ] v1.0 — First full Gothic 2 walkthrough config
