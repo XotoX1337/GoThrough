@@ -44,6 +44,22 @@ make run                                                    # shortcut: build + 
 
 > `-s` skips Wails' npm pipeline — assets are embedded directly via `//go:embed`.
 
+### Iterating on the UI (devui)
+
+For fast HUD iteration without rebuilding the Wails app, `tools/devui` is a
+pure-Go (stdlib only, no Node) dev server that serves the untouched
+`overlay/frontend/index.html` with the Wails bindings mocked against real step
+data and live-reloads on save:
+
+```bash
+go run ./tools/devui                       # → http://localhost:34116 (gothic2/chapter1)
+go run ./tools/devui -config path/to.yaml  # preview any walkthrough
+go run ./tools/devui -bg screenshot.png    # use a real game screenshot as the scene
+```
+
+> devui approximates the glassmorphism/blur look but cannot reproduce true window
+> transparency — verify the final result with `wails build -s` over a running game.
+
 ## Config Format
 
 Walkthroughs are defined as YAML files:
@@ -91,6 +107,8 @@ GoThrough/
 ├── configs/           # Community walkthrough YAML files
 │   └── gothic2/
 │       └── chapter1.yaml
+├── tools/
+│   └── devui/         # Pure-Go live-reload dev server for the HUD
 ├── scripts/           # Dev scripts
 └── Makefile
 ```

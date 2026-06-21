@@ -1,0 +1,17 @@
+# Wails auto-generated bindings & compiled output (never hand-edit)
+frontend/wailsjs/
+build/bin/
+build/appicon.png
+build/windows/icon.ico
+
+# Go build artifacts & binaries (incl. v2 CGo outputs: gosseract/gocv)
+*.exe
+*.test
+*.prof
+*.dll
+*.so
+*.dylib
+vendor/
+
+# Dependency lockfile (large hash list; go.mod already conveys deps)
+go.sum
