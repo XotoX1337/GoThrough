@@ -146,32 +146,38 @@ const harnessHTML = `<!DOCTYPE html>
   html, body { height: 100%; }
   body {
     /* Faux "game scene" so the glassmorphism/blur is visible. Override with -bg. */
-    background: var(--scene), radial-gradient(120% 120% at 30% 20%, #2a3a5e 0%, #141a2e 45%, #06070f 100%);
+    background: var(--scene), radial-gradient(120% 90% at 68% 12%, #2b3542 0%, #1a2129 40%, #0c0f13 82%);
     background-size: cover;
     background-position: center;
-    display: grid;
-    place-items: center;
     font-family: system-ui, sans-serif;
-  }
-  .hud {
-    width: 440px;
-    height: 220px;
-    border-radius: 10px;
-    background: transparent;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
     overflow: hidden;
   }
-  iframe { width: 100%; height: 100%; border: none; background: transparent; color-scheme: light dark; }
+  /* Subtle scene texture so the frostglass blur reads against something. */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(70,92,112,0.18) 0%, rgba(0,0,0,0) 35%, rgba(8,12,16,0.55) 100%),
+      repeating-linear-gradient(54deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 9px);
+    pointer-events: none;
+  }
+  /* The overlay fills the whole "screen", transparent — the HUD positions itself. */
+  iframe {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    border: none; background: transparent;
+    color-scheme: light dark;
+  }
   .tag {
     position: fixed; bottom: 12px; left: 12px;
-    font-size: 11px; color: rgba(255,255,255,0.4);
-    letter-spacing: 0.05em;
+    font-size: 11px; color: rgba(255,255,255,0.32);
+    letter-spacing: 0.05em; pointer-events: none; z-index: 1;
   }
 </style>
 </head>
 <body>
-  <div class="hud"><iframe src="/app" title="GoThrough HUD"></iframe></div>
-  <div class="tag">devui · live reload active · 440×220</div>
+  <iframe src="/app" title="GoThrough HUD"></iframe>
+  <div class="tag">devui · live reload active · fullscreen overlay</div>
   <script>
     // Use the -bg image as the scene background if the server provides one.
     fetch('/__bg', { method: 'HEAD' }).then(res => {

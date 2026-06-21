@@ -1,150 +1,481 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- TODO(v0.3): self-host these as embedded .woff2 — Google Fonts CDN won't
+         reliably load over a fullscreen game without guaranteed internet. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --glass: rgba(10, 12, 24, 0.78);
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #e8eaf6;
-            --muted: rgba(255, 255, 255, 0.45);
-            --accent: rgba(99, 102, 241, 0.55);
-            --accent-hover: rgba(99, 102, 241, 0.80);
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: var(--glass);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            color: var(--text);
-            font-family: system-ui, -apple-system, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 14px 16px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            user-select: none;
+            font-family: 'Hanken Grotesk', system-ui, sans-serif;
+            background: transparent; /* real overlay: the game shows through */
+            color: #e8e9ec;
             overflow: hidden;
+            user-select: none;
         }
 
-        .topbar {
-            --wails-draggable: drag;
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* --- Mover: the draggable/resizable wrapper around the panel -------- */
+        .mover {
+            position: absolute;
+            border-radius: 13px;
+            outline-offset: 3px;
+            transition: outline 0.2s ease;
+        }
+        .mover.editing { outline: 1px dashed rgba(255, 255, 255, 0.35); }
+        .mover.dragging { transition: none; }
+
+        /* --- Panel: the frostglass container ------------------------------- */
+        .panel {
+            width: 100%;
+            border-radius: 12px;
+            padding: 13px;
+            background: rgba(15, 17, 21, 0.6);
+            backdrop-filter: blur(18px) saturate(125%);
+            -webkit-backdrop-filter: blur(18px) saturate(125%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        /* --- Header -------------------------------------------------------- */
+        .header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin: -4px -4px 0;
+            padding: 4px 4px 0;
+            border-radius: 8px;
+            cursor: default;
+        }
+        .editing .header { cursor: move; }
+
+        .header-left { display: flex; align-items: flex-start; gap: 7px; min-width: 0; }
+        .grip { font-size: 13px; color: rgba(255, 255, 255, 0.4); line-height: 1.1; margin-top: 1px; flex-shrink: 0; }
+        .kicker {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            color: rgba(255, 255, 255, 0.42);
+            text-transform: uppercase;
+        }
+        .quest-title { font-size: 13.5px; font-weight: 600; line-height: 1.25; margin-top: 3px; }
+
+        .header-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+        .lock-btn {
+            font-size: 8px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border-radius: 5px;
+            padding: 3px 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.18s ease;
+            flex-shrink: 0;
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .editing .lock-btn { color: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.32); }
+        .lock-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+        .chevron-btn {
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+        .chevron-btn:hover { background: rgba(255, 255, 255, 0.08); }
+        .chevron {
+            display: inline-block;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1;
+            transition: transform 0.25s ease;
+        }
+        .collapsed .chevron { transform: rotate(-90deg); }
+
+        /* --- "Now" card (always visible, even when collapsed) -------------- */
+        .now-card {
+            margin-top: 12px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .now-label { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
+        .now-step { font-size: 15px; font-weight: 600; line-height: 1.3; margin-top: 5px; }
+        .now-meta { font-size: 9.5px; color: rgba(255, 255, 255, 0.4); margin-top: 5px; letter-spacing: 0.02em; }
+
+        .done-card {
+            margin-top: 12px;
+            padding: 14px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* --- Collapsible section (progress + checklist) -------------------- */
+        .collapsible {
+            overflow: hidden;
+            max-height: 600px;
+            opacity: 1;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+        .collapsed .collapsible { max-height: 0; opacity: 0; }
+
+        /* --- Progress ------------------------------------------------------ */
+        .progress-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-top: 13px;
+        }
+        .progress-label { font-size: 9px; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.42); text-transform: uppercase; }
+        .progress-count { font-size: 9.5px; color: rgba(255, 255, 255, 0.55); }
+        .progress-track {
+            height: 4px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: rgba(236, 237, 240, 0.88);
+            border-radius: 3px;
+            transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .progress {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--muted);
+        /* --- Checklist (height is user-resizable in edit mode) ------------- */
+        .checklist {
+            overflow-y: auto;
+            margin-top: 8px;
+            margin-right: -4px;
+            padding-right: 4px;
         }
+        .row {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+            padding: 7px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.18s ease;
+        }
+        .row.current { background: rgba(255, 255, 255, 0.07); }
+        .row:hover { background: rgba(255, 255, 255, 0.1); }
 
-        .close-btn {
-            --wails-draggable: no-drag;
+        .mark {
             width: 16px;
             height: 16px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            border: none;
-            cursor: pointer;
-            color: var(--muted);
-            font-size: 9px;
-            line-height: 16px;
-            text-align: center;
-            transition: background 0.15s, color 0.15s;
-        }
-        .close-btn:hover { background: rgba(255, 70, 70, 0.65); color: #fff; }
-
-        .step-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 6px;
-            line-height: 1.3;
-        }
-
-        .step-desc {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.55;
-            flex: 1;
-        }
-
-        .buttons {
+            border-radius: 5px;
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+            transition: all 0.2s ease;
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
         }
+        .row.current .mark { border-color: rgba(255, 255, 255, 0.7); animation: gt-pulse 2.4s ease-in-out infinite; }
+        .row.done .mark { background: rgba(236, 237, 240, 0.92); border-color: transparent; animation: none; }
+        .mark .check { font-size: 10px; color: #0d1014; font-weight: 700; line-height: 1; }
 
-        button {
-            flex: 1;
-            padding: 6px 0;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s, opacity 0.15s;
-        }
-        button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
-        button:disabled { opacity: 0.3; cursor: default; }
+        .row-main { flex: 1; min-width: 0; }
+        .row-label { font-size: 13px; font-weight: 500; line-height: 1.3; color: rgba(255, 255, 255, 0.92); }
+        .row.done .row-label { font-weight: 400; color: rgba(255, 255, 255, 0.42); text-decoration: line-through; }
+        .row-meta { font-size: 9px; color: rgba(255, 255, 255, 0.36); margin-top: 2px; letter-spacing: 0.02em; }
 
-        #btn-next {
-            background: var(--accent);
-            border-color: rgba(99, 102, 241, 0.6);
+        /* --- Hint footer (per-step; hidden when the current step has none) - */
+        .hint {
+            margin-top: 11px;
+            padding-top: 11px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
         }
-        #btn-next:hover:not(:disabled) { background: var(--accent-hover); }
+        .hint-label { font-size: 8.5px; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; margin-top: 2px; flex-shrink: 0; }
+        .hint-text { flex: 1; font-size: 11.5px; color: rgba(255, 255, 255, 0.62); line-height: 1.45; }
+
+        /* --- Resize handle (edit mode) — diagonal: width + list height ----- */
+        .resize-handle {
+            position: absolute;
+            left: -3px;
+            bottom: -3px;
+            width: 16px;
+            height: 16px;
+            cursor: nesw-resize;
+            border-left: 2px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            border-bottom-left-radius: 4px;
+            display: none;
+        }
+        .editing .resize-handle { display: block; }
+
+        @keyframes gt-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.20); }
+            50% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0); }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
-    <div class="topbar">
-        <span class="progress" id="progress">Step 1 / 1</span>
-        <button class="close-btn" onclick="quit()">✕</button>
-    </div>
-    <div class="step-title" id="title"></div>
-    <div class="step-desc" id="desc"></div>
-    <div class="buttons">
-        <button id="btn-prev" onclick="prevStep()">← Prev</button>
-        <button id="btn-next" onclick="nextStep()">Next →</button>
+    <div class="mover" id="mover">
+        <div class="panel" id="panel"></div>
+        <div class="resize-handle" id="resize"></div>
     </div>
 
     <script>
-        function render(s) {
-            document.getElementById('progress').textContent = `Step ${s.current} / ${s.total}`;
-            document.getElementById('title').textContent = s.title;
-            document.getElementById('desc').textContent = s.description;
-            document.getElementById('btn-prev').disabled = s.isFirst;
-            document.getElementById('btn-next').textContent = s.isLast ? 'Finish ✓' : 'Next →';
-        }
+    // ===================================================================
+    // GoThrough HUD — plain HTML/CSS/JS reskin (v0.3 visual iteration).
+    //
+    // Step 1 of the redesign: data + interactions are mocked client-side so
+    // the look & feel can be iterated in devui without Go changes. Step 2 will
+    // swap `guide` for the Wails bindings (GuideService).
+    // ===================================================================
 
-        function nextStep() {
-            if (document.getElementById('btn-next').textContent.startsWith('Finish')) {
-                window.runtime.Quit();
-                return;
-            }
-            window.go.overlay.App.Next().then(render);
-        }
+    // --- Mock walkthrough (Gothic 2, Chapter 1) ------------------------------
+    // Hints are per-step now: a step without `hint` shows no hint box.
+    const guide = {
+        zone: "Khorinis",
+        title: "Kapitel 1 — Ankunft in Khorinis",
+        steps: [
+            { id: 1, label: "Verlasse Xardas' Turm",             target: "Xardas-Turm" },
+            { id: 2, label: "Folge dem Küstenweg nach Khorinis", target: "Küstenweg" },
+            { id: 3, label: "Sprich mit dem Torwächter",         target: "Stadttor",
+              hint: "Spar vor dem Stadttor — der Wächter lässt dich nur mit Wort weiter." },
+            { id: 4, label: "Erlege die Feldräuber",             target: "Khorinis-Tal", need: 3,
+              hint: "Feldräuber patrouillieren in Gruppen — locke einzelne mit Pfeilen heraus." },
+            { id: 5, label: "Sammle Schattenbeeren",            target: "Khorinis-Tal", need: 5,
+              hint: "Schattenbeeren wachsen im Schatten der Felswände entlang des Tals." },
+            { id: 6, label: "Durchsuche die verlassene Hütte",   target: "Khorinis-Tal" },
+            { id: 7, label: "Finde Lares in der Taverne",        target: "Hafenviertel",
+              hint: "Lares findest du abends meist im hinteren Teil der Taverne." },
+            { id: 8, label: "Nimm Lares' Auftrag an",            target: "Hafenviertel" },
+        ],
+    };
 
-        function prevStep() {
-            window.go.overlay.App.Prev().then(render);
-        }
-
-        function quit() {
-            window.runtime.Quit();
-        }
-
-        window.addEventListener('load', () => {
-            window.go.overlay.App.CurrentStep().then(render);
+    function makeSteps(doneN) {
+        return guide.steps.map((s, i) => {
+            const done = i < doneN;
+            return s.need
+                ? { ...s, have: done ? s.need : 0, done }
+                : { ...s, done };
         });
+    }
+
+    // --- State ---------------------------------------------------------------
+    const saved = (() => { try { return JSON.parse(localStorage.getItem("gt-overlay") || "{}"); } catch { return {}; } })();
+    const WIDTH = saved.width || 250;
+    const state = {
+        steps: makeSteps(2),
+        collapsed: false,
+        locked: saved.locked ?? false,
+        width: WIDTH,
+        listHeight: saved.listHeight || 116,
+        pos: saved.pos || { x: window.innerWidth - WIDTH - 14, y: 14 }, // default: top-right
+    };
+
+    const MIN_W = 200, MAX_W = 360;
+    const MIN_H = 60, MAX_H = 360;
+
+    const mover = document.getElementById("mover");
+    const panel = document.getElementById("panel");
+    const resizeHandle = document.getElementById("resize");
+
+    function save() {
+        try {
+            localStorage.setItem("gt-overlay", JSON.stringify({
+                locked: state.locked, pos: state.pos, width: state.width, listHeight: state.listHeight,
+            }));
+        } catch {}
+    }
+
+    // --- Derived -------------------------------------------------------------
+    function derive() {
+        const currentIdx = state.steps.findIndex(s => !s.done);
+        const doneCount = state.steps.filter(s => s.done).length;
+        const total = state.steps.length;
+        return { currentIdx, doneCount, total, pct: Math.round(doneCount / total * 100) };
+    }
+
+    function meta(s) {
+        return s.need ? `${s.target} · ${s.have}/${s.need}` : s.target;
+    }
+
+    // --- Render --------------------------------------------------------------
+    function render() {
+        const { currentIdx, doneCount, total, pct } = derive();
+        const current = currentIdx >= 0 ? state.steps[currentIdx] : null;
+
+        mover.classList.toggle("editing", !state.locked);
+        mover.classList.toggle("collapsed", state.collapsed);
+
+        const nowHTML = current
+            ? `<div class="now-card">
+                   <div class="now-label mono">Jetzt</div>
+                   <div class="now-step">${current.label}</div>
+                   <div class="now-meta mono">${meta(current)}</div>
+               </div>`
+            : `<div class="done-card">✓ Kapitel abgeschlossen</div>`;
+
+        const rowsHTML = state.steps.map((s, i) => `
+            <div class="row${s.done ? " done" : ""}${i === currentIdx ? " current" : ""}" data-id="${s.id}">
+                <div class="mark">${s.done ? '<span class="check">✓</span>' : ""}</div>
+                <div class="row-main">
+                    <div class="row-label">${s.label}</div>
+                    <div class="row-meta mono">${meta(s)}</div>
+                </div>
+            </div>`).join("");
+
+        const hintHTML = (current && current.hint)
+            ? `<div class="hint">
+                   <span class="hint-label mono">Hinweis</span>
+                   <span class="hint-text">${current.hint}</span>
+               </div>`
+            : "";
+
+        panel.innerHTML = `
+            <div class="header" id="header">
+                <div class="header-left">
+                    ${state.locked ? "" : '<span class="grip">⠿</span>'}
+                    <div>
+                        <div class="kicker mono">${guide.zone}</div>
+                        <div class="quest-title">${guide.title}</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
+                    <div class="chevron-btn" id="chevronBtn"><span class="chevron">⌄</span></div>
+                </div>
+            </div>
+            ${nowHTML}
+            <div class="collapsible">
+                <div class="progress-row">
+                    <span class="progress-label mono">Schritte</span>
+                    <span class="progress-count mono">${doneCount} / ${total}</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+                <div class="checklist">${rowsHTML}</div>
+            </div>
+            ${hintHTML}`;
+
+        applyLayout();
+        wireEvents();
+    }
+
+    function applyLayout() {
+        mover.style.left = state.pos.x + "px";
+        mover.style.top = state.pos.y + "px";
+        mover.style.width = state.width + "px";
+        const cl = panel.querySelector(".checklist");
+        if (cl) cl.style.maxHeight = state.listHeight + "px";
+    }
+
+    // --- Interactions --------------------------------------------------------
+    function toggle(id) {
+        const s = state.steps.find(st => st.id === id);
+        if (!s) return;
+        if (s.need) {
+            s.have = (s.have || 0) + 1;
+            if (s.have > s.need) { s.have = 0; s.done = false; }
+            else { s.done = s.have >= s.need; }
+        } else {
+            s.done = !s.done;
+        }
+        render();
+    }
+
+    function wireEvents() {
+        document.getElementById("header").addEventListener("mousedown", startDrag);
+        const lockBtn = document.getElementById("lockBtn");
+        lockBtn.addEventListener("mousedown", stopProp);
+        lockBtn.addEventListener("click", toggleLock);
+        const chevronBtn = document.getElementById("chevronBtn");
+        chevronBtn.addEventListener("mousedown", stopProp);
+        chevronBtn.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+        panel.querySelectorAll(".row").forEach(row =>
+            row.addEventListener("click", () => toggle(Number(row.dataset.id))));
+    }
+
+    function toggleLock() {
+        state.locked = !state.locked;
+        save();
+        render();
+    }
+
+    function stopProp(e) { e.stopPropagation(); }
+
+    // --- Drag & resize -------------------------------------------------------
+    let drag = null;
+
+    function startDrag(e) {
+        if (state.locked) return;
+        e.preventDefault();
+        drag = { mode: "move", sx: e.clientX, sy: e.clientY, ox: state.pos.x, oy: state.pos.y };
+        mover.classList.add("dragging");
+    }
+
+    function startResize(e) {
+        if (state.locked) return;
+        e.preventDefault();
+        e.stopPropagation();
+        drag = { mode: "resize", sx: e.clientX, sy: e.clientY, ox: state.pos.x, ow: state.width, oh: state.listHeight };
+        mover.classList.add("dragging");
+    }
+
+    function onMove(e) {
+        if (!drag) return;
+        if (drag.mode === "move") {
+            let nx = drag.ox + (e.clientX - drag.sx);
+            let ny = drag.oy + (e.clientY - drag.sy);
+            nx = Math.max(0, Math.min(nx, window.innerWidth - mover.offsetWidth));
+            ny = Math.max(0, Math.min(ny, window.innerHeight - mover.offsetHeight));
+            state.pos = { x: nx, y: ny };
+        } else {
+            // Width: bottom-left handle, so the right edge stays fixed (grow left).
+            const right = drag.ox + drag.ow;
+            let nx = drag.ox + (e.clientX - drag.sx);
+            nx = Math.max(0, Math.min(nx, right - MIN_W));
+            nx = Math.max(nx, right - MAX_W);
+            state.pos = { x: nx, y: state.pos.y };
+            state.width = right - nx;
+            // Height: grow the list as the handle is dragged down.
+            const nh = drag.oh + (e.clientY - drag.sy);
+            state.listHeight = Math.max(MIN_H, Math.min(nh, MAX_H));
+        }
+        applyLayout();
+    }
+
+    function onUp() {
+        if (drag) { drag = null; mover.classList.remove("dragging"); save(); }
+    }
+
+    resizeHandle.addEventListener("mousedown", startResize);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+
+    // Keep the panel on-screen if the window/viewport resizes.
+    window.addEventListener("resize", () => {
+        state.pos.x = Math.max(0, Math.min(state.pos.x, window.innerWidth - mover.offsetWidth));
+        state.pos.y = Math.max(0, Math.min(state.pos.y, window.innerHeight - mover.offsetHeight));
+        applyLayout();
+    });
+
+    render();
     </script>
 </body>
 </html>
