@@ -24,5 +24,5 @@ func runWalkthrough(_ *cobra.Command, args []string) error {
 		return err
 	}
 	eng := engine.New(wt)
-	return overlay.New(eng, wt.Title).Run()
+	return overlay.New(eng).Run()
 }
