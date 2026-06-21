@@ -43,3 +43,6 @@ Thumbs.db
 
 # Claude Code project instructions (local only)
 CLAUDE.md
+
+# RTK (Rust Token Killer) local tracking data
+.rtk/
