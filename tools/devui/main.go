@@ -46,13 +46,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("encoding steps: %v", err)
 	}
+	metaJSON, err := json.Marshal(map[string]string{"game": wt.Game, "title": wt.Title})
+	if err != nil {
+		log.Fatalf("encoding meta: %v", err)
+	}
 
 	hub := newReloadHub()
 	go watch(frontendDir, hub)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", serveHarness)
-	mux.HandleFunc("/app", serveApp(stepsJSON))
+	mux.HandleFunc("/app", serveApp(stepsJSON, metaJSON))
 	mux.HandleFunc("/__reload", hub.handleSSE)
 	if *bgPath != "" {
 		mux.HandleFunc("/__bg", func(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +100,7 @@ func toStepInfos(wt *config.Walkthrough) []stepInfo {
 
 // serveApp serves the real index.html with the Wails bindings mocked, so the
 // untouched frontend runs in a plain browser against real step data.
-func serveApp(stepsJSON []byte) http.HandlerFunc {
+func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		raw, err := os.ReadFile(filepath.Join(frontendDir, "index.html"))
 		if err != nil {
@@ -109,17 +113,39 @@ func serveApp(stepsJSON []byte) http.HandlerFunc {
 // --- devui: mock of the Wails bindings ---------------------------------
 (function () {
   const steps = ` + string(stepsJSON) + `;
+  const meta = ` + string(metaJSON) + `;
   let i = 0;
+  const listeners = {};
+  const emit = (name, data) => (listeners[name] || []).forEach(cb => cb(data));
   const at = () => Promise.resolve(steps[i]);
   window.go = { overlay: { App: {
+    Meta: () => Promise.resolve(meta),
+    Steps: () => Promise.resolve(steps),
     CurrentStep: at,
     Next: () => { if (i < steps.length - 1) i++; return at(); },
     Prev: () => { if (i > 0) i--; return at(); },
+    Goto: (idx) => { i = Math.max(0, Math.min(idx, steps.length - 1)); return at(); },
+    FitWindow: () => {}, // no-op: the browser can't resize the OS window
   } } };
-  window.runtime = { Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)') };
+  window.runtime = {
+    Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),
+    EventsOn: (name, cb) => { (listeners[name] = listeners[name] || []).push(cb); },
+    EventsEmit: (name, data) => emit(name, data),
+  };
+  // Simulate the real global hotkeys (Ctrl+Alt+Right/Left) with the arrow keys,
+  // so the event-driven step:changed path can be exercised in the browser.
+  // Click the HUD first to give the iframe keyboard focus.
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { if (i < steps.length - 1) i++; emit('step:changed', steps[i]); }
+    else if (e.key === 'ArrowLeft') { if (i > 0) i--; emit('step:changed', steps[i]); }
+  });
 })();
 </script>`
-		html := strings.Replace(string(raw), "</body>", inject+"\n</body>", 1)
+		// Inject before </head> so window.go / window.runtime exist before the
+		// frontend's inline script runs (it resolves `window.go.overlay.App` at
+		// parse time) — this mirrors how the real Wails build injects its
+		// bindings into the head ahead of app scripts.
+		html := strings.Replace(string(raw), "</head>", inject+"\n</head>", 1)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprint(w, html)
 	}
