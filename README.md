@@ -15,6 +15,7 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 - Quest-checklist sidebar: click any step to jump to it
 - Global hotkeys that work while the game has focus (next/prev/hide/quit)
 - Movable, resizable, lockable window (drag only when unlocked, clamped to screen)
+- Progress is saved automatically and resumes where you left off (per walkthrough)
 - Extendable trigger system (`manual` → `ocr` → `memory`)
 
 ### Hotkeys
@@ -50,8 +51,12 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 ```bash
 wails build -s                                              # build → build/bin/GoThrough.exe
 ./build/bin/GoThrough.exe run configs/gothic2/chapter1.yaml # run a walkthrough
+./build/bin/GoThrough.exe run config.yaml --fresh           # ignore saved progress, start at step 1
 make run                                                    # shortcut: build + run
 ```
+
+> Progress is stored as JSON under the OS user-config dir
+> (`%AppData%\GoThrough\progress.json` on Windows) and restored on the next launch.
 
 > `-s` skips Wails' npm pipeline — assets are embedded directly via `//go:embed`.
 
@@ -110,7 +115,8 @@ steps:
 GoThrough/
 ├── cmd/               # Cobra CLI commands
 ├── config/            # YAML config loader & validator
-├── engine/            # Step management & progress tracking
+├── engine/            # Step management & navigation
+├── progress/          # JSON progress persistence (resume per walkthrough)
 ├── overlay/           # Wails UI window
 │   ├── app.go         # Go backend (bound to frontend)
 │   ├── overlay.go     # Wails app setup
@@ -129,7 +135,7 @@ GoThrough/
 - [x] v0.1 — Config loader + step engine (no UI)
 - [x] v0.2 — Basic overlay window (manual progression)
 - [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(in-game verification pending)*
-- [ ] v0.4 — Progress persistence
+- [x] v0.4 — Progress persistence (auto-saved per walkthrough, resumes on launch)
 - [ ] v0.5 — OCR trigger support
 - [ ] v1.0 — First full Gothic 2 walkthrough config
 
