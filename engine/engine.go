@@ -10,6 +10,7 @@ import (
 var (
 	ErrAlreadyFirst = errors.New("already at first step")
 	ErrAlreadyLast  = errors.New("already at last step")
+	ErrOutOfRange   = errors.New("step index out of range")
 )
 
 // Engine tracks which step the user is currently on.
@@ -45,6 +46,26 @@ func (e *Engine) Prev() error {
 	e.index--
 	return nil
 }
+
+// Goto jumps to a 0-based step index. Returns ErrOutOfRange if out of bounds.
+func (e *Engine) Goto(index int) error {
+	if index < 0 || index >= len(e.walkthrough.Steps) {
+		return ErrOutOfRange
+	}
+	e.index = index
+	return nil
+}
+
+// Steps returns all steps in the walkthrough.
+func (e *Engine) Steps() []config.Step {
+	return e.walkthrough.Steps
+}
+
+// Game returns the game name from the loaded walkthrough.
+func (e *Engine) Game() string { return e.walkthrough.Game }
+
+// Title returns the walkthrough title.
+func (e *Engine) Title() string { return e.walkthrough.Title }
 
 // Progress returns 1-based current position and total step count.
 func (e *Engine) Progress() (current, total int) {
