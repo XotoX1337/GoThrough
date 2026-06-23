@@ -6,7 +6,7 @@
 
 A game-agnostic walkthrough overlay platform written in Go. Load a YAML config for any game and follow step-by-step guides without alt-tabbing.
 
-> Inspired by Zygor Guides for WoW — but for any game, community-driven, and open source.
+> Community-driven and open source — for any game.
 
 ## Features
 
@@ -16,7 +16,7 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 - Global hotkeys that work while the game has focus (next/prev/hide/quit)
 - Movable, resizable, lockable window (drag only when unlocked, clamped to screen)
 - Progress is saved automatically and resumes where you left off (per walkthrough)
-- Extendable trigger system (`manual` → `ocr` → `memory`)
+- Manual step progression (Next/Prev) — no fragile auto-detection to lead you astray
 
 ### Hotkeys
 
@@ -35,9 +35,7 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 | CLI | [Cobra](https://github.com/spf13/cobra) |
 | Overlay UI | [Wails v2](https://wails.io) |
 | Config format | YAML |
-| Screen capture | Win32 GDI or `ztrue/screenshot` *(v0.5)* |
-| OCR | [gosseract](https://github.com/otiai10/gosseract) *(v0.5)* |
-| Image processing | [gocv](https://gocv.io) *(v0.5)* |
+| Global hotkeys | [`golang.design/x/hotkey`](https://github.com/golang-design/hotkey) |
 
 ## Requirements
 
@@ -45,6 +43,7 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 - [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation): `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
 - GCC (Windows: [MinGW via Scoop](https://scoop.sh) — `scoop install mingw`)
 - WebView2 Runtime (pre-installed on Windows 10/11)
+- Run your game in **windowed** or **borderless windowed** mode (the supported display modes for the overlay; true exclusive fullscreen may occlude it)
 
 ## Build & Run
 
@@ -106,8 +105,13 @@ steps:
 | Type | Description | Status |
 |---|---|---|
 | `manual` | User clicks Next or presses a hotkey | v0.1+ |
-| `ocr` | Screen capture + text recognition | v0.5 |
-| `memory` | Read game memory (game-specific) | Future |
+
+> Automatic triggers (OCR, memory-reading) were intentionally dropped: a game-agnostic
+> tool has no reliable way to read quest state, so progression is user-driven by design.
+>
+> Exception left open for the future: games that expose a clean modding/scripting API
+> (e.g. Elder Scrolls) *could* gain an opt-in, per-game automatic trigger that reads real
+> quest state through that API — manual stays the baseline.
 
 ## Project Structure
 
@@ -117,6 +121,7 @@ GoThrough/
 ├── config/            # YAML config loader & validator
 ├── engine/            # Step management & navigation
 ├── progress/          # JSON progress persistence (resume per walkthrough)
+├── settings/          # JSON user settings — hotkey rebinding etc. (v0.5)
 ├── overlay/           # Wails UI window
 │   ├── app.go         # Go backend (bound to frontend)
 │   ├── overlay.go     # Wails app setup
@@ -134,10 +139,14 @@ GoThrough/
 
 - [x] v0.1 — Config loader + step engine (no UI)
 - [x] v0.2 — Basic overlay window (manual progression)
-- [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(in-game verification pending)*
+- [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(verified in-game over Gothic 2)*
 - [x] v0.4 — Progress persistence (auto-saved per walkthrough, resumes on launch)
-- [ ] v0.5 — OCR trigger support
+- [ ] v0.5 — Settings: persistent user config + hotkey rebinding
+- [ ] v0.6 — Branching & sections in the config format (e.g. Gothic 2's guild choice)
 - [ ] v1.0 — First full Gothic 2 walkthrough config
+
+> Automatic progress tracking (OCR / memory-reading) was evaluated and dropped — see
+> [Trigger types](#trigger-types).
 
 ## Community Configs
 
