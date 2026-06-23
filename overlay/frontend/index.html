@@ -108,14 +108,65 @@
             transition: all 0.18s ease;
         }
         .close-btn:hover { background: rgba(232, 80, 80, 0.22); color: #fff; }
-        .chevron {
-            display: inline-block;
-            font-size: 13px;
+        /* Generic icon button (gear). */
+        .icon-btn {
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
             color: rgba(255, 255, 255, 0.5);
-            line-height: 1;
-            transition: transform 0.25s ease;
+            transition: all 0.18s ease;
         }
-        .collapsed .chevron { transform: rotate(-90deg); }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); }
+        .icon-btn.active { background: rgba(255, 255, 255, 0.13); color: #fff; }
+        .icon-btn svg { display: block; width: 14px; height: 14px; }
+
+        /* The quest title doubles as the collapse toggle (replaces the separate
+           chevron button); a small caret in front of it is the only affordance. */
+        .quest-title { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .editing .quest-title { cursor: move; } /* header drag wins in edit mode */
+        .title-caret {
+            font-size: 11px;
+            line-height: 1;
+            color: rgba(255, 255, 255, 0.45);
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .collapsed .title-caret { transform: rotate(-90deg); }
+
+        /* --- Settings view (hotkey rebinding) ------------------------------ */
+        .settings-view { margin-top: 12px; }
+        .settings-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-name { font-size: 12.5px; color: rgba(255, 255, 255, 0.9); }
+        .combo {
+            font-size: 10.5px;
+            padding: 4px 9px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.18s ease;
+        }
+        .combo:hover { background: rgba(255, 255, 255, 0.1); }
+        .combo.capturing {
+            border-color: rgba(120, 180, 255, 0.7);
+            color: #cfe2ff;
+            animation: gt-pulse 1.6s ease-in-out infinite;
+        }
+        .settings-hint { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 11px; line-height: 1.45; }
+        .settings-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; min-height: 1em; }
 
         /* --- "Now" card (always visible, even when collapsed) -------------- */
         .now-card {
@@ -279,6 +330,10 @@
         meta: { game: "", title: "" },
         steps: [],            // [{title, description, current, total, isFirst, isLast}]
         activePos: 1,         // 1-based index of the current step
+        view: "steps",        // "steps" | "settings"
+        settings: null,       // {version, hotkeys:{next,prev,toggleHide,quit}} from App.Settings()
+        capturing: null,      // hotkey action currently awaiting a keypress, or null
+        settingsError: "",    // last rebind error message
         collapsed: false,
         locked: saved.locked ?? true,
         width: saved.width || DEFAULT_W,
@@ -309,6 +364,71 @@
     function esc(s) {
         return String(s ?? "").replace(/[&<>"]/g,
             c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    // --- Hotkeys -------------------------------------------------------------
+    // The settings panel rebinds these four global actions; the names/order
+    // mirror settings.Hotkeys (settings/settings.go).
+    const HOTKEY_ACTIONS = [
+        { key: "next",       label: "Nächster Schritt" },
+        { key: "prev",       label: "Vorheriger Schritt" },
+        { key: "toggleHide", label: "Overlay ein/aus" },
+        { key: "quit",       label: "Overlay schließen" },
+    ];
+
+    // formatBinding renders a stored binding for display. A binding triggers on
+    // either a keyboard key OR a mouse button:
+    //   {mods:["ctrl","alt"], key:"right"}     → "Ctrl + Alt + →"
+    //   {mods:["ctrl","alt"], button:"middle"} → "Ctrl + Alt + Maus M"
+    const MOD_LABEL = { ctrl: "Ctrl", alt: "Alt", shift: "Shift", win: "Win" };
+    const KEY_LABEL = { left: "←", right: "→", up: "↑", down: "↓", space: "Space", return: "Enter", escape: "Esc", delete: "Del", tab: "Tab" };
+    const BUTTON_LABEL = { left: "Maus L", middle: "Maus M", right: "Maus R", back: "Maus 4", x1: "Maus 4", forward: "Maus 5", x2: "Maus 5" };
+    function formatBinding(b) {
+        if (!b) return "—";
+        let trigger;
+        if (b.button) trigger = BUTTON_LABEL[b.button] || b.button;
+        else if (b.key) trigger = KEY_LABEL[b.key] || b.key.toUpperCase();
+        else return "—";
+        const parts = (b.mods || []).map(m => MOD_LABEL[m] || m);
+        parts.push(trigger);
+        return parts.join(" + ");
+    }
+
+    // bindingFromKeyEvent turns a keydown into a stored keyboard binding, or null
+    // if the event is just a bare modifier (wait for the real key) or an
+    // unsupported key. Uses event.code so the physical key is captured
+    // regardless of layout.
+    function bindingFromKeyEvent(e) {
+        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) return null;
+        let key = null;
+        const c = e.code;
+        if (/^Key[A-Z]$/.test(c)) key = c.slice(3).toLowerCase();
+        else if (/^Digit[0-9]$/.test(c)) key = c.slice(5);
+        else if (/^F([1-9]|1[0-2])$/.test(c)) key = c.toLowerCase();
+        else key = ({
+            ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
+            Space: "space", Enter: "return", Escape: "escape", Delete: "delete", Tab: "tab",
+        })[c] || null;
+        if (!key) return null;
+        return { mods: modsFromEvent(e), key };
+    }
+
+    // bindingFromMouseEvent turns a mousedown into a stored mouse binding.
+    // event.button: 0=left, 1=middle, 2=right, 3=back(X1), 4=forward(X2).
+    function bindingFromMouseEvent(e) {
+        const button = ({ 0: "left", 1: "middle", 2: "right", 3: "back", 4: "forward" })[e.button];
+        if (!button) return null;
+        return { mods: modsFromEvent(e), button };
+    }
+
+    // modsFromEvent reads the held modifiers off a key/mouse event.
+    function modsFromEvent(e) {
+        const mods = [];
+        if (e.ctrlKey) mods.push("ctrl");
+        if (e.altKey) mods.push("alt");
+        if (e.shiftKey) mods.push("shift");
+        if (e.metaKey) mods.push("win");
+        return mods;
     }
 
     // --- Derived -------------------------------------------------------------
@@ -354,20 +474,42 @@
                </div>`
             : "";
 
+        const inSettings = state.view === "settings";
+
+        // Settings body: one row per global action, each showing its current
+        // combo as a button that captures a new keypress when clicked.
+        const settingsHTML = `
+            <div class="settings-view">
+                <div class="settings-kicker mono">Tastenkürzel</div>
+                ${HOTKEY_ACTIONS.map(a => {
+                    const b = state.settings && state.settings.hotkeys[a.key];
+                    const capturing = state.capturing === a.key;
+                    return `<div class="setting-row">
+                        <span class="setting-name">${esc(a.label)}</span>
+                        <span class="combo mono${capturing ? " capturing" : ""}" data-action="${a.key}">${capturing ? "Taste/Maus drücken…" : esc(formatBinding(b))}</span>
+                    </div>`;
+                }).join("")}
+                <div class="settings-error">${esc(state.settingsError)}</div>
+                <div class="settings-hint">Klick auf ein Kürzel, dann Tasten- oder Maustasten-Kombination drücken. Esc bricht ab.</div>
+            </div>`;
+
         panel.innerHTML = `
             <div class="header" id="header">
                 <div class="header-left">
                     <div>
                         <div class="kicker mono">${esc(state.meta.game)}</div>
-                        <div class="quest-title">${esc(state.meta.title)}</div>
+                        <div class="quest-title" id="questTitle">${esc(state.meta.title)}<span class="title-caret">⌄</span></div>
                     </div>
                 </div>
                 <div class="header-right">
                     <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
-                    <div class="chevron-btn" id="chevronBtn"><span class="chevron">⌄</span></div>
-                    <div class="close-btn" id="closeBtn" title="Overlay schließen (Ctrl+Alt+Q)">✕</div>
+                    <div class="icon-btn${inSettings ? " active" : ""}" id="settings" title="Einstellungen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </div>
+                    <div class="close-btn" id="closeBtn" title="Overlay schließen">✕</div>
                 </div>
             </div>
+            ${inSettings ? settingsHTML : `
             ${nowHTML}
             <div class="collapsible">
                 <div class="progress-row">
@@ -377,7 +519,7 @@
                 <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
                 <div class="checklist">${rowsHTML}</div>
             </div>
-            ${hintHTML}`;
+            ${hintHTML}`}`;
 
         applyLayout();
         wireEvents();
@@ -416,15 +558,85 @@
         const lockBtn = document.getElementById("lockBtn");
         lockBtn.addEventListener("mousedown", stopProp);
         lockBtn.addEventListener("click", toggleLock);
-        const chevronBtn = document.getElementById("chevronBtn");
-        chevronBtn.addEventListener("mousedown", stopProp);
-        chevronBtn.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+        // The title is the collapse toggle (no separate chevron button). A click
+        // that isn't a window-drag toggles the checklist; harmless in the
+        // settings view (nothing to collapse there).
+        const title = document.getElementById("questTitle");
+        title.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+        const settingsBtn = document.getElementById("settings");
+        settingsBtn.addEventListener("mousedown", stopProp);
+        settingsBtn.addEventListener("click", toggleSettings);
         const closeBtn = document.getElementById("closeBtn");
         closeBtn.addEventListener("mousedown", stopProp);
         closeBtn.addEventListener("click", () => { window.runtime?.Quit?.(); });
         panel.querySelectorAll(".row").forEach(row =>
             row.addEventListener("click", () => gotoIndex(Number(row.dataset.index))));
+        panel.querySelectorAll(".combo").forEach(combo => {
+            combo.addEventListener("mousedown", stopProp);
+            combo.addEventListener("click", () => startCapture(combo.dataset.action));
+        });
     }
+
+    // --- Settings panel + hotkey rebinding -----------------------------------
+    function toggleSettings() {
+        state.view = state.view === "settings" ? "steps" : "settings";
+        state.capturing = null;
+        state.settingsError = "";
+        render();
+    }
+
+    // startCapture arms the next key/mouse press to rebind `action`. The actual
+    // capture happens in the global listeners below.
+    function startCapture(action) {
+        state.capturing = action;
+        state.settingsError = "";
+        render();
+    }
+
+    // applyCapturedBinding persists a captured binding via App.SaveHotkeys (which
+    // validates + re-registers in the real build) and adopts the returned
+    // settings, or shows the validation error.
+    function applyCapturedBinding(binding) {
+        const action = state.capturing;
+        const hotkeys = { ...state.settings.hotkeys, [action]: binding };
+        window.go.overlay.App.SaveHotkeys(hotkeys).then(saved => {
+            state.settings = saved;
+            state.capturing = null;
+            state.settingsError = "";
+            render();
+        }).catch(err => {
+            state.capturing = null;
+            state.settingsError = String(err && err.message ? err.message : err);
+            render();
+        });
+    }
+
+    // While capturing, the next usable keydown becomes the new binding. Esc cancels.
+    function onCaptureKeydown(e) {
+        if (!state.capturing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === "Escape") { state.capturing = null; render(); return; }
+        const binding = bindingFromKeyEvent(e);
+        if (!binding) return; // bare modifier or unsupported key — keep waiting
+        applyCapturedBinding(binding);
+    }
+
+    // While capturing, a mousedown binds that mouse button (+ held modifiers).
+    function onCaptureMousedown(e) {
+        if (!state.capturing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const binding = bindingFromMouseEvent(e);
+        if (!binding) return; // unsupported button — keep waiting
+        applyCapturedBinding(binding);
+    }
+
+    // Capture phase so we intercept before the step-navigation keys / UI clicks.
+    window.addEventListener("keydown", onCaptureKeydown, true);
+    window.addEventListener("mousedown", onCaptureMousedown, true);
+    // Suppress the context menu while binding a right-click.
+    window.addEventListener("contextmenu", e => { if (state.capturing) e.preventDefault(); }, true);
 
     function toggleLock() {
         state.locked = !state.locked;
@@ -475,7 +687,7 @@
 
     async function startWindowDrag(e) {
         if (state.locked || e.button !== 0) return;
-        if (e.target.closest(".lock-btn, .chevron-btn, .close-btn")) return;
+        if (e.target.closest(".lock-btn, .icon-btn, .close-btn")) return;
         const rt = window.runtime;
         if (!rt || !rt.WindowGetPosition) return; // e.g. devui (no OS window)
         e.preventDefault();
@@ -518,12 +730,13 @@
     // --- Boot ----------------------------------------------------------------
     async function init() {
         try {
-            const [meta, steps, current] = await Promise.all([
-                App.Meta(), App.Steps(), App.CurrentStep(),
+            const [meta, steps, current, settings] = await Promise.all([
+                App.Meta(), App.Steps(), App.CurrentStep(), App.Settings(),
             ]);
             state.meta = meta;
             state.steps = steps;
             state.activePos = current.current;
+            state.settings = settings;
         } catch (e) {
             console.error("[GoThrough] failed to load walkthrough from backend:", e);
         }

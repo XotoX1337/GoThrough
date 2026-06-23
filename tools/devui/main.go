@@ -118,6 +118,14 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
   const listeners = {};
   const emit = (name, data) => (listeners[name] || []).forEach(cb => cb(data));
   const at = () => Promise.resolve(steps[i]);
+  // Mock settings — mirrors settings.Defaults() (settings/settings.go). SaveHotkeys
+  // just stores and echoes them back; real registration happens only in the Wails build.
+  const settings = { version: 1, hotkeys: {
+    next:       { mods: ['ctrl', 'alt'], key: 'right' },
+    prev:       { mods: ['ctrl', 'alt'], key: 'left'  },
+    toggleHide: { mods: ['ctrl', 'alt'], key: 'h'     },
+    quit:       { mods: ['ctrl', 'alt'], key: 'q'     },
+  } };
   window.go = { overlay: { App: {
     Meta: () => Promise.resolve(meta),
     Steps: () => Promise.resolve(steps),
@@ -126,6 +134,8 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
     Prev: () => { if (i > 0) i--; return at(); },
     Goto: (idx) => { i = Math.max(0, Math.min(idx, steps.length - 1)); return at(); },
     FitWindow: () => {}, // no-op: the browser can't resize the OS window
+    Settings: () => Promise.resolve(settings),
+    SaveHotkeys: (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
   } } };
   window.runtime = {
     Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),

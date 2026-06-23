@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/XotoX1337/GoThrough/config"
 	"github.com/XotoX1337/GoThrough/engine"
 	"github.com/XotoX1337/GoThrough/overlay"
 	"github.com/XotoX1337/GoThrough/progress"
+	"github.com/XotoX1337/GoThrough/settings"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +36,25 @@ func runWalkthrough(_ *cobra.Command, args []string) error {
 	eng := engine.New(wt)
 	attachProgress(eng, wt)
 
-	return overlay.New(eng).Run()
+	return overlay.New(eng, openSettings()).Run()
+}
+
+// openSettings loads the user settings store, falling back to an in-memory
+// defaults store if the file can't be opened. Like progress, settings are
+// best-effort — a load failure must not stop the walkthrough from running; the
+// user just gets the default hotkeys for this session.
+func openSettings() *settings.Store {
+	path, err := settings.DefaultPath()
+	if err == nil {
+		if store, oerr := settings.Open(path); oerr == nil {
+			return store
+		} else {
+			err = oerr
+		}
+	}
+	fmt.Fprintf(os.Stderr, "warning: settings unavailable, using defaults: %v\n", err)
+	store, _ := settings.Open(filepath.Join(os.TempDir(), "gothrough-settings.json"))
+	return store
 }
 
 // attachProgress wires the engine to the on-disk progress store: it restores

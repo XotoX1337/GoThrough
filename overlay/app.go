@@ -2,11 +2,13 @@ package overlay
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/XotoX1337/GoThrough/engine"
+	"github.com/XotoX1337/GoThrough/settings"
 )
 
 // stepChangedEvent is emitted to the frontend whenever the active step changes
@@ -38,6 +40,9 @@ type App struct {
 	mu  sync.Mutex
 	eng *engine.Engine
 	ctx context.Context // set in OnStartup; nil until the window is up
+
+	set     *settings.Store
+	hotkeys *hotkeyManager // set in OnStartup, once the window (and ctx) exist
 }
 
 // Meta returns the walkthrough header info (game + title).
@@ -93,6 +98,54 @@ func (a *App) Goto(index int) StepInfo {
 	defer a.mu.Unlock()
 	_ = a.eng.Goto(index)
 	return a.stepInfo()
+}
+
+// Settings returns the current user settings for the HUD's settings panel.
+func (a *App) Settings() settings.Settings {
+	return a.set.Get()
+}
+
+// SaveHotkeys validates, persists, and re-registers a new set of hotkey
+// bindings. It returns the stored settings on success so the frontend can
+// re-render; an invalid binding (unknown key/modifier) is rejected and the
+// previous bindings stay in effect. Called from the HUD settings panel.
+func (a *App) SaveHotkeys(hk settings.Hotkeys) (settings.Settings, error) {
+	if err := validateHotkeys(hk); err != nil {
+		return a.set.Get(), err
+	}
+
+	ns := a.set.Get()
+	ns.Hotkeys = hk
+	if err := a.set.Save(ns); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
+	}
+
+	a.mu.Lock()
+	hm := a.hotkeys
+	a.mu.Unlock()
+	if hm != nil {
+		hm.apply(hk)
+	}
+	return ns, nil
+}
+
+// validateHotkeys checks that every binding resolves to a real key/modifier
+// combination before it is persisted or registered.
+func validateHotkeys(hk settings.Hotkeys) error {
+	for name, b := range map[string]settings.Binding{
+		"next": hk.Next, "prev": hk.Prev, "toggleHide": hk.ToggleHide, "quit": hk.Quit,
+	} {
+		var err error
+		if b.IsMouse() {
+			_, _, err = resolveMouse(b)
+		} else {
+			_, _, err = resolve(b)
+		}
+		if err != nil {
+			return fmt.Errorf("%s: %w", name, err)
+		}
+	}
+	return nil
 }
 
 // FitWindow shrink-wraps the OS window to the given content size (logical px),

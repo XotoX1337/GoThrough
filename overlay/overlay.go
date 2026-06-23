@@ -12,6 +12,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/XotoX1337/GoThrough/engine"
+	"github.com/XotoX1337/GoThrough/settings"
 )
 
 // Overlay window geometry. The window is a fixed corner panel (not fullscreen)
@@ -32,9 +33,11 @@ type Overlay struct {
 	hotkeys *hotkeyManager
 }
 
-// New creates an Overlay for the given engine.
-func New(eng *engine.Engine) *Overlay {
-	return &Overlay{app: &App{eng: eng}}
+// New creates an Overlay for the given engine and settings store. The store
+// supplies the initial hotkey bindings and is updated when the user rebinds
+// them from the HUD settings panel.
+func New(eng *engine.Engine, set *settings.Store) *Overlay {
+	return &Overlay{app: &App{eng: eng, set: set}}
 }
 
 // Run opens the overlay window and blocks until the user closes it.
@@ -67,7 +70,8 @@ func (o *Overlay) onStartup(ctx context.Context) {
 	o.app.ctx = ctx
 	anchorTopRight(ctx)
 	o.hotkeys = newHotkeyManager(ctx, o.app)
-	o.hotkeys.start()
+	o.app.hotkeys = o.hotkeys
+	o.hotkeys.apply(o.app.set.Get().Hotkeys)
 }
 
 // anchorTopRight positions the window at the top-right corner of the primary

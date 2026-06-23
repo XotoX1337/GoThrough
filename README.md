@@ -17,8 +17,12 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 - Movable, resizable, lockable window (drag only when unlocked, clamped to screen)
 - Progress is saved automatically and resumes where you left off (per walkthrough)
 - Manual step progression (Next/Prev) — no fragile auto-detection to lead you astray
+- In-HUD settings panel (gear icon) with rebindable global hotkeys
 
 ### Hotkeys
+
+Global hotkeys are **rebindable** from the in-HUD settings panel (click the gear).
+The defaults are:
 
 | Hotkey | Action |
 |---|---|
@@ -26,6 +30,15 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 | `Ctrl+Alt+←` | Previous step |
 | `Ctrl+Alt+H` | Toggle overlay visibility |
 | `Ctrl+Alt+Q` | Quit |
+
+> **Mouse buttons can be bound too** (e.g. `Ctrl+Alt+MiddleClick`, side buttons).
+> Keyboard combos go through Win32 `RegisterHotKey` (and `XGrabKey` on X11); mouse
+> buttons — which those APIs don't cover — go through a separate global backend
+> (`mousehook`): a low-level mouse hook (`WH_MOUSE_LL`) on Windows, `XGrabButton`
+> on Linux/X11. Only the bound button of a matched combo is swallowed; a bare
+> click (or a different modifier set) passes straight through to the game.
+> Mouse-button hotkeys are unsupported under Wayland and on macOS (the same
+> global-hotkey limitation the keyboard side already has there).
 
 ## Stack
 
@@ -54,8 +67,16 @@ wails build -s                                              # build → build/bi
 make run                                                    # shortcut: build + run
 ```
 
-> Progress is stored as JSON under the OS user-config dir
-> (`%AppData%\GoThrough\progress.json` on Windows) and restored on the next launch.
+> State is stored as JSON under the OS user-config dir (`os.UserConfigDir()`),
+> as two separate files:
+>
+> | File | Holds | Windows | Linux |
+> |---|---|---|---|
+> | `progress.json` | Saved step per walkthrough (auto-saved, restored on launch; `--fresh` ignores it) | `%AppData%\GoThrough\` | `~/.config/GoThrough/` |
+> | `settings.json` | User settings, e.g. hotkey bindings (defaults used when absent) | `%AppData%\GoThrough\` | `~/.config/GoThrough/` |
+>
+> They're kept separate on purpose: progress is rewritten on every step change and
+> reset by `--fresh`, while settings change rarely and must survive a fresh start.
 
 > `-s` skips Wails' npm pipeline — assets are embedded directly via `//go:embed`.
 
@@ -122,6 +143,7 @@ GoThrough/
 ├── engine/            # Step management & navigation
 ├── progress/          # JSON progress persistence (resume per walkthrough)
 ├── settings/          # JSON user settings — hotkey rebinding etc. (v0.5)
+├── mousehook/         # Global mouse-button hotkeys (WH_MOUSE_LL / XGrabButton)
 ├── overlay/           # Wails UI window
 │   ├── app.go         # Go backend (bound to frontend)
 │   ├── overlay.go     # Wails app setup
@@ -141,7 +163,7 @@ GoThrough/
 - [x] v0.2 — Basic overlay window (manual progression)
 - [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(verified in-game over Gothic 2)*
 - [x] v0.4 — Progress persistence (auto-saved per walkthrough, resumes on launch)
-- [ ] v0.5 — Settings: persistent user config + hotkey rebinding
+- [x] v0.5 — Settings: persistent user config + rebindable hotkeys (in-HUD panel)
 - [ ] v0.6 — Branching & sections in the config format (e.g. Gothic 2's guild choice)
 - [ ] v1.0 — First full Gothic 2 walkthrough config
 
