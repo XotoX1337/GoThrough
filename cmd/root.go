@@ -7,6 +7,13 @@ import (
 	"github.com/XotoX1337/GoThrough/overlay"
 )
 
+func init() {
+	// GoThrough is a GUI app — disable Cobra's Windows mousetrap which would
+	// otherwise show "This is a command line tool" and exit when the binary is
+	// launched by double-clicking in Windows Explorer.
+	cobra.MousetrapHelpText = ""
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "gothrough",
 	Short: "Game-agnostic walkthrough overlay",
