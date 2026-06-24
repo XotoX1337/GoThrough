@@ -3,11 +3,20 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/XotoX1337/GoThrough/overlay"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "gothrough",
 	Short: "Game-agnostic walkthrough overlay",
+	Long: `GoThrough — game-agnostic walkthrough overlay.
+
+Double-click the binary (or run with no arguments) to open the config picker.
+Use 'gothrough run <config.yaml>' to start a specific walkthrough directly.`,
+	RunE: func(_ *cobra.Command, _ []string) error {
+		return overlay.New(nil, openSettings()).Run()
+	},
 }
 
 // Execute runs the root command and returns any error.

@@ -11,13 +11,11 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"github.com/XotoX1337/GoThrough/configstore"
 	"github.com/XotoX1337/GoThrough/engine"
 	"github.com/XotoX1337/GoThrough/settings"
 )
 
-// Overlay window geometry. The window is a fixed corner panel (not fullscreen)
-// so the game stays clickable everywhere outside it; it is anchored to the
-// top-right of the primary screen on startup.
 const (
 	overlayWidth  = 340
 	overlayHeight = 480
@@ -33,17 +31,20 @@ type Overlay struct {
 	hotkeys *hotkeyManager
 }
 
-// New creates an Overlay for the given engine and settings store. The store
-// supplies the initial hotkey bindings and is updated when the user rebinds
-// them from the HUD settings panel.
+// New creates an Overlay for the given engine and settings store.
+// Pass eng=nil to start in config-picker mode.
 func New(eng *engine.Engine, set *settings.Store) *Overlay {
 	return &Overlay{app: &App{eng: eng, set: set}}
 }
 
 // Run opens the overlay window and blocks until the user closes it.
 func (o *Overlay) Run() error {
+	title := "GoThrough"
+	if o.app.eng != nil {
+		title = "GoThrough — " + o.app.eng.Title()
+	}
 	return wails.Run(&options.App{
-		Title:         "GoThrough — " + o.app.eng.Title(),
+		Title:         title,
 		Width:         overlayWidth,
 		Height:        overlayHeight,
 		DisableResize: true,
@@ -63,30 +64,32 @@ func (o *Overlay) Run() error {
 	})
 }
 
-// onStartup captures the Wails runtime context (needed to emit events and
-// drive window visibility), anchors the window to the top-right of the screen,
-// and starts the global hotkey listeners.
 func (o *Overlay) onStartup(ctx context.Context) {
 	o.app.ctx = ctx
 	anchorTopRight(ctx)
 	o.hotkeys = newHotkeyManager(ctx, o.app)
 	o.app.hotkeys = o.hotkeys
 	o.hotkeys.apply(o.app.set.Get().Hotkeys)
+
+	// Background: check for configs in the repo newer than the bundled set.
+	go func() {
+		entries, err := configstore.FetchNewRemote(ctx)
+		if err != nil {
+			runtime.LogInfof(ctx, "configstore: remote check failed (offline?): %v", err)
+			return
+		}
+		if len(entries) > 0 {
+			runtime.EventsEmit(ctx, "configs:remote", entries)
+		}
+	}()
 }
 
-// anchorTopRight positions the window at the top-right corner of the primary
-// screen at its initial size. Wails centres new windows by default, which (with
-// our small window) makes the overlay look like a tiny box in the middle of the
-// screen. The frontend later shrink-wraps the window to the panel via
-// App.FitWindow, which re-anchors using the same margin.
 func anchorTopRight(ctx context.Context) {
 	if w := primaryScreenWidth(ctx); w > 0 {
 		runtime.WindowSetPosition(ctx, w-overlayWidth-screenMargin, screenMargin)
 	}
 }
 
-// primaryScreenWidth returns the logical-pixel width of the primary screen, or
-// 0 if it can't be determined.
 func primaryScreenWidth(ctx context.Context) int {
 	screens, err := runtime.ScreenGetAll(ctx)
 	if err != nil || len(screens) == 0 {
@@ -102,10 +105,9 @@ func primaryScreenWidth(ctx context.Context) int {
 	if screen.Size.Width != 0 {
 		return screen.Size.Width
 	}
-	return screen.Width // fall back to the deprecated field if Size is unset
+	return screen.Width
 }
 
-// onShutdown releases the global hotkeys when the window closes.
 func (o *Overlay) onShutdown(_ context.Context) {
 	if o.hotkeys != nil {
 		o.hotkeys.stop()

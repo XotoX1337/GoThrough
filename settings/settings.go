@@ -51,6 +51,7 @@ type Hotkeys struct {
 type Settings struct {
 	Version int     `json:"version"`
 	Hotkeys Hotkeys `json:"hotkeys"`
+	Opacity float64 `json:"opacity"`
 }
 
 // Defaults returns the built-in settings, used when no file exists yet. The
@@ -66,6 +67,7 @@ func Defaults() Settings {
 			ToggleHide: Binding{Mods: ctrlAlt(), Key: "h"},
 			Quit:       Binding{Mods: ctrlAlt(), Key: "q"},
 		},
+		Opacity: 1.0,
 	}
 }
 

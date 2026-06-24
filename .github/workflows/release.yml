@@ -50,6 +50,26 @@ jobs:
       - name: Build
         run: wails build -s ${{ matrix.flags }}
 
+      # Sign the Windows binary if a code-signing certificate is available.
+      # Store the PFX as a base64-encoded secret SIGNING_KEY_B64 and its
+      # password as SIGNING_PASSWORD. Without these secrets the step is skipped
+      # and the binary ships unsigned (SmartScreen will warn on first run).
+      # Recommended: obtain a certificate via https://signpath.io (free for OSS)
+      # or an OV/EV certificate from a trusted CA.
+      - name: Sign (Windows)
+        if: runner.os == 'Windows' && env.SIGNING_KEY_B64 != ''
+        shell: powershell
+        env:
+          SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          $pfxBytes = [Convert]::FromBase64String($env:SIGNING_KEY_B64)
+          [IO.File]::WriteAllBytes("cert.pfx", $pfxBytes)
+          $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" -ErrorAction SilentlyContinue | Select-Object -Last 1).FullName
+          if (-not $signtool) { Write-Error "signtool.exe not found"; exit 1 }
+          & $signtool sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 /f cert.pfx /p $env:SIGNING_PASSWORD "build/bin/GoThrough.exe"
+          Remove-Item cert.pfx
+
       - name: Stage binary
         shell: bash
         run: |

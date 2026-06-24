@@ -3,11 +3,15 @@ package overlay
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"github.com/XotoX1337/GoThrough/config"
+	"github.com/XotoX1337/GoThrough/configstore"
 	"github.com/XotoX1337/GoThrough/engine"
+	"github.com/XotoX1337/GoThrough/progress"
 	"github.com/XotoX1337/GoThrough/settings"
 )
 
@@ -45,10 +49,84 @@ type App struct {
 	hotkeys *hotkeyManager // set in OnStartup, once the window (and ctx) exist
 }
 
+// IsPicker reports whether the app is in config-picker mode (no walkthrough loaded).
+func (a *App) IsPicker() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.eng == nil
+}
+
+// ListConfigs returns all walkthrough configs bundled in the binary.
+func (a *App) ListConfigs() []configstore.Entry {
+	return configstore.List()
+}
+
+// OpenBrowse opens a native file dialog so the user can pick a walkthrough
+// YAML outside the bundled set. Returns the selected path, or "" if cancelled.
+func (a *App) OpenBrowse() string {
+	a.mu.Lock()
+	ctx := a.ctx
+	a.mu.Unlock()
+	if ctx == nil {
+		return ""
+	}
+	path, _ := runtime.OpenFileDialog(ctx, runtime.OpenDialogOptions{
+		Title: "Walkthrough öffnen",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "YAML Walkthrough (*.yaml, *.yml)", Pattern: "*.yaml;*.yml"},
+		},
+	})
+	return path
+}
+
+// LoadConfig loads a walkthrough from the embedded store (embedded=true) or
+// from a file path on disk (embedded=false), wires up progress persistence,
+// and transitions the app from picker mode into walkthrough mode.
+func (a *App) LoadConfig(path string, embedded bool) error {
+	var data []byte
+	var err error
+	if embedded {
+		data, err = configstore.Open(path)
+	} else {
+		data, err = os.ReadFile(path)
+	}
+	if err != nil {
+		return fmt.Errorf("reading config: %w", err)
+	}
+
+	wt, err := config.LoadBytes(data)
+	if err != nil {
+		return err
+	}
+
+	eng := engine.New(wt)
+	attachProgress(eng, wt, false)
+
+	a.mu.Lock()
+	a.eng = eng
+	hm := a.hotkeys
+	a.mu.Unlock()
+
+	if hm != nil {
+		hm.apply(a.set.Get().Hotkeys)
+	}
+	return nil
+}
+
+// UnloadConfig drops the active walkthrough and returns the app to picker mode.
+func (a *App) UnloadConfig() {
+	a.mu.Lock()
+	a.eng = nil
+	a.mu.Unlock()
+}
+
 // Meta returns the walkthrough header info (game + title).
 func (a *App) Meta() MetaInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return MetaInfo{}
+	}
 	return MetaInfo{Game: a.eng.Game(), Title: a.eng.Title()}
 }
 
@@ -56,6 +134,9 @@ func (a *App) Meta() MetaInfo {
 func (a *App) Steps() []StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return nil
+	}
 	steps := a.eng.Steps()
 	total := len(steps)
 	out := make([]StepInfo, total)
@@ -75,12 +156,18 @@ func (a *App) Steps() []StepInfo {
 func (a *App) CurrentStep() StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return StepInfo{}
+	}
 	return a.stepInfo()
 }
 
 func (a *App) Next() StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return StepInfo{}
+	}
 	_ = a.eng.Next()
 	return a.stepInfo()
 }
@@ -88,6 +175,9 @@ func (a *App) Next() StepInfo {
 func (a *App) Prev() StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return StepInfo{}
+	}
 	_ = a.eng.Prev()
 	return a.stepInfo()
 }
@@ -96,6 +186,9 @@ func (a *App) Prev() StepInfo {
 func (a *App) Goto(index int) StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if a.eng == nil {
+		return StepInfo{}
+	}
 	_ = a.eng.Goto(index)
 	return a.stepInfo()
 }
@@ -106,9 +199,8 @@ func (a *App) Settings() settings.Settings {
 }
 
 // SaveHotkeys validates, persists, and re-registers a new set of hotkey
-// bindings. It returns the stored settings on success so the frontend can
-// re-render; an invalid binding (unknown key/modifier) is rejected and the
-// previous bindings stay in effect. Called from the HUD settings panel.
+// bindings. Returns the stored settings on success; an invalid binding is
+// rejected and the previous bindings stay in effect.
 func (a *App) SaveHotkeys(hk settings.Hotkeys) (settings.Settings, error) {
 	if err := validateHotkeys(hk); err != nil {
 		return a.set.Get(), err
@@ -125,6 +217,19 @@ func (a *App) SaveHotkeys(hk settings.Hotkeys) (settings.Settings, error) {
 	a.mu.Unlock()
 	if hm != nil {
 		hm.apply(hk)
+	}
+	return ns, nil
+}
+
+// SaveOpacity persists the panel opacity (0.1–1.0) and returns the updated settings.
+func (a *App) SaveOpacity(opacity float64) (settings.Settings, error) {
+	if opacity < 0.1 || opacity > 1.0 {
+		return a.set.Get(), fmt.Errorf("opacity must be between 0.1 and 1.0")
+	}
+	ns := a.set.Get()
+	ns.Opacity = opacity
+	if err := a.set.Save(ns); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
 	}
 	return ns, nil
 }
@@ -149,11 +254,7 @@ func validateHotkeys(hk settings.Hotkeys) error {
 }
 
 // FitWindow shrink-wraps the OS window to the given content size (logical px),
-// keeping the window's current top-right corner fixed. This confines the
-// translucent window backdrop to the panel (no surrounding frame, no
-// click-dead-zone), makes the panel grow left/down on resize, and leaves a
-// user-moved window where they dragged it. Called by the frontend after any
-// layout change.
+// keeping the window's current top-right corner fixed.
 func (a *App) FitWindow(width, height int) {
 	a.mu.Lock()
 	ctx := a.ctx
@@ -168,14 +269,16 @@ func (a *App) FitWindow(width, height int) {
 	runtime.WindowSetPosition(ctx, right-width, y)
 }
 
-// next/prev are the hotkey-driven counterparts: they mutate the engine and
-// push the new state to the frontend via an event (no return value, since the
-// caller is Go, not JS).
+// next/prev are the hotkey-driven counterparts to Next/Prev.
 func (a *App) next() { a.advance((*engine.Engine).Next) }
 func (a *App) prev() { a.advance((*engine.Engine).Prev) }
 
 func (a *App) advance(move func(*engine.Engine) error) {
 	a.mu.Lock()
+	if a.eng == nil {
+		a.mu.Unlock()
+		return
+	}
 	_ = move(a.eng)
 	info := a.stepInfo()
 	ctx := a.ctx
@@ -197,4 +300,24 @@ func (a *App) stepInfo() StepInfo {
 		IsFirst:     current == 1,
 		IsLast:      a.eng.Done(),
 	}
+}
+
+// attachProgress wires the engine to the on-disk progress store. fresh=true
+// skips restoring saved position (used by the CLI --fresh flag).
+func attachProgress(eng *engine.Engine, wt *config.Walkthrough, fresh bool) {
+	path, err := progress.DefaultPath()
+	if err != nil {
+		return
+	}
+	store, err := progress.Open(path)
+	if err != nil {
+		return
+	}
+	h := store.For(wt)
+	if !fresh {
+		if index, stepID, ok := h.Load(); ok {
+			eng.Restore(index, stepID)
+		}
+	}
+	eng.UsePersister(h)
 }

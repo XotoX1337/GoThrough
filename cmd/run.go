@@ -5,19 +5,20 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+
 	"github.com/XotoX1337/GoThrough/config"
 	"github.com/XotoX1337/GoThrough/engine"
 	"github.com/XotoX1337/GoThrough/overlay"
 	"github.com/XotoX1337/GoThrough/progress"
 	"github.com/XotoX1337/GoThrough/settings"
-	"github.com/spf13/cobra"
 )
 
 var freshStart bool
 
 var runCmd = &cobra.Command{
 	Use:   "run <config.yaml>",
-	Short: "Start a walkthrough",
+	Short: "Start a walkthrough from a YAML file",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runWalkthrough,
 }
@@ -34,15 +35,13 @@ func runWalkthrough(_ *cobra.Command, args []string) error {
 	}
 
 	eng := engine.New(wt)
-	attachProgress(eng, wt)
+	attachProgressCLI(eng, wt)
 
 	return overlay.New(eng, openSettings()).Run()
 }
 
 // openSettings loads the user settings store, falling back to an in-memory
-// defaults store if the file can't be opened. Like progress, settings are
-// best-effort — a load failure must not stop the walkthrough from running; the
-// user just gets the default hotkeys for this session.
+// defaults store on failure so the app always starts.
 func openSettings() *settings.Store {
 	path, err := settings.DefaultPath()
 	if err == nil {
@@ -57,11 +56,9 @@ func openSettings() *settings.Store {
 	return store
 }
 
-// attachProgress wires the engine to the on-disk progress store: it restores
-// the last saved step (unless --fresh) and enables autosave on future changes.
-// Persistence is best-effort — if the store can't be opened we warn and run
-// without it rather than refusing to start the walkthrough.
-func attachProgress(eng *engine.Engine, wt *config.Walkthrough) {
+// attachProgressCLI wires the engine to the on-disk progress store for the
+// CLI run command, honouring the --fresh flag.
+func attachProgressCLI(eng *engine.Engine, wt *config.Walkthrough) {
 	path, err := progress.DefaultPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: progress disabled: %v\n", err)

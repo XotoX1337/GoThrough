@@ -34,7 +34,7 @@ const (
 )
 
 func main() {
-	configPath := flag.String("config", "configs/gothic2/chapter1.yaml", "walkthrough YAML to preview")
+	configPath := flag.String("config", "configstore/configs/gothic2/chapter1.yaml", "walkthrough YAML to preview")
 	bgPath := flag.String("bg", "", "optional background image (game screenshot) for the scene")
 	flag.Parse()
 
@@ -118,15 +118,22 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
   const listeners = {};
   const emit = (name, data) => (listeners[name] || []).forEach(cb => cb(data));
   const at = () => Promise.resolve(steps[i]);
-  // Mock settings — mirrors settings.Defaults() (settings/settings.go). SaveHotkeys
-  // just stores and echoes them back; real registration happens only in the Wails build.
-  const settings = { version: 1, hotkeys: {
+  // Mock settings — mirrors settings.Defaults() (settings/settings.go). Save methods
+  // just store and echo back; real registration/persistence only in the Wails build.
+  const settings = { version: 1, opacity: 1.0, hotkeys: {
     next:       { mods: ['ctrl', 'alt'], key: 'right' },
     prev:       { mods: ['ctrl', 'alt'], key: 'left'  },
     toggleHide: { mods: ['ctrl', 'alt'], key: 'h'     },
     quit:       { mods: ['ctrl', 'alt'], key: 'q'     },
   } };
+  // Mock config list — one entry matching the loaded walkthrough.
+  const mockConfigs = [{ game: meta.game, title: meta.title, author: '', chapter: 1, path: 'configstore/configs/gothic2/chapter1.yaml', embedded: true }];
   window.go = { overlay: { App: {
+    IsPicker:    () => Promise.resolve(false), // devui always starts in steps view
+    ListConfigs: () => Promise.resolve(mockConfigs),
+    OpenBrowse:  () => Promise.resolve(''),
+    LoadConfig:  () => Promise.resolve(),
+    UnloadConfig: () => Promise.resolve(),
     Meta: () => Promise.resolve(meta),
     Steps: () => Promise.resolve(steps),
     CurrentStep: at,
@@ -134,8 +141,9 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
     Prev: () => { if (i > 0) i--; return at(); },
     Goto: (idx) => { i = Math.max(0, Math.min(idx, steps.length - 1)); return at(); },
     FitWindow: () => {}, // no-op: the browser can't resize the OS window
-    Settings: () => Promise.resolve(settings),
+    Settings:    () => Promise.resolve(settings),
     SaveHotkeys: (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
+    SaveOpacity: (v) => { settings.opacity = v; return Promise.resolve(settings); },
   } } };
   window.runtime = {
     Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),

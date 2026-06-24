@@ -23,15 +23,15 @@ jobs:
           cache: true
 
       - name: Test
-        run: go test ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/
+        run: go test ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/ ./configstore/
 
       - name: Vet
-        run: go vet ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/
+        run: go vet ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/ ./configstore/
 
       - name: Staticcheck
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
-          staticcheck ./config/... ./engine/... ./progress/... ./settings/... ./mousehook/...
+          staticcheck ./config/... ./engine/... ./progress/... ./settings/... ./mousehook/... ./configstore/...
 
   build-linux:
     name: Build check (Linux / CGo)

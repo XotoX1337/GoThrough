@@ -55,8 +55,6 @@
             border-radius: 8px;
             cursor: default;
         }
-        /* The header drags the whole OS window, but only in edit mode (unlocked);
-           dragging is handled in JS so it can be clamped to the screen. */
         .header { cursor: default; }
         .editing .header { cursor: move; }
 
@@ -87,15 +85,6 @@
         .editing .lock-btn { color: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.32); }
         .lock-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
-        .chevron-btn {
-            cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-        }
-        .chevron-btn:hover { background: rgba(255, 255, 255, 0.08); }
-
         .close-btn {
             cursor: pointer;
             padding: 3px 7px;
@@ -108,7 +97,8 @@
             transition: all 0.18s ease;
         }
         .close-btn:hover { background: rgba(232, 80, 80, 0.22); color: #fff; }
-        /* Generic icon button (gear). */
+
+        /* Generic icon button (gear, home). */
         .icon-btn {
             cursor: pointer;
             padding: 3px 6px;
@@ -122,10 +112,8 @@
         .icon-btn.active { background: rgba(255, 255, 255, 0.13); color: #fff; }
         .icon-btn svg { display: block; width: 14px; height: 14px; }
 
-        /* The quest title doubles as the collapse toggle (replaces the separate
-           chevron button); a small caret in front of it is the only affordance. */
         .quest-title { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        .editing .quest-title { cursor: move; } /* header drag wins in edit mode */
+        .editing .quest-title { cursor: move; }
         .title-caret {
             font-size: 11px;
             line-height: 1;
@@ -135,7 +123,7 @@
         }
         .collapsed .title-caret { transform: rotate(-90deg); }
 
-        /* --- Settings view (hotkey rebinding) ------------------------------ */
+        /* --- Settings view (hotkey rebinding + opacity) --------------------- */
         .settings-view { margin-top: 12px; }
         .settings-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
         .setting-row {
@@ -165,13 +153,35 @@
             color: #cfe2ff;
             animation: gt-pulse 1.6s ease-in-out infinite;
         }
+
+        /* Opacity slider row */
+        .opacity-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 110px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.18);
+            outline: none;
+            cursor: pointer;
+        }
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+        }
+
         .settings-hint { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 11px; line-height: 1.45; }
         .settings-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; min-height: 1em; }
 
-        /* --- "Now" card (always visible, even when collapsed) -------------- */
+        /* --- "Now" card ---------------------------------------------------- */
         .now-card {
             margin-top: 12px;
-            padding: 11px 12px;
+            padding: 11px 12px 13px;
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -179,6 +189,12 @@
         .now-label { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
         .now-step { font-size: 15px; font-weight: 600; line-height: 1.3; margin-top: 5px; }
         .now-meta { font-size: 9.5px; color: rgba(255, 255, 255, 0.4); margin-top: 5px; letter-spacing: 0.02em; }
+        .now-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.55;
+            margin-top: 9px;
+        }
 
         .done-card {
             margin-top: 12px;
@@ -223,7 +239,7 @@
             transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- Checklist (height is user-resizable in edit mode) ------------- */
+        /* --- Checklist ----------------------------------------------------- */
         .checklist {
             overflow-y: auto;
             margin-top: 8px;
@@ -234,7 +250,7 @@
             display: flex;
             gap: 9px;
             align-items: flex-start;
-            padding: 7px 8px;
+            padding: 6px 8px;
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.18s ease;
@@ -243,41 +259,27 @@
         .row:hover { background: rgba(255, 255, 255, 0.1); }
 
         .mark {
-            width: 16px;
-            height: 16px;
-            border-radius: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-top: 1px;
+            margin-top: 2px;
             transition: all 0.2s ease;
             border: 1.5px solid rgba(255, 255, 255, 0.25);
         }
         .row.current .mark { border-color: rgba(255, 255, 255, 0.7); animation: gt-pulse 2.4s ease-in-out infinite; }
         .row.done .mark { background: rgba(236, 237, 240, 0.92); border-color: transparent; animation: none; }
-        .mark .check { font-size: 10px; color: #0d1014; font-weight: 700; line-height: 1; }
+        .mark .check { font-size: 9px; color: #0d1014; font-weight: 700; line-height: 1; }
 
         .row-main { flex: 1; min-width: 0; }
-        .row-label { font-size: 13px; font-weight: 500; line-height: 1.3; color: rgba(255, 255, 255, 0.92); }
+        .row-label { font-size: 12.5px; font-weight: 500; line-height: 1.3; color: rgba(255, 255, 255, 0.92); }
         .row.done .row-label { font-weight: 400; color: rgba(255, 255, 255, 0.42); text-decoration: line-through; }
         .row-meta { font-size: 9px; color: rgba(255, 255, 255, 0.36); margin-top: 2px; letter-spacing: 0.02em; }
 
-        /* --- Hint footer (per-step; hidden when the current step has none) - */
-        .hint {
-            margin-top: 11px;
-            padding-top: 11px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            gap: 9px;
-            align-items: flex-start;
-        }
-        .hint-label { font-size: 8.5px; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; margin-top: 2px; flex-shrink: 0; }
-        .hint-text { flex: 1; font-size: 11.5px; color: rgba(255, 255, 255, 0.62); line-height: 1.45; }
-
-        /* --- Resize handle (edit mode) — diagonal: width + list height ----- */
-        /* Bottom-left handle: dragging out (left/down) grows the panel; the
-           window keeps its top-right corner fixed (see App.FitWindow). */
+        /* --- Resize handle (edit mode) ------------------------------------- */
         .resize-handle {
             position: absolute;
             left: 3px;
@@ -291,6 +293,48 @@
             display: none;
         }
         .editing .resize-handle { display: block; }
+
+        /* --- Picker view --------------------------------------------------- */
+        .picker-view { margin-top: 12px; }
+        .picker-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; margin-bottom: 8px; }
+        .picker-list { }
+        .picker-row {
+            padding: 9px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.18s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .picker-row:last-child { border-bottom: none; }
+        .picker-row:hover { background: rgba(255, 255, 255, 0.08); }
+        .picker-game { font-size: 8.5px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.42); text-transform: uppercase; }
+        .picker-title { font-size: 13.5px; font-weight: 600; margin-top: 3px; }
+        .picker-meta { font-size: 9.5px; color: rgba(255, 255, 255, 0.38); margin-top: 2px; }
+        .picker-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+        .picker-browse {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.62);
+            cursor: pointer;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            text-align: center;
+            transition: all 0.18s ease;
+        }
+        .picker-browse:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.9); }
+        .picker-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; }
+        .picker-remote-badge {
+            font-size: 9.5px;
+            color: rgba(255, 200, 100, 0.82);
+            margin-top: 10px;
+            line-height: 1.45;
+        }
+        .picker-empty {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.38);
+            padding: 14px 0;
+            text-align: center;
+        }
 
         @keyframes gt-pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.20); }
@@ -310,43 +354,37 @@
     <script>
     // ===================================================================
     // GoThrough HUD — wired to the real Wails backend (overlay.App).
-    //
-    // Step data lives in Go (the engine is the source of truth). The HUD:
-    //   - loads meta + steps + current position via window.go.overlay.App
-    //   - reflects global-hotkey changes via the "step:changed" runtime event
-    //   - jumps to a step on row click via App.Goto(index)
-    // Only layout prefs (position/size/lock/collapse) live in localStorage;
-    // step progress is owned by the backend.
     // ===================================================================
 
     const App = window.go.overlay.App;
 
-    // --- State (data from backend; layout prefs from localStorage) -----------
-    // Bumped when the layout model changes so stale prefs are discarded.
     const STORE_KEY = "gt-overlay-v3";
     const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } })();
-    const DEFAULT_W = 312; // matches the initial corner window (340) minus margins
+    const DEFAULT_W = 312;
     const state = {
+        view: "picker",           // "picker" | "steps" | "settings"
+        // --- picker ---
+        configs: [],              // []configstore.Entry from App.ListConfigs()
+        remoteCount: 0,           // new configs found in the remote repo
+        pickerError: "",
+        // --- steps ---
         meta: { game: "", title: "" },
-        steps: [],            // [{title, description, current, total, isFirst, isLast}]
-        activePos: 1,         // 1-based index of the current step
-        view: "steps",        // "steps" | "settings"
-        settings: null,       // {version, hotkeys:{next,prev,toggleHide,quit}} from App.Settings()
-        capturing: null,      // hotkey action currently awaiting a keypress, or null
-        settingsError: "",    // last rebind error message
+        steps: [],
+        activePos: 1,
+        // --- settings ---
+        settings: null,           // {version, hotkeys, opacity} from App.Settings()
+        capturing: null,
+        settingsError: "",
+        // --- layout ---
         collapsed: false,
         locked: saved.locked ?? true,
         width: saved.width || DEFAULT_W,
-        // listHeight is the checklist's reserved height. null = derive from the
-        // natural content height on first render; that baseline becomes listMin,
-        // the smallest you can shrink to. Growing past it adds scroll room.
         listHeight: saved.listHeight ?? null,
         listMin: saved.listMin ?? null,
     };
 
-    // Current size is the minimum; you can drag larger (not smaller).
     const MIN_W = DEFAULT_W, MAX_W = 680;
-    const EXTRA_H = 560; // how much taller than the baseline you may drag
+    const EXTRA_H = 560;
 
     const mover = document.getElementById("mover");
     const panel = document.getElementById("panel");
@@ -366,9 +404,12 @@
             c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     }
 
-    // --- Hotkeys -------------------------------------------------------------
-    // The settings panel rebinds these four global actions; the names/order
-    // mirror settings.Hotkeys (settings/settings.go).
+    // --- Opacity ----------------------------------------------------------
+    function applyOpacity(v) {
+        mover.style.opacity = (v != null && v > 0) ? v : 1;
+    }
+
+    // --- Hotkeys ----------------------------------------------------------
     const HOTKEY_ACTIONS = [
         { key: "next",       label: "Nächster Schritt" },
         { key: "prev",       label: "Vorheriger Schritt" },
@@ -376,10 +417,6 @@
         { key: "quit",       label: "Overlay schließen" },
     ];
 
-    // formatBinding renders a stored binding for display. A binding triggers on
-    // either a keyboard key OR a mouse button:
-    //   {mods:["ctrl","alt"], key:"right"}     → "Ctrl + Alt + →"
-    //   {mods:["ctrl","alt"], button:"middle"} → "Ctrl + Alt + Maus M"
     const MOD_LABEL = { ctrl: "Ctrl", alt: "Alt", shift: "Shift", win: "Win" };
     const KEY_LABEL = { left: "←", right: "→", up: "↑", down: "↓", space: "Space", return: "Enter", escape: "Esc", delete: "Del", tab: "Tab" };
     const BUTTON_LABEL = { left: "Maus L", middle: "Maus M", right: "Maus R", back: "Maus 4", x1: "Maus 4", forward: "Maus 5", x2: "Maus 5" };
@@ -394,10 +431,6 @@
         return parts.join(" + ");
     }
 
-    // bindingFromKeyEvent turns a keydown into a stored keyboard binding, or null
-    // if the event is just a bare modifier (wait for the real key) or an
-    // unsupported key. Uses event.code so the physical key is captured
-    // regardless of layout.
     function bindingFromKeyEvent(e) {
         if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) return null;
         let key = null;
@@ -413,15 +446,12 @@
         return { mods: modsFromEvent(e), key };
     }
 
-    // bindingFromMouseEvent turns a mousedown into a stored mouse binding.
-    // event.button: 0=left, 1=middle, 2=right, 3=back(X1), 4=forward(X2).
     function bindingFromMouseEvent(e) {
         const button = ({ 0: "left", 1: "middle", 2: "right", 3: "back", 4: "forward" })[e.button];
         if (!button) return null;
         return { mods: modsFromEvent(e), button };
     }
 
-    // modsFromEvent reads the held modifiers off a key/mouse event.
     function modsFromEvent(e) {
         const mods = [];
         if (e.ctrlKey) mods.push("ctrl");
@@ -431,26 +461,77 @@
         return mods;
     }
 
-    // --- Derived -------------------------------------------------------------
+    // --- Derived ----------------------------------------------------------
     function derive() {
         const total = state.steps.length;
         const doneCount = Math.max(0, state.activePos - 1);
         return { total, doneCount, pct: total ? Math.round(doneCount / total * 100) : 0 };
     }
 
-    // --- Render --------------------------------------------------------------
+    // --- Render -----------------------------------------------------------
     function render() {
+        mover.classList.toggle("editing", !state.locked);
+        mover.classList.toggle("collapsed", state.collapsed && state.view === "steps");
+        applyOpacity(state.settings ? state.settings.opacity : 1);
+
+        if (state.view === "picker") {
+            renderPicker();
+        } else {
+            renderSteps();
+        }
+
+        applyLayout();
+        wireEvents();
+    }
+
+    function renderPicker() {
+        const rowsHTML = state.configs.length
+            ? state.configs.map(c => `
+                <div class="picker-row" data-path="${esc(c.path)}" data-embedded="true">
+                    <div class="picker-game mono">${esc(c.game)}${c.chapter ? ` · Kapitel ${c.chapter}` : ''}</div>
+                    <div class="picker-title">${esc(c.title)}</div>
+                    ${c.author ? `<div class="picker-meta mono">von ${esc(c.author)}</div>` : ''}
+                </div>`).join('')
+            : `<div class="picker-empty">Keine eingebetteten Configs gefunden.</div>`;
+
+        const remoteBadge = state.remoteCount > 0
+            ? `<div class="picker-remote-badge mono">↑ ${state.remoteCount} neue Config${state.remoteCount > 1 ? 's' : ''} verfügbar — GoThrough aktualisieren</div>`
+            : '';
+
+        panel.innerHTML = `
+            <div class="header" id="header">
+                <div class="header-left">
+                    <div>
+                        <div class="kicker mono">GoThrough</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
+                    <div class="close-btn" id="closeBtn" title="Schließen">✕</div>
+                </div>
+            </div>
+            <div class="picker-view">
+                <div class="picker-kicker mono">Walkthrough wählen</div>
+                <div class="picker-list" id="pickerList">${rowsHTML}</div>
+                <div class="picker-actions">
+                    <div class="picker-browse mono" id="pickerBrowse">Datei öffnen…</div>
+                </div>
+                ${state.pickerError ? `<div class="picker-error">${esc(state.pickerError)}</div>` : ''}
+                ${remoteBadge}
+            </div>`;
+    }
+
+    function renderSteps() {
         const { total, doneCount, pct } = derive();
         const current = state.steps[state.activePos - 1] || null;
-
-        mover.classList.toggle("editing", !state.locked);
-        mover.classList.toggle("collapsed", state.collapsed);
+        const inSettings = state.view === "settings";
 
         const nowHTML = current
             ? `<div class="now-card">
                    <div class="now-label mono">Jetzt</div>
                    <div class="now-step">${esc(current.title)}</div>
                    <div class="now-meta mono">Schritt ${state.activePos} / ${total}</div>
+                   ${current.description ? `<div class="now-desc">${esc(current.description)}</div>` : ''}
                </div>`
             : `<div class="done-card">Keine Schritte geladen</div>`;
 
@@ -467,17 +548,6 @@
             </div>`;
         }).join("");
 
-        const hintHTML = (current && current.description)
-            ? `<div class="hint">
-                   <span class="hint-label mono">Hinweis</span>
-                   <span class="hint-text">${esc(current.description)}</span>
-               </div>`
-            : "";
-
-        const inSettings = state.view === "settings";
-
-        // Settings body: one row per global action, each showing its current
-        // combo as a button that captures a new keypress when clicked.
         const settingsHTML = `
             <div class="settings-view">
                 <div class="settings-kicker mono">Tastenkürzel</div>
@@ -489,6 +559,12 @@
                         <span class="combo mono${capturing ? " capturing" : ""}" data-action="${a.key}">${capturing ? "Taste/Maus drücken…" : esc(formatBinding(b))}</span>
                     </div>`;
                 }).join("")}
+                <div class="setting-row">
+                    <span class="setting-name">Transparenz</span>
+                    <input type="range" class="opacity-slider" id="opacitySlider"
+                        min="10" max="100" step="5"
+                        value="${Math.round((state.settings ? (state.settings.opacity ?? 1) : 1) * 100)}">
+                </div>
                 <div class="settings-error">${esc(state.settingsError)}</div>
                 <div class="settings-hint">Klick auf ein Kürzel, dann Tasten- oder Maustasten-Kombination drücken. Esc bricht ab.</div>
             </div>`;
@@ -503,8 +579,11 @@
                 </div>
                 <div class="header-right">
                     <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
-                    <div class="icon-btn${inSettings ? " active" : ""}" id="settings" title="Einstellungen">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <div class="icon-btn" id="homeBtn" title="Anderes Walkthrough">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    </div>
+                    <div class="icon-btn${inSettings ? " active" : ""}" id="settingsBtn" title="Einstellungen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     </div>
                     <div class="close-btn" id="closeBtn" title="Overlay schließen">✕</div>
                 </div>
@@ -518,25 +597,16 @@
                 </div>
                 <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
                 <div class="checklist">${rowsHTML}</div>
-            </div>
-            ${hintHTML}`}`;
-
-        applyLayout();
-        wireEvents();
+            </div>`}`;
     }
 
     function applyLayout() {
-        // The OS window is shrink-wrapped to the panel (see fitWindow), so the
-        // panel is always pinned at the window's top-left.
         mover.style.left = "0px";
         mover.style.top = "0px";
         mover.style.width = state.width + "px";
         const cl = panel.querySelector(".checklist");
         if (cl) {
             if (state.listHeight == null) {
-                // First render: take the natural content height as the baseline
-                // (and minimum). The default look is unchanged; dragging the
-                // handle down grows the list area beyond this.
                 cl.style.height = "auto";
                 const base = Math.ceil(cl.scrollHeight);
                 state.listMin = state.listMin || base;
@@ -546,38 +616,107 @@
         }
     }
 
-    // --- Interactions --------------------------------------------------------
-    // Row click jumps the engine to that step; the returned StepInfo is the
-    // new authoritative position.
+    // --- Interactions -----------------------------------------------------
     function gotoIndex(index) {
         App.Goto(index).then(info => { state.activePos = info.current; render(); });
     }
 
+    function loadConfig(path, embedded) {
+        state.pickerError = "";
+        App.LoadConfig(path, embedded).then(() => {
+            return Promise.all([App.Meta(), App.Steps(), App.CurrentStep()]);
+        }).then(([meta, steps, current]) => {
+            state.meta = meta;
+            state.steps = steps;
+            state.activePos = current.current;
+            state.listHeight = null; // reset so layout recalculates for new content
+            state.listMin = null;
+            state.view = "steps";
+            render();
+        }).catch(err => {
+            state.pickerError = String(err && err.message ? err.message : err);
+            render();
+        });
+    }
+
+    function goHome() {
+        App.UnloadConfig().then(() => {
+            state.view = "picker";
+            state.configs = [];
+            return App.ListConfigs();
+        }).then(configs => {
+            state.configs = configs;
+            render();
+        });
+    }
+
     function wireEvents() {
         document.getElementById("header").addEventListener("mousedown", startWindowDrag);
+
         const lockBtn = document.getElementById("lockBtn");
         lockBtn.addEventListener("mousedown", stopProp);
         lockBtn.addEventListener("click", toggleLock);
-        // The title is the collapse toggle (no separate chevron button). A click
-        // that isn't a window-drag toggles the checklist; harmless in the
-        // settings view (nothing to collapse there).
-        const title = document.getElementById("questTitle");
-        title.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
-        const settingsBtn = document.getElementById("settings");
-        settingsBtn.addEventListener("mousedown", stopProp);
-        settingsBtn.addEventListener("click", toggleSettings);
+
         const closeBtn = document.getElementById("closeBtn");
         closeBtn.addEventListener("mousedown", stopProp);
         closeBtn.addEventListener("click", () => { window.runtime?.Quit?.(); });
+
+        if (state.view === "picker") {
+            panel.querySelectorAll(".picker-row").forEach(row => {
+                row.addEventListener("click", () =>
+                    loadConfig(row.dataset.path, row.dataset.embedded === "true"));
+            });
+            const browse = document.getElementById("pickerBrowse");
+            if (browse) {
+                browse.addEventListener("mousedown", stopProp);
+                browse.addEventListener("click", () => {
+                    App.OpenBrowse().then(path => {
+                        if (path) loadConfig(path, false);
+                    });
+                });
+            }
+            return; // no further event wiring needed in picker
+        }
+
+        // steps / settings view
+        const title = document.getElementById("questTitle");
+        if (title) title.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+
+        const homeBtn = document.getElementById("homeBtn");
+        if (homeBtn) {
+            homeBtn.addEventListener("mousedown", stopProp);
+            homeBtn.addEventListener("click", goHome);
+        }
+
+        const settingsBtn = document.getElementById("settingsBtn");
+        if (settingsBtn) {
+            settingsBtn.addEventListener("mousedown", stopProp);
+            settingsBtn.addEventListener("click", toggleSettings);
+        }
+
         panel.querySelectorAll(".row").forEach(row =>
             row.addEventListener("click", () => gotoIndex(Number(row.dataset.index))));
+
         panel.querySelectorAll(".combo").forEach(combo => {
             combo.addEventListener("mousedown", stopProp);
             combo.addEventListener("click", () => startCapture(combo.dataset.action));
         });
+
+        const opacitySlider = document.getElementById("opacitySlider");
+        if (opacitySlider) {
+            opacitySlider.addEventListener("mousedown", stopProp);
+            opacitySlider.addEventListener("input", () => {
+                const v = Number(opacitySlider.value) / 100;
+                applyOpacity(v);
+            });
+            opacitySlider.addEventListener("change", () => {
+                const v = Number(opacitySlider.value) / 100;
+                App.SaveOpacity(v).then(s => { state.settings = s; });
+            });
+        }
     }
 
-    // --- Settings panel + hotkey rebinding -----------------------------------
+    // --- Settings panel + hotkey rebinding --------------------------------
     function toggleSettings() {
         state.view = state.view === "settings" ? "steps" : "settings";
         state.capturing = null;
@@ -585,17 +724,12 @@
         render();
     }
 
-    // startCapture arms the next key/mouse press to rebind `action`. The actual
-    // capture happens in the global listeners below.
     function startCapture(action) {
         state.capturing = action;
         state.settingsError = "";
         render();
     }
 
-    // applyCapturedBinding persists a captured binding via App.SaveHotkeys (which
-    // validates + re-registers in the real build) and adopts the returned
-    // settings, or shows the validation error.
     function applyCapturedBinding(binding) {
         const action = state.capturing;
         const hotkeys = { ...state.settings.hotkeys, [action]: binding };
@@ -611,31 +745,27 @@
         });
     }
 
-    // While capturing, the next usable keydown becomes the new binding. Esc cancels.
     function onCaptureKeydown(e) {
         if (!state.capturing) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.key === "Escape") { state.capturing = null; render(); return; }
         const binding = bindingFromKeyEvent(e);
-        if (!binding) return; // bare modifier or unsupported key — keep waiting
+        if (!binding) return;
         applyCapturedBinding(binding);
     }
 
-    // While capturing, a mousedown binds that mouse button (+ held modifiers).
     function onCaptureMousedown(e) {
         if (!state.capturing) return;
         e.preventDefault();
         e.stopPropagation();
         const binding = bindingFromMouseEvent(e);
-        if (!binding) return; // unsupported button — keep waiting
+        if (!binding) return;
         applyCapturedBinding(binding);
     }
 
-    // Capture phase so we intercept before the step-navigation keys / UI clicks.
     window.addEventListener("keydown", onCaptureKeydown, true);
     window.addEventListener("mousedown", onCaptureMousedown, true);
-    // Suppress the context menu while binding a right-click.
     window.addEventListener("contextmenu", e => { if (state.capturing) e.preventDefault(); }, true);
 
     function toggleLock() {
@@ -646,24 +776,19 @@
 
     function stopProp(e) { e.stopPropagation(); }
 
-    // --- Resize (edit mode): panel width + checklist height ------------------
-    // The window is shrink-wrapped to the panel (see fitWindow); resizing the
-    // panel resizes the window, keeping its top-right corner fixed.
+    // --- Resize -----------------------------------------------------------
     let drag = null;
 
     function startResize(e) {
         if (state.locked) return;
         e.preventDefault();
         e.stopPropagation();
-        // Use absolute screen coords: the window repositions during resize, so
-        // webview-relative clientX/Y would drift.
         drag = { sx: e.screenX, sy: e.screenY, ow: state.width, oh: state.listHeight };
         mover.classList.add("dragging");
     }
 
     function onMove(e) {
         if (!drag) return;
-        // Bottom-left handle: drag left → wider, drag down → taller.
         state.width = Math.max(MIN_W, Math.min(drag.ow - (e.screenX - drag.sx), MAX_W));
         const minH = state.listMin || 0;
         state.listHeight = Math.max(minH, Math.min(drag.oh + (e.screenY - drag.sy), minH + EXTRA_H));
@@ -678,18 +803,14 @@
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
 
-    // --- Move the whole OS window (header drag, edit mode only) ---------------
-    // Custom (not Wails' --wails-draggable) so it can be gated on the lock state
-    // and clamped to the screen bounds. Window pos/size and the screen size are
-    // fetched once on mousedown; moves are then computed from absolute screen
-    // mouse coords.
+    // --- Window drag ------------------------------------------------------
     let winDrag = null;
 
     async function startWindowDrag(e) {
         if (state.locked || e.button !== 0) return;
-        if (e.target.closest(".lock-btn, .icon-btn, .close-btn")) return;
+        if (e.target.closest(".lock-btn, .icon-btn, .close-btn, .picker-browse, .picker-row")) return;
         const rt = window.runtime;
-        if (!rt || !rt.WindowGetPosition) return; // e.g. devui (no OS window)
+        if (!rt || !rt.WindowGetPosition) return;
         e.preventDefault();
         const [pos, size, screens] = await Promise.all([
             rt.WindowGetPosition(), rt.WindowGetSize(), rt.ScreenGetAll(),
@@ -716,10 +837,7 @@
     window.addEventListener("mousemove", onWinMove);
     window.addEventListener("mouseup", onWinUp);
 
-    // --- Shrink-wrap the OS window to the panel ------------------------------
-    // Confines the translucent window backdrop to the panel itself (no frame
-    // around it) and removes the click-dead-zone. Fires on every panel size
-    // change: content, collapse/expand animation, font load, manual resize.
+    // --- FitWindow --------------------------------------------------------
     function fitWindow() {
         const r = panel.getBoundingClientRect();
         const w = Math.ceil(r.width), h = Math.ceil(r.height);
@@ -727,26 +845,39 @@
     }
     new ResizeObserver(fitWindow).observe(panel);
 
-    // --- Boot ----------------------------------------------------------------
+    // --- Boot -------------------------------------------------------------
     async function init() {
         try {
-            const [meta, steps, current, settings] = await Promise.all([
-                App.Meta(), App.Steps(), App.CurrentStep(), App.Settings(),
-            ]);
-            state.meta = meta;
-            state.steps = steps;
-            state.activePos = current.current;
+            const settings = await App.Settings();
             state.settings = settings;
+            applyOpacity(settings.opacity ?? 1);
+
+            const isPicker = await App.IsPicker();
+            if (isPicker) {
+                state.view = "picker";
+                state.configs = await App.ListConfigs();
+            } else {
+                const [meta, steps, current] = await Promise.all([
+                    App.Meta(), App.Steps(), App.CurrentStep(),
+                ]);
+                state.meta = meta;
+                state.steps = steps;
+                state.activePos = current.current;
+                state.view = "steps";
+            }
         } catch (e) {
-            console.error("[GoThrough] failed to load walkthrough from backend:", e);
+            console.error("[GoThrough] init failed:", e);
         }
         render();
 
-        // Global-hotkey-driven step changes arrive as events from Go.
         if (window.runtime && window.runtime.EventsOn) {
             window.runtime.EventsOn("step:changed", info => {
                 state.activePos = info.current;
                 render();
+            });
+            window.runtime.EventsOn("configs:remote", entries => {
+                state.remoteCount = Array.isArray(entries) ? entries.length : 0;
+                if (state.view === "picker") render();
             });
         }
     }
