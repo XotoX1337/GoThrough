@@ -37,7 +37,12 @@ func Load(path string) (*Walkthrough, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
+	return LoadBytes(data)
+}
 
+// LoadBytes parses and validates a walkthrough from raw YAML bytes.
+// Used by the embedded config store and tests.
+func LoadBytes(data []byte) (*Walkthrough, error) {
 	var wt Walkthrough
 	if err := yaml.Unmarshal(data, &wt); err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)

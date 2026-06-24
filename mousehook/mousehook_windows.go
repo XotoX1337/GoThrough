@@ -278,3 +278,6 @@ func keyDown(vk int) bool {
 	r, _, _ := procGetAsyncKeyState.Call(uintptr(vk))
 	return r&0x8000 != 0
 }
+
+// bit returns the swallow-tracking bit for a button (Windows-only).
+func bit(b Button) uint8 { return 1 << uint(b) }
