@@ -1,0 +1,55 @@
+name: CI
+
+# Runs on every push to main and v* branches, and on PRs targeting main.
+# Tests the pure-Go packages (no CGo/Wails needed) and does a full Linux
+# overlay build so CGo-only compile errors (e.g. missing platform constants)
+# are caught before a release tag is pushed.
+on:
+  push:
+    branches: [main, 'v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: go test ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/
+
+      - name: Vet
+        run: go vet ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/
+
+      - name: Staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./config/... ./engine/... ./progress/... ./settings/... ./mousehook/...
+
+  build-linux:
+    name: Build check (Linux / CGo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Build
+        run: wails build -s -tags webkit2_41
