@@ -67,5 +67,3 @@ func (c *core) Add(mods Modifier, btn Button, act func()) {
 	c.bindings = append(c.bindings, binding{mods: mods, btn: btn, act: act})
 }
 
-// bit returns the swallow-tracking bit for a button.
-func bit(b Button) uint8 { return 1 << uint(b) }
