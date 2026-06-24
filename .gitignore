@@ -46,3 +46,6 @@ CLAUDE.md
 
 # RTK (Rust Token Killer) local tracking data
 .rtk/
+
+# Design
+design/

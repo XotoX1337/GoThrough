@@ -15,3 +15,6 @@ vendor/
 
 # Dependency lockfile (large hash list; go.mod already conveys deps)
 go.sum
+
+# Design
+design/
