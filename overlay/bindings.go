@@ -16,13 +16,16 @@ import (
 // the Wails/CGo toolchain) and confines the platform-specific key tables to the
 // overlay, which only builds on Windows anyway.
 
-// modByName maps a settings modifier name to its hotkey.Modifier. Names are the
-// lower-case tokens stored in settings.json.
+// modByName maps a settings modifier name to its hotkey.Modifier. It is built
+// from the cross-platform ctrl/shift plus the platform-specific alt/win entries
+// (modAlt/modWin), because golang.design/x/hotkey names those constants
+// differently per OS: ModAlt/ModWin on Windows, Mod1/Mod4 on Linux/X11. See
+// bindings_windows.go / bindings_linux.go.
 var modByName = map[string]hotkey.Modifier{
 	"ctrl":  hotkey.ModCtrl,
-	"alt":   hotkey.ModAlt,
 	"shift": hotkey.ModShift,
-	"win":   hotkey.ModWin,
+	"alt":   modAlt,
+	"win":   modWin,
 }
 
 // keyByName maps a settings key name to its hotkey.Key. Covers the letters,
