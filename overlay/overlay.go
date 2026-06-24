@@ -4,6 +4,7 @@ package overlay
 import (
 	"context"
 	"embed"
+	"log"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -43,7 +44,8 @@ func (o *Overlay) Run() error {
 	if o.app.eng != nil {
 		title = "GoThrough — " + o.app.eng.Title()
 	}
-	return wails.Run(&options.App{
+	log.Printf("overlay.Run: picker=%v title=%q", o.app.eng == nil, title)
+	err := wails.Run(&options.App{
 		Title:         title,
 		Width:         overlayWidth,
 		Height:        overlayHeight,
@@ -62,14 +64,21 @@ func (o *Overlay) Run() error {
 			WindowIsTranslucent:  true,
 		},
 	})
+	log.Printf("overlay.Run: wails.Run returned err=%v", err)
+	return err
 }
 
 func (o *Overlay) onStartup(ctx context.Context) {
+	log.Println("onStartup: begin")
 	o.app.ctx = ctx
+	log.Println("onStartup: anchoring window")
 	anchorTopRight(ctx)
+	log.Println("onStartup: creating hotkey manager")
 	o.hotkeys = newHotkeyManager(ctx, o.app)
 	o.app.hotkeys = o.hotkeys
+	log.Printf("onStartup: applying hotkeys: %+v", o.app.set.Get().Hotkeys)
 	o.hotkeys.apply(o.app.set.Get().Hotkeys)
+	log.Println("onStartup: done")
 
 	// Background: check for configs in the repo newer than the bundled set.
 	go func() {
@@ -82,6 +91,13 @@ func (o *Overlay) onStartup(ctx context.Context) {
 			runtime.EventsEmit(ctx, "configs:remote", entries)
 		}
 	}()
+}
+
+func (o *Overlay) onShutdown(_ context.Context) {
+	log.Println("onShutdown: called")
+	if o.hotkeys != nil {
+		o.hotkeys.stop()
+	}
 }
 
 func anchorTopRight(ctx context.Context) {
@@ -108,8 +124,3 @@ func primaryScreenWidth(ctx context.Context) int {
 	return screen.Width
 }
 
-func (o *Overlay) onShutdown(_ context.Context) {
-	if o.hotkeys != nil {
-		o.hotkeys.stop()
-	}
-}
