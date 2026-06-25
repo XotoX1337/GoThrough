@@ -138,39 +138,6 @@ func (e *Engine) expandNodes(nodes []config.Node, section string) (items []Item,
 	return out, false
 }
 
-// findBranch locates a branch by persistKey anywhere in the document.
-func (e *Engine) findBranch(persistKey string) *config.Branch {
-	var search func(nodes []config.Node) *config.Branch
-	search = func(nodes []config.Node) *config.Branch {
-		for _, n := range nodes {
-			if n.Branch != nil {
-				if n.Branch.PersistKey == persistKey {
-					return n.Branch
-				}
-				for _, o := range n.Branch.Options {
-					if b := search(o.Steps); b != nil {
-						return b
-					}
-				}
-			}
-		}
-		return nil
-	}
-	for _, on := range e.walkthrough.Outline() {
-		if on.Branch != nil {
-			if on.Branch.PersistKey == persistKey {
-				return on.Branch
-			}
-			for _, o := range on.Branch.Options {
-				if b := search(o.Steps); b != nil {
-					return b
-				}
-			}
-		}
-	}
-	return nil
-}
-
 // Choose records the option for the branch the user is currently on (which may
 // already be decided — this is how re-choosing works) and advances into the
 // chosen option. The current item must be that branch (ErrNotABranch
