@@ -1,14 +1,17 @@
 // Command devui serves the overlay frontend in a normal browser with live
 // reload, so the HUD can be iterated on without rebuilding the Wails app.
 //
-// It mocks the Wails bindings (window.go.overlay.App + window.runtime) with
-// real step data loaded from a walkthrough YAML, renders the HUD inside a
-// correctly-sized frame over a faux game scene, and reloads the browser via
-// Server-Sent Events whenever a file in overlay/frontend changes.
+// It mocks the Wails bindings (window.go.overlay.App + window.runtime). Rather
+// than re-implementing navigation in JavaScript, the mock calls small HTTP
+// endpoints backed by the REAL engine.Engine — so branch flattening, choices
+// and `next` hand-off behave exactly as in the Wails build and the mock can't
+// drift from the engine. Only the StepInfo wire shape is mirrored here (it
+// belongs to the overlay package, which is CGo/Wails-only and can't be imported
+// by this pure-Go tool); keep it in sync with overlay.StepInfo.
 //
-// No Node, no npm — pure Go stdlib plus the project's own config package.
+// No Node, no npm — pure Go stdlib plus the project's own packages.
 //
-//	go run ./tools/devui                       # defaults to gothic2/chapter1
+//	go run ./tools/devui                       # defaults to gothic2/day1
 //	go run ./tools/devui -config path/to.yaml  # any walkthrough
 //	go run ./tools/devui -bg scene.png         # use a real screenshot as scene
 package main
@@ -21,11 +24,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/XotoX1337/GoThrough/config"
+	"github.com/XotoX1337/GoThrough/engine"
 )
 
 const (
@@ -33,8 +38,15 @@ const (
 	frontendDir = "overlay/frontend"
 )
 
+// server holds the live engine the mock bindings drive over HTTP.
+type server struct {
+	mu     sync.Mutex
+	eng    *engine.Engine
+	cfgDir string // dir of the loaded config, for resolving `next:`
+}
+
 func main() {
-	configPath := flag.String("config", "configstore/configs/gothic2/chapter1.yaml", "walkthrough YAML to preview")
+	configPath := flag.String("config", "configstore/configs/gothic2/day1.yaml", "walkthrough YAML to preview")
 	bgPath := flag.String("bg", "", "optional background image (game screenshot) for the scene")
 	flag.Parse()
 
@@ -42,22 +54,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("loading walkthrough: %v", err)
 	}
-	stepsJSON, err := json.Marshal(toStepInfos(wt))
-	if err != nil {
-		log.Fatalf("encoding steps: %v", err)
-	}
-	metaJSON, err := json.Marshal(map[string]string{"game": wt.Game, "title": wt.Title})
-	if err != nil {
-		log.Fatalf("encoding meta: %v", err)
-	}
+	srv := &server{eng: engine.New(wt), cfgDir: filepath.Dir(*configPath)}
 
 	hub := newReloadHub()
 	go watch(frontendDir, hub)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", serveHarness)
-	mux.HandleFunc("/app", serveApp(stepsJSON, metaJSON))
+	mux.HandleFunc("/app", serveApp)
 	mux.HandleFunc("/__reload", hub.handleSSE)
+	srv.routes(mux)
 	if *bgPath != "" {
 		mux.HandleFunc("/__bg", func(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, *bgPath)
@@ -65,7 +71,7 @@ func main() {
 	}
 
 	url := "http://" + addr
-	fmt.Printf("devui: %s — %d steps from %s\n", url, len(wt.Steps), *configPath)
+	fmt.Printf("devui: %s — %d items from %s\n", url, len(srv.eng.Items()), *configPath)
 	fmt.Println("devui: edit overlay/frontend/index.html and save — the page reloads automatically. Ctrl+C to stop.")
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
@@ -74,50 +80,190 @@ func main() {
 
 // stepInfo mirrors overlay.StepInfo — the shape the real Wails binding returns.
 type stepInfo struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Current     int    `json:"current"`
-	Total       int    `json:"total"`
-	IsFirst     bool   `json:"isFirst"`
-	IsLast      bool   `json:"isLast"`
+	Current int    `json:"current"`
+	Total   int    `json:"total"`
+	IsFirst bool   `json:"isFirst"`
+	IsLast  bool   `json:"isLast"`
+	Section string `json:"section,omitempty"`
+
+	IsBranch  bool               `json:"isBranch,omitempty"`
+	BranchKey string             `json:"branchKey,omitempty"`
+	Selected  string             `json:"selected,omitempty"`
+	Options   []branchOptionInfo `json:"options,omitempty"`
+
+	ID          int         `json:"id,omitempty"`
+	Title       string      `json:"title"`
+	Description string      `json:"description,omitempty"`
+	Optional    bool        `json:"optional,omitempty"`
+	Quests      []questInfo `json:"quests,omitempty"`
+	Hints       []string    `json:"hints,omitempty"`
+	Warnings    []string    `json:"warnings,omitempty"`
 }
 
-func toStepInfos(wt *config.Walkthrough) []stepInfo {
-	total := len(wt.Steps)
-	out := make([]stepInfo, total)
-	for i, s := range wt.Steps {
-		out[i] = stepInfo{
-			Title:       s.Title,
-			Description: s.Description,
-			Current:     i + 1,
-			Total:       total,
-			IsFirst:     i == 0,
-			IsLast:      i == total-1,
+type branchOptionInfo struct {
+	Label       string `json:"label"`
+	Description string `json:"description,omitempty"`
+}
+
+type questInfo struct {
+	Name   string `json:"name"`
+	Status string `json:"status,omitempty"`
+	Note   string `json:"note,omitempty"`
+}
+
+// itemInfo mirrors overlay.itemInfo — keep the two in sync.
+func itemInfo(it engine.Item, pos, total int, last bool) stepInfo {
+	info := stepInfo{Current: pos, Total: total, IsFirst: pos == 1, IsLast: last, Section: it.Section}
+	if it.IsBranch() {
+		info.IsBranch = true
+		info.Title = it.Branch.Title
+		info.BranchKey = it.Branch.PersistKey
+		info.Selected = it.Selected
+		for _, o := range it.Branch.Options {
+			info.Options = append(info.Options, branchOptionInfo{Label: o.Label, Description: o.Description})
 		}
+		return info
+	}
+	s := it.Step
+	info.ID = s.ID
+	info.Title = s.Title
+	info.Description = s.Description
+	info.Optional = s.Optional
+	info.Hints = s.Hints
+	info.Warnings = s.Warnings
+	for _, q := range s.Quests {
+		info.Quests = append(info.Quests, questInfo{Name: q.Name, Status: q.Status, Note: q.Note})
+	}
+	return info
+}
+
+func (s *server) current() stepInfo {
+	cur, total := s.eng.Progress()
+	it := s.eng.Current()
+	if it == nil {
+		return stepInfo{Current: cur, Total: total}
+	}
+	return itemInfo(*it, cur, total, s.eng.Done())
+}
+
+func (s *server) steps() []stepInfo {
+	items := s.eng.Items()
+	total := len(items)
+	out := make([]stepInfo, total)
+	for i, it := range items {
+		out[i] = itemInfo(it, i+1, total, s.eng.Done() && i == total-1)
 	}
 	return out
 }
 
-// serveApp serves the real index.html with the Wails bindings mocked, so the
-// untouched frontend runs in a plain browser against real step data.
-func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		raw, err := os.ReadFile(filepath.Join(frontendDir, "index.html"))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+func (s *server) routes(mux *http.ServeMux) {
+	writeJSON := func(w http.ResponseWriter, v any) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(v)
+	}
+	mux.HandleFunc("/api/meta", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		writeJSON(w, map[string]string{"game": s.eng.Game(), "title": s.eng.Title(), "variant": s.eng.Variant()})
+	})
+	mux.HandleFunc("/api/steps", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		writeJSON(w, s.steps())
+	})
+	mux.HandleFunc("/api/current", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		writeJSON(w, s.current())
+	})
+	mux.HandleFunc("/api/nextfile", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		writeJSON(w, s.eng.NextFile())
+	})
+	mux.HandleFunc("/api/next", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		_ = s.eng.Next()
+		writeJSON(w, s.current())
+	})
+	mux.HandleFunc("/api/prev", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		_ = s.eng.Prev()
+		writeJSON(w, s.current())
+	})
+	mux.HandleFunc("/api/goto", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		i, _ := strconv.Atoi(r.URL.Query().Get("i"))
+		_ = s.eng.Goto(i)
+		writeJSON(w, s.current())
+	})
+	mux.HandleFunc("/api/choose", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		_ = s.eng.Choose(r.URL.Query().Get("key"), r.URL.Query().Get("label"))
+		writeJSON(w, s.current())
+	})
+	mux.HandleFunc("/api/loadnext", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.loadNext()
+		writeJSON(w, s.current())
+	})
+	// hotkeynext mirrors overlay.App.next(): at the end of a walkthrough that has
+	// a `next:` file, hand off to it; otherwise advance one step. The response's
+	// "swapped" flag tells the mock whether to fire config:changed (full reload)
+	// or step:changed (in-place step update), matching the real Wails events.
+	mux.HandleFunc("/api/hotkeynext", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		swapped := false
+		if s.eng.Done() && s.eng.NextFile() != "" {
+			swapped = s.loadNext()
+		} else {
+			_ = s.eng.Next()
 		}
-		inject := `
+		writeJSON(w, map[string]any{"swapped": swapped, "current": s.current()})
+	})
+}
+
+// loadNext swaps the engine to the active walkthrough's `next:` file, tracking
+// the new config's directory so a further hand-off resolves correctly. Caller
+// must hold s.mu. Returns whether a swap actually happened.
+func (s *server) loadNext() bool {
+	next := s.eng.NextFile()
+	if next == "" {
+		return false
+	}
+	path := filepath.Join(s.cfgDir, next)
+	wt, err := config.Load(path)
+	if err != nil {
+		log.Printf("devui: loadnext %q: %v", next, err)
+		return false
+	}
+	s.eng = engine.New(wt)
+	s.cfgDir = filepath.Dir(path)
+	return true
+}
+
+// serveApp serves the real index.html with the Wails bindings mocked, so the
+// untouched frontend runs in a plain browser against the live engine.
+func serveApp(w http.ResponseWriter, r *http.Request) {
+	raw, err := os.ReadFile(filepath.Join(frontendDir, "index.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	inject := `
 <style>html { background: transparent !important; }</style>
 <script>
-// --- devui: mock of the Wails bindings ---------------------------------
+// --- devui: mock of the Wails bindings (engine-backed via /api/*) ------
 (function () {
-  const steps = ` + string(stepsJSON) + `;
-  const meta = ` + string(metaJSON) + `;
-  let i = 0;
   const listeners = {};
   const emit = (name, data) => (listeners[name] || []).forEach(cb => cb(data));
-  const at = () => Promise.resolve(steps[i]);
+  const api = (p, opts) => fetch(p, opts).then(r => r.json());
   // Mock settings — mirrors settings.Defaults() (settings/settings.go). Save methods
   // just store and echo back; real registration/persistence only in the Wails build.
   const settings = { version: 1, opacity: 1.0, hotkeys: {
@@ -126,24 +272,25 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
     toggleHide: { mods: ['ctrl', 'alt'], key: 'h'     },
     quit:       { mods: ['ctrl', 'alt'], key: 'q'     },
   } };
-  // Mock config list — one entry matching the loaded walkthrough.
-  const mockConfigs = [{ game: meta.game, title: meta.title, author: '', chapter: 1, path: 'configstore/configs/gothic2/chapter1.yaml', embedded: true }];
   window.go = { overlay: { App: {
-    IsPicker:    () => Promise.resolve(false), // devui always starts in steps view
-    ListConfigs: () => Promise.resolve(mockConfigs),
-    OpenBrowse:  () => Promise.resolve(''),
-    LoadConfig:  () => Promise.resolve(),
+    IsPicker:     () => Promise.resolve(false), // devui always starts in steps view
+    ListConfigs:  () => api('/api/meta').then(m => [{ game: m.game, title: m.title, author: '', chapter: 1, path: '(devui)', embedded: true }]),
+    OpenBrowse:   () => Promise.resolve(''),
+    LoadConfig:   () => Promise.resolve(),
     UnloadConfig: () => Promise.resolve(),
-    Meta: () => Promise.resolve(meta),
-    Steps: () => Promise.resolve(steps),
-    CurrentStep: at,
-    Next: () => { if (i < steps.length - 1) i++; return at(); },
-    Prev: () => { if (i > 0) i--; return at(); },
-    Goto: (idx) => { i = Math.max(0, Math.min(idx, steps.length - 1)); return at(); },
-    FitWindow: () => {}, // no-op: the browser can't resize the OS window
-    Settings:    () => Promise.resolve(settings),
-    SaveHotkeys: (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
-    SaveOpacity: (v) => { settings.opacity = v; return Promise.resolve(settings); },
+    Meta:         () => api('/api/meta'),
+    Steps:        () => api('/api/steps'),
+    CurrentStep:  () => api('/api/current'),
+    NextFile:     () => api('/api/nextfile'),
+    Next:         () => api('/api/next', { method: 'POST' }),
+    Prev:         () => api('/api/prev', { method: 'POST' }),
+    Goto:         (idx) => api('/api/goto?i=' + idx, { method: 'POST' }),
+    Choose:       (key, label) => api('/api/choose?key=' + encodeURIComponent(key) + '&label=' + encodeURIComponent(label), { method: 'POST' }),
+    LoadNext:     () => api('/api/loadnext', { method: 'POST' }),
+    FitWindow:    () => {}, // no-op: the browser can't resize the OS window
+    Settings:     () => Promise.resolve(settings),
+    SaveHotkeys:  (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
+    SaveOpacity:  (v) => { settings.opacity = v; return Promise.resolve(settings); },
   } } };
   window.runtime = {
     Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),
@@ -154,19 +301,22 @@ func serveApp(stepsJSON, metaJSON []byte) http.HandlerFunc {
   // so the event-driven step:changed path can be exercised in the browser.
   // Click the HUD first to give the iframe keyboard focus.
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') { if (i < steps.length - 1) i++; emit('step:changed', steps[i]); }
-    else if (e.key === 'ArrowLeft') { if (i > 0) i--; emit('step:changed', steps[i]); }
+    if (e.key === 'ArrowRight') {
+      api('/api/hotkeynext', { method: 'POST' })
+        .then(res => emit(res.swapped ? 'config:changed' : 'step:changed', res.current));
+    } else if (e.key === 'ArrowLeft') {
+      api('/api/prev', { method: 'POST' }).then(c => emit('step:changed', c));
+    }
   });
 })();
 </script>`
-		// Inject before </head> so window.go / window.runtime exist before the
-		// frontend's inline script runs (it resolves `window.go.overlay.App` at
-		// parse time) — this mirrors how the real Wails build injects its
-		// bindings into the head ahead of app scripts.
-		html := strings.Replace(string(raw), "</head>", inject+"\n</head>", 1)
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprint(w, html)
-	}
+	// Inject before </head> so window.go / window.runtime exist before the
+	// frontend's inline script runs (it resolves `window.go.overlay.App` at
+	// parse time) — this mirrors how the real Wails build injects its
+	// bindings into the head ahead of app scripts.
+	html := strings.Replace(string(raw), "</head>", inject+"\n</head>", 1)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, html)
 }
 
 // serveHarness renders the faux game scene with the HUD framed at real size
