@@ -1,0 +1,209 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 3
+title: 'Act 3: Sarn to Dominus'
+next: act4.yaml
+sections:
+  - title: Sarn to Dominus
+    steps:
+      - id: 1
+        title: Get to The Sarn Encampment
+        description: |-
+          - Get to **The City of Sarn**
+          - Get Crafting recipe
+          - Help and talk to Clarissa
+          - Get to **The Sarn Encampment**
+      - id: 2
+        title: Get to The Crematorium
+        description: |-
+          - Get to **The Slums**
+          - Get to **The Crematorium**
+        hints:
+          - Go up
+          - Follow Stairs
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 3
+                  title: Trial
+                  description: Complete Trial
+            - label: Twinked / later
+              steps:
+                - id: 4
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 5
+        title: Kill Piety
+        description: |-
+          - Find and kill **Piety**, take *Tolman's Bracelet*
+          - Get Crafting recipe
+          - log out
+      - id: 6
+        title: 'Hand in: Lost in Love'
+        description: |-
+          - Talk to Clarissa, take *Sewer Keys*
+          - Hand in *Lost in Love*
+      - id: 7
+        title: Get to The Sewers
+        description: |-
+          - Get to **The Slums**
+          - Get to **The Sewers**
+          - Find 1x*Platinum Bust*
+          - Get Waypoint
+          - Find 2x*Platinum Bust*
+        hints:
+          - Go up
+      - id: 8
+        title: Get to The Marketplace
+        description: |-
+          - Get to **The Marketplace**
+          - Get Waypoint
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 9
+                  title: Get to The Catacombs
+                  description: |-
+                    - Get to **The Catacombs**
+                    - Complete Trial
+                    - Get Crafting recipe
+                  hints:
+                    - Look around nearby
+            - label: Twinked / later
+              steps:
+                - id: 10
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 11
+        title: 'Hand in: Victario''s Secrets'
+        description: |-
+          - log out
+          - Hand in *Victario's Secrets*
+      - id: 12
+        title: Get to The Solaris Temple Level 1
+        description: |-
+          - Waypoint to **The Marketplace**
+          - Get to **The Battlefront**
+          - Get Waypoint
+          - Find and take *Ribbon Spool*
+          - Get to **The Solaris Temple Level 1**
+        hints:
+          - Search up
+          - Go up-left
+          - Go down-left
+          - Go up-right
+      - id: 13
+        title: Get to The Docks
+        description: |-
+          - Get to **The Solaris Temple Level 2**
+          - Get to **Eternal Laboratory**, get Crafting recipe
+          - Waypoint to **The Battlefront**
+          - Get to **The Docks**
+          - Find and take *Thaumetic Sulphite*
+          - log out
+        hints:
+          - Go up-left
+      - id: 14
+        title: 'Hand in: The Ribbon Spool'
+        description: |-
+          - Waypoint to **The Solaris Temple Level 2**
+          - Talk to Lady Dialla
+          - Hand in *The Ribbon Spool*
+          - Hand in *Fiery Dust*, take *Infernal Talc*
+      - id: 15
+        title: Kill General Gravicius
+        description: |-
+          - Waypoint to **The Sewers**
+          - Burn the *Undying Blockage*
+          - Get Crafting recipe
+          - Get to **The Ebony Barracks**
+          - Get Waypoint
+          - Kill **General Gravicius**
+          - Get to **The Lunaris Temple Level 1**
+        hints:
+          - Go up-left
+      - id: 16
+        title: Kill Piety
+        description: |-
+          - Get to **The Lunaris Temple Level 2**
+          - Find and kill **Piety**, take *Tower Key*
+          - Get Crafting recipe
+          - log out
+          - Hand in *Piety's Pets*
+          - Hand in *Sever the Right Hand*
+        hints:
+          - Follow stairs that are going up
+          - At the fork in the road with wagons, go the route with 1 wagon, not 2
+      - id: 17
+        title: Get to The Imperial Gardens
+        description: |-
+          - Waypoint to **The Ebony Barracks**
+          - Get to **The Imperial Gardens**
+          - Get Waypoint
+        hints:
+          - Go up-right
+          - Follow the road
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 18
+                  title: Trial
+                  description: |-
+                    - Complete Trial
+                    - Get Crafting recipe
+                    - log out
+                  hints:
+                    - Go up
+                - id: 19
+                  title: 'Waypoint: The Imperial Gardens'
+                  description: Waypoint to **The Imperial Gardens**
+            - label: Twinked / later
+              steps:
+                - id: 20
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 21
+        title: Get to The Archives
+        description: |-
+          _(optional: Library — book reward)_
+          - Get to **The Library**
+          - Get Waypoint
+          - Find Loose Candle, get to **The Archives**
+          - Get Crafting recipe
+          - Find 4x*Golden Page*
+          - log out
+        optional: true
+        hints:
+          - Go up-left
+          - Look for a candle in a narrow corridor
+      - id: 22
+        title: 'Hand in: A Fixture of Fate'
+        description: |-
+          _(optional: Library — book reward)_
+          - Waypoint to **The Library**
+          - Hand in *A Fixture of Fate*
+        optional: true
+        hints:
+          - Put currency needed to buy skill gems in inventory
+      - id: 23
+        title: 'Waypoint: The Imperial Gardens'
+        description: 'Waypoint to **The Imperial Gardens** _(optional: Library — book reward)_'
+        optional: true
+      - id: 24
+        title: Kill Dominus, High Templar
+        description: |-
+          - Get to **The Sceptre of God**
+          - Get to **The Upper Sceptre of God**
+          - Get to **Tower Rooftop**, Kill **Dominus, High Templar**
+        hints:
+          - Stairs spawn in one of the corners
+          - Look for barricades

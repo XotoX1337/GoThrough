@@ -1,0 +1,172 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 1
+title: 'Act 1: The Coast to Merveil'
+next: act2.yaml
+sections:
+  - title: The Coast to Merveil
+    steps:
+      - id: 1
+        title: Kill Hillock
+        description: |-
+          - Find and kill **Hillock**
+          - Get to **Lioneye's Watch**
+          - Hand in *Enemy at the Gate*
+      - id: 2
+        title: Get to The Coast
+        description: Get to **The Coast**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 3
+                  title: Get Waypoint
+                  description: Get Waypoint
+            - label: Twinked / later
+              steps:
+                - id: 4
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 5
+        title: Get to The Submerged Passage
+        description: |-
+          - Get to **The Mud Flats**
+          - Find 3x*Glyph*
+          - Get to **The Submerged Passage**
+        hints:
+          - Little streams connect the 3 Rhoa nests
+          - Usually form a triangle, but will rarely form a line
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 6
+                  title: Kill Hailrake
+                  description: |-
+                    - Waypoint to **The Coast**
+                    - Get to **The Tidal Island**
+                    - Find and kill **Hailrake**, take *Medicine Chest*
+                    - log out
+                    - Hand in *Breaking Some Eggs*
+                    - Hand in *Mercy Mission*
+                  hints:
+                    - Go left
+                    - If you find a ledge, turn around and go right
+                    - 'Recommended Level: 4'
+            - label: Twinked / later
+              steps:
+                - id: 7
+                  title: 'Hand in: Breaking Some Eggs'
+                  description: |-
+                    - Waypoint to **Lioneye's Watch**
+                    - Hand in *Breaking Some Eggs*
+      - id: 8
+        title: Get to The Climb
+        description: |-
+          - Waypoint to **The Submerged Passage**
+          - Find bridge, place Portal
+          - Get to **The Ledge**
+          - Get to **The Climb**
+      - id: 9
+        title: Kill The Dweller of the Deep
+        description: |-
+          - Get to **The Lower Prison**
+          - Waypoint to **Lioneye's Watch**
+          - Take Portal
+          - Get to **The Flooded Depths**
+          - Find and kill **The Dweller of the Deep**
+          - log out
+          - Hand in *The Dweller of the Deep*
+          - Hand in *The Caged Brute*
+        hints:
+          - Go right of the bridge to find **The Dweller of the Deep**
+          - Search opposite the entrance
+          - Look for the large empty room
+      - id: 10
+        title: 'Waypoint: The Lower Prison'
+        description: Waypoint to **The Lower Prison**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 11
+                  title: Trial
+                  description: Complete Trial
+                  hints:
+                    - Usually up-right
+            - label: Twinked / later
+              steps:
+                - id: 12
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 13
+        title: Get to The Upper Prison
+        description: Get to **The Upper Prison**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 14
+                  title: Find Chemist's Strongbox
+                  description: Find Chemist's Strongbox
+                  hints:
+                    - Look for map icon, access with nearby switch
+                    - High chance for Quicksilver Flask
+                    - Vendor Quicksilver Flask + Orb of Augmentation + Normal Boots
+                    - Vendor Quicksilver Flask + Orb of Augmentation + Movement Speed Boots
+            - label: Twinked / later
+              steps:
+                - id: 15
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 16
+        title: Kill Brutus, Lord Incarcerator
+        description: |-
+          - Get to **The Warden's Quarters**, kill **Brutus, Lord Incarcerator**
+          - log out
+          - Hand in *The Caged Brute*
+        hints:
+          - 'Recommended Level: 8'
+      - id: 17
+        title: Get to The Ship Graveyard
+        description: |-
+          - Waypoint to **Prisoner's Gate**
+          - Get to **The Ship Graveyard**
+          - Find **The Ship Graveyard Cave**, place Portal
+        hints:
+          - Go down the ledge next to the road
+      - id: 18
+        title: Get to The Ship Graveyard Cave
+        description: |-
+          - Get to **The Cavern of Wrath**
+          - Waypoint to **Lioneye's Watch**
+          - Take Portal
+          - Get to **The Ship Graveyard Cave**
+          - Find *Slave Girl*, take *Allflame*
+        hints:
+          - Search opposite the entrance
+      - id: 19
+        title: Kill Captain Fairgraves
+        description: |-
+          - Get to **The Ship Graveyard**, kill **Captain Fairgraves**
+          - log out
+          - Hand in *The Marooned Mariner*
+          - Hand in *The Siren's Cadence*
+      - id: 20
+        title: Kill Merveil, the Siren
+        description: |-
+          - Waypoint to **The Cavern of Wrath**
+          - Get to **The Cavern of Anger**
+          - Get to **Merveil's Lair**, kill **Merveil, the Siren**
+        hints:
+          - Follow the water to find **Merveil, the Siren**
+          - Follow the water
+          - 'Recommended Level: 12'

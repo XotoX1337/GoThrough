@@ -1,0 +1,178 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 7
+title: 'Act 7: Bridge to Arakaali'
+next: act8.yaml
+sections:
+  - title: Bridge to Arakaali
+    steps:
+      - id: 1
+        title: Get to The Broken Bridge
+        description: |-
+          - Waypoint to **The Bridge Encampment**
+          - Get to **The Broken Bridge**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 2
+                  title: Find and take Silver Locket
+                  description: Find and take *Silver Locket*
+                  hints:
+                    - Follow the road, look for the broken Waypoint
+            - label: Twinked / later
+              steps:
+                - id: 3
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 4
+        title: Get to The Fellshrine Ruins
+        description: |-
+          - Get to **The Crossroads**
+          - Get Waypoint
+          - Get to **The Fellshrine Ruins**
+        hints:
+          - Follow the road
+          - Go down-right
+      - id: 5
+        title: Get to The Crypt
+        description: Get to **The Crypt**
+        hints:
+          - Follow the road
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 6
+                  title: Trial
+                  description: |-
+                    - Complete Trial
+                    - Get Crafting recipe
+            - label: Twinked / later
+              steps:
+                - id: 7
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 8
+        title: Find Sarcophagus to next floor
+        description: |-
+          - Find Sarcophagus to next floor
+          - Find and take *Maligaro's Map*
+          - log out
+      - id: 9
+        title: Kill Maligaro, the Artist
+        description: |-
+          - Waypoint to **The Crossroads**
+          - Get to **The Chamber of Sins Level 1**
+          - Get Crafting recipe
+          - Get Waypoint
+          - Activate *Map Device* with *Maligaro's Map*
+          - Get to **Maligaro's Sanctum**
+          - Get to **Maligaro's Workshop**, kill **Maligaro, the Artist**, take *Black Venom*
+          - log out
+          - Hand in *Essence of the Artist*
+        hints:
+          - Go up-left to find **Maligaro, the Artist**
+          - Follow edges of the zone and cross bridges in the corners
+          - Typically bridges spawn in the opposite diagonal corners
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 10
+                  title: 'Hand in: The Silver Locket'
+                  description: Hand in *The Silver Locket*
+            - label: Twinked / later
+              steps:
+                - id: 11
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 12
+        title: 'Hand in: Web of Secrets'
+        description: |-
+          - Waypoint to **The Chamber of Sins Level 1**
+          - Hand in *Web of Secrets*, take *Obsidian Key*
+      - id: 13
+        title: Get to The Chamber of Sins Level 2
+        description: Get to **The Chamber of Sins Level 2**
+        hints:
+          - Go in same direction as Waypoint
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 14
+                  title: Trial
+                  description: |-
+                    - Complete Trial
+                    - Get Crafting recipe
+            - label: Twinked / later
+              steps:
+                - id: 15
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 16
+        title: Kill Greust, Lord of the Forest
+        description: |-
+          - Open Secret Passage, get to **The Den**
+          - Get to **The Ashen Fields**
+          - Get to **The Forest Encampment**, kill **Greust, Lord of the Forest**
+        hints:
+          - Go down-left
+      - id: 17
+        title: 'Hand in: The Master of a Million Faces'
+        description: |-
+          - Get to **The Northern Forest**
+          - Waypoint to **The Bridge Encampment**
+          - Hand in *The Master of a Million Faces*
+      - id: 18
+        title: Kill Abberath, the Cloven One
+        description: |-
+          - Waypoint to **Prisoner's Gate**
+          - Get to **Valley of the Fire Drinker**, kill **Abberath, the Cloven One**
+          - take Portal
+          - Hand in *The Cloven One*
+        hints:
+          - Go down the ledge next to the road
+      - id: 19
+        title: Get to The Vaal City
+        description: |-
+          - Waypoint to **The Northern Forest**
+          - Get to **The Causeway**
+          - Get Crafting recipe
+          - Find and take *Kishara's Star*
+          - Get to **The Vaal City**
+          - Find Waypoint
+          - Waypoint to **The Northern Forest**
+      - id: 20
+        title: Kill Gruthkul, Mother of Despair
+        description: |-
+          - Get to **The Dread Thicket**
+          - Find and take 7x*Firefly*
+          - Get Crafting recipe
+          - Get to **Den of Despair**, kill **Gruthkul, Mother of Despair**
+          - take Portal
+          - Hand in *Queen of Despair*
+          - Hand in *Kishara's Star*
+      - id: 21
+        title: 'Hand in: Lighting the Way'
+        description: |-
+          - Waypoint to **Aspirants' Plaza**
+          - Labyrinth (cruel)
+          - Get Crafting recipe
+          - Waypoint to **The Vaal City**
+          - Hand in *Lighting the Way*
+      - id: 22
+        title: Kill Arakaali, Spinner of Shadows
+        description: |-
+          - Get to **The Temple of Decay Level 1**
+          - Get to **The Temple of Decay Level 2**
+          - Get Crafting recipe
+          - Get to **Arakaali's Web**, kill **Arakaali, Spinner of Shadows**

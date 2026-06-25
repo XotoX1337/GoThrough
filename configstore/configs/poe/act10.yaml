@@ -1,0 +1,105 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 10
+title: 'Act 10: Cathedral Rooftop to Kitava'
+sections:
+  - title: Cathedral Rooftop to Kitava
+    steps:
+      - id: 1
+        title: Kill Plaguewing
+        description: |-
+          - Waypoint to **Oriath Docks**
+          - Get to **The Cathedral Rooftop**
+          - Get to **Cathedral Apex**, kill **Plaguewing**
+          - Get to **The Ravaged Square**
+          - Place Portal in the plaza
+        hints:
+          - Go up
+      - id: 2
+        title: 'Hand in: Safe Passage'
+        description: |-
+          - Get to **The Control Blocks**
+          - Waypoint to **Oriath Docks**
+          - Hand in *Safe Passage*
+        hints:
+          - Go down
+      - id: 3
+        title: Take Portal
+        description: |-
+          - Take Portal
+          - Get Waypoint
+        hints:
+          - Go up-right
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 4
+                  title: Get to The Ossuary
+                  description: |-
+                    - Get to **The Ossuary**
+                    - Get Crafting recipe
+                    - Complete Trial
+                    - log out
+            - label: Twinked / later
+              steps:
+                - id: 5
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 6
+        title: Kill Vilenta
+        description: |-
+          - Waypoint to **The Control Blocks**
+          - Find and kill **Vilenta**
+          - log out
+          - Hand in *Vilenta's Vengeance*
+      - id: 7
+        title: Kill Avarius, Reassembled
+        description: |-
+          - Waypoint to **Aspirants' Plaza**
+          - Labyrinth (merciless)
+          - Get Crafting recipe
+          - Waypoint to **The Ravaged Square**
+          - Get to **The Torched Courts**
+          - Get to **The Desecrated Chambers**
+          - Get Crafting recipe
+          - Get to **Sanctum of Innocence**, kill **Avarius, Reassembled**, take *The Staff of Purity*
+          - log out
+        hints:
+          - Go down-right to find **Avarius, Reassembled**
+          - Loop around clockwise
+          - Go up-left counter-clockwise spiral
+      - id: 8
+        title: 'Hand in: Death and Rebirth'
+        description: |-
+          - Talk to Bannon
+          - Hand in *Death and Rebirth*
+      - id: 9
+        title: Kill Kitava, the Insatiable
+        description: |-
+          - Waypoint to **The Ravaged Square**
+          - Talk to Innocence
+          - Get to **The Canals**
+          - Get to **The Feeding Trough**
+          - Get Crafting recipe
+          - Talk to Sin
+          - Get to **Altar of Hunger**, kill **Kitava, the Insatiable**
+        hints:
+          - Go up-right to find **Kitava, the Insatiable**
+      - id: 10
+        title: Get to Karui Shores
+        description: |-
+          - Talk to Sin, get to **Oriath Docks**
+          - Talk to Lilly Roth, Set Sail from Oriath
+          - Get to **Karui Shores**
+          - Get Crafting recipe
+      - id: 11
+        title: 'Hand in: An End to Hunger'
+        description: Hand in *An End to Hunger*
+        hints:
+          - 'Bandit reward: instead of killing all three you may spare one bandit for a permanent bonus — Oak (life & physical), Kraityn (attack/cast/move speed), Alira (mana regen, crit multi, resistances). Killing all three (the route below) grants 2 passive skill points instead.'
+          - Type /passives in chat to confirm that you have all 24 passives from quests

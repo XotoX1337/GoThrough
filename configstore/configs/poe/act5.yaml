@@ -1,0 +1,85 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 5
+title: 'Act 5: Slave Pens to Kitava'
+next: act6.yaml
+sections:
+  - title: Slave Pens to Kitava
+    steps:
+      - id: 1
+        title: Kill Overseer Krow
+        description: |-
+          - Get to **The Slave Pens**
+          - Find and kill **Overseer Krow**
+          - Get to **Overseer's Tower**
+          - Hand in *Return to Oriath*
+        hints:
+          - Go down until you find the hanged Kauri
+          - Loop around clockwise to go left
+      - id: 2
+        title: Kill Justicar Casticus
+        description: |-
+          - Get to **The Control Blocks**
+          - Find and take *Miasmeter*
+          - Find and kill **Justicar Casticus**, take *Eyes of Zeal*
+          - Get to **Oriath Square**
+        hints:
+          - Go left as much as possible to find **Justicar Casticus**
+          - Go up-right from *Miasmeter*
+      - id: 3
+        title: Kill High Templar Avarius
+        description: |-
+          - Get to **The Templar Courts**
+          - Get to **The Chamber of Innocence**
+          - Get Crafting recipe
+          - Get to **Sanctum of Innocence**, kill **High Templar Avarius**
+          - log out
+          - Hand in *The Key to Freedom*
+          - Hand in *In Service to Science*
+          - Hand in *Death to Purity*
+        hints:
+          - Go up-right to find **High Templar Avarius**
+          - Loop around clockwise
+          - 'Farm Level: 40-42'
+          - Go up-left counter-clockwise spiral
+      - id: 4
+        title: Get to The Ruined Square
+        description: |-
+          - Waypoint to **The Chamber of Innocence**
+          - Get to **The Torched Courts**
+          - Get to **The Ruined Square**
+          - Get Waypoint
+        hints:
+          - Loop around counter-clockwise
+          - Go up-left
+      - id: 5
+        title: Get to The Ossuary
+        description: |-
+          - Get to **The Ossuary**
+          - Find and take *Sign of Purity*
+          - Get Crafting recipe
+          - log out
+      - id: 6
+        title: 'Hand in: Kitava''s Torments'
+        description: |-
+          - Waypoint to **The Ruined Square**
+          - Get to **The Reliquary**
+          - Find 3x*Kitava's Torment*, search in the corners of the map
+          - Get Crafting recipe
+          - log out
+          - Hand in *Kitava's Torments*
+        hints:
+          - Go down-left find the plaza
+          - Go down
+      - id: 7
+        title: Kill Kitava, the Insatiable
+        description: |-
+          - Waypoint to **The Ruined Square**
+          - Get to **The Cathedral Rooftop**
+          - Get to **Cathedral Apex**, kill **Kitava, the Insatiable**
+          - Talk to Lilly Roth, Sail to Wraeclast
+        hints:
+          - Go down-left to find **Kitava, the Insatiable**

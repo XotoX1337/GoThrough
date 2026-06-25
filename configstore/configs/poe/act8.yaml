@@ -1,0 +1,130 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 8
+title: 'Act 8: Sarn Ramparts to Solaris & Lunaris'
+next: act9.yaml
+sections:
+  - title: Sarn Ramparts to Solaris & Lunaris
+    steps:
+      - id: 1
+        title: Get to The Sarn Encampment
+        description: |-
+          - Get to **The Sarn Ramparts**
+          - Get to **The Sarn Encampment**
+      - id: 2
+        title: Kill Doedre the Vile
+        description: |-
+          - Get to **The Toxic Conduits**
+          - Get to **Doedre's Cesspool**
+          - Get to **The Cauldron**, kill **Doedre the Vile**
+          - Get to **Sewer Outlet**
+          - Get Crafting recipe
+        hints:
+          - Go left to find **Doedre the Vile**
+          - Black splashes of paint on ground points to the right direction to go
+      - id: 3
+        title: Get to The Grain Gate
+        description: |-
+          - Get to **The Quay**
+          - Find and take *Ankh of Eternity*
+          - Get to **Resurrection Site**
+          - Talk to Clarissa, kill **Tolman**
+          - Get to **The Grain Gate**
+          - Find and kill **Gemling Legionnaires**
+        hints:
+          - Go up-right
+          - Follow left wall
+          - Go down-right
+          - Follow the dead guards by doorways
+          - Look for a book icon
+      - id: 4
+        title: Get to The Solaris Temple Level 1
+        description: |-
+          - Get to **The Imperial Fields**
+          - Get to **The Solaris Temple Level 1**
+          - Get Waypoint
+        hints:
+          - Follow the dead guards by doorways
+          - Follow the road until Waypoint
+          - Go up-left
+      - id: 5
+        title: Kill Dawn, Harbinger of Solaris
+        description: |-
+          - Get to **The Solaris Temple Level 2**
+          - Find and kill **Dawn, Harbinger of Solaris**, take *Sun Orb*
+          - Get Crafting recipe
+          - log out
+          - Hand in *Essence of the Hag*
+          - Hand in *The Gemling Legion*
+          - Hand in *Love is Dead*
+      - id: 6
+        title: Get to The Harbour Bridge
+        description: |-
+          - Waypoint to **The Solaris Temple Level 1**
+          - Get to **The Solaris Concourse**
+          - Get to **The Harbour Bridge**
+        hints:
+          - Go down-left
+      - id: 7
+        title: Get to The Lunaris Temple Level 1
+        description: |-
+          - Get to **The Lunaris Concourse**
+          - Get Waypoint
+          - Get to **The Lunaris Temple Level 1**
+        hints:
+          - Go up-left
+      - id: 8
+        title: Kill Dusk, Harbinger of Lunaris
+        description: |-
+          - Get to **The Lunaris Temple Level 2**
+          - Find and kill **Dusk, Harbinger of Lunaris**, take *Moon Orb*
+          - Get Crafting recipe
+          - log out
+      - id: 9
+        title: Get to The Blood Aqueduct
+        description: |-
+          - Waypoint to **The Lunaris Concourse**
+          - Get to **The Harbour Bridge**
+          - Get to **The Sky Shrine**, activate Statue of the Sisters
+          - Kill **Lunaris, Eternal Moon** & **Solaris, Eternal Sun**
+          - Get to **The Blood Aqueduct**
+        hints:
+          - Go down-right
+          - 'Farm Level: 58-62'
+      - id: 10
+        title: Get to The Bath House
+        description: |-
+          - Get to **Highgate**
+          - Waypoint to **The Lunaris Concourse**
+          - Get to **The Bath House**
+        hints:
+          - Go down
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 11
+                  title: Trial
+                  description: |-
+                    - Complete Trial
+                    - Get Crafting recipe
+                  hints:
+                    - Search left side
+            - label: Twinked / later
+              steps:
+                - id: 12
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 13
+        title: Kill Yugul, Reflection of Terror
+        description: |-
+          - Get to **The High Gardens**
+          - Get to **The Pools of Terror**, kill **Yugul, Reflection of Terror**
+          - take Portal
+          - Hand in *Reflection of Terror*
+        hints:
+          - Search left side

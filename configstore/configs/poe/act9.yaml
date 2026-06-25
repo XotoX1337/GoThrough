@@ -1,0 +1,111 @@
+schema: 2
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 9
+title: 'Act 9: The Descent to the Depraved Trinity'
+next: act10.yaml
+sections:
+  - title: The Descent to the Depraved Trinity
+    steps:
+      - id: 1
+        title: Get to The Vastiri Desert
+        description: |-
+          - Waypoint to **Highgate**
+          - Get to **The Descent**
+          - Get to **The Vastiri Desert**
+          - Get Waypoint
+          - Get Crafting recipe
+          - Find and take *The Storm Blade*
+        hints:
+          - Go right
+      - id: 2
+        title: Kill The Basilisk
+        description: |-
+          - Get to **The Foothills**
+          - Get Waypoint
+          - Get to **The Boiling Lake**
+          - Find and Kill **The Basilisk**, take *Basilisk Acid*
+          - Get Crafting recipe
+          - log out
+        hints:
+          - Go up-left to find **The Basilisk**
+          - Go up-right until you find the cliff to find **The Basilisk**
+          - Go up-right look for petrified soldiers
+      - id: 3
+        title: 'Hand in: The Storm Blade'
+        description: |-
+          - Talk to Sin
+          - Hand in *The Storm Blade*
+          - Hand in *Queen of the Sands*, take *Bottled Storm*
+      - id: 4
+        title: Kill Shakari, Queen of the Sands
+        description: |-
+          - Waypoint to **The Vastiri Desert**
+          - Get to **The Oasis**
+          - Get to **The Sand Pit**, kill **Shakari, Queen of the Sands**
+          - log out
+          - Hand in *Queen of the Sands*
+        hints:
+          - Go up-right to find **Shakari, Queen of the Sands**
+      - id: 5
+        title: Get to The Tunnel
+        description: |-
+          - Waypoint to **The Foothills**
+          - Get to **The Tunnel**
+        hints:
+          - Go up-left
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 6
+                  title: Trial
+                  description: |-
+                    - Before Waypoint, complete Trial
+                    - Get Crafting recipe
+            - label: Twinked / later
+              steps:
+                - id: 7
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 8
+        title: Kill Garukhan, Queen of the Winds
+        description: |-
+          - Get to **The Quarry**
+          - Get Waypoint
+          - Get Crafting recipe
+          - Get to **Shrine of the Winds**, kill **Garukhan, Queen of the Winds**, take *Sekhema Feather*
+          - log out
+          - Hand in *The Ruler of Highgate*
+        hints:
+          - Go up-left to find **Garukhan, Queen of the Winds**
+          - up-right or down-left
+      - id: 9
+        title: Kill General Adus
+        description: |-
+          - Waypoint to **The Quarry**
+          - Get to **The Refinery**
+          - Get Crafting recipe
+          - Find and kill **General Adus**, take *Trarthan Powder*
+          - log out
+        hints:
+          - up-left or up-right to find **General Adus**
+          - Look for a sewer grate leading to **Refinery Tunnels**, it is attached to the cart tracks
+          - Go up-right follow cart tracks
+      - id: 10
+        title: Kill The Depraved Trinity
+        description: |-
+          - Waypoint to **The Quarry**
+          - Talk to Sin
+          - Get to **The Belly of the Beast**
+          - Get to **The Rotting Core**
+          - Get to **The Black Core**
+          - Talk to Sin
+          - Get to **Doedre's Despair**, kill **Doedre, Darksoul**
+          - Get to **Maligaro's Misery**, kill **Maligaro, The Broken**
+          - Get to **Shavronne's Sorrow**, kill **Shavronne, Unbound**
+          - Talk to Sin, get to **The Black Heart**, kill **The Depraved Trinity**
+          - take Portal
