@@ -11,7 +11,7 @@ day: 1
 title: "Kapitel 1 – Tag 1: Von Xardas' Turm nach Khorinis"
 # Lineare Fortsetzung in eigener Datei (Hand-off beim letzten Step).
 # Pfad relativ zu dieser Datei; fehlendes Ziel = einfach kein "Weiter"-Button.
-next: "Day 2 test.yaml"
+next: "day2.yaml"
 
 sections:
   - title: "Xardas' Turm"
