@@ -19,16 +19,20 @@ import (
 )
 
 // fileVersion tags the on-disk schema so future formats can be migrated.
-const fileVersion = 1
+// v2 added the per-walkthrough Branches map (v0.7); v1 files (no Branches)
+// still load — the field simply unmarshals to nil, meaning "no choices yet".
+const fileVersion = 2
 
 // record is the saved position for one walkthrough. StepID is kept alongside
 // the index so progress survives steps being inserted or removed from the
 // config: on restore we prefer to re-find the step by ID and only fall back to
-// the raw index.
+// the raw index. Branches records chosen branch options (persistKey -> option
+// label) so a branching walkthrough resumes on the same path.
 type record struct {
-	StepIndex int       `json:"stepIndex"`
-	StepID    int       `json:"stepId"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	StepIndex int               `json:"stepIndex"`
+	StepID    int               `json:"stepId"`
+	Branches  map[string]string `json:"branches,omitempty"`
+	UpdatedAt time.Time         `json:"updatedAt"`
 }
 
 // document is the root JSON structure written to disk.
@@ -94,23 +98,34 @@ func (s *Store) For(wt *config.Walkthrough) *Handle {
 	return &Handle{store: s, key: Key(wt)}
 }
 
-// Load returns the saved step index and ID for this walkthrough. ok is false
-// when no progress has been recorded yet.
-func (h *Handle) Load() (index, stepID int, ok bool) {
+// Load returns the saved step index, ID, and branch choices for this
+// walkthrough. ok is false when no progress has been recorded yet.
+func (h *Handle) Load() (index, stepID int, branches map[string]string, ok bool) {
 	h.store.mu.Lock()
 	defer h.store.mu.Unlock()
 	rec, ok := h.store.doc.Entries[h.key]
-	return rec.StepIndex, rec.StepID, ok
+	return rec.StepIndex, rec.StepID, rec.Branches, ok
 }
 
-// Save records the current position and atomically rewrites the progress file.
-func (h *Handle) Save(index, stepID int) error {
+// Save records the current position and branch choices and atomically rewrites
+// the progress file. It satisfies engine.Persister.
+func (h *Handle) Save(index, stepID int, branches map[string]string) error {
 	h.store.mu.Lock()
 	defer h.store.mu.Unlock()
+
+	// Copy the map so later engine mutations can't alias the stored record.
+	var b map[string]string
+	if len(branches) > 0 {
+		b = make(map[string]string, len(branches))
+		for k, v := range branches {
+			b[k] = v
+		}
+	}
 
 	h.store.doc.Entries[h.key] = record{
 		StepIndex: index,
 		StepID:    stepID,
+		Branches:  b,
 		UpdatedAt: time.Now().UTC(),
 	}
 	return h.store.writeLocked()
