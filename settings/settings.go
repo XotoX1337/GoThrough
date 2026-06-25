@@ -47,11 +47,21 @@ type Hotkeys struct {
 	Quit       Binding `json:"quit"`
 }
 
+// LastConfig records the walkthrough that was loaded most recently so the app
+// can reopen it on the next launch. An empty Path means "none" — start in the
+// config picker. Embedded distinguishes a bundled config (configstore key) from
+// a file on disk, mirroring the App.LoadConfig arguments.
+type LastConfig struct {
+	Path     string `json:"path"`
+	Embedded bool   `json:"embedded"`
+}
+
 // Settings is the root document written to disk.
 type Settings struct {
-	Version int     `json:"version"`
-	Hotkeys Hotkeys `json:"hotkeys"`
-	Opacity float64 `json:"opacity"`
+	Version    int        `json:"version"`
+	Hotkeys    Hotkeys    `json:"hotkeys"`
+	Opacity    float64    `json:"opacity"`
+	LastConfig LastConfig `json:"lastConfig"`
 }
 
 // Defaults returns the built-in settings, used when no file exists yet. The
