@@ -10,35 +10,62 @@ sections:
   - title: The Coast to Merveil
     steps:
       - id: 1
-        title: Lioneye's Watch
+        title: Kill Hillock
         description: |-
           - Find and kill **Hillock**
           - Get to **Lioneye's Watch**
           - Hand in *Enemy at the Gate*
-          - Exit to The Coast
-          - Get to **The Mud Flats**
-          - Grab Waypoint
+      - id: 2
+        title: Get to The Coast
+        description: Get to **The Coast**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 3
+                  title: Get Waypoint
+                  description: Get Waypoint
+            - label: Twinked / later
+              steps:
+                - id: 4
+                  title: Skip — overleveled / twinked, no detour needed
       - id: 5
         title: Get to The Submerged Passage
         description: |-
-          - Find 3x *Glyph*
+          - Get to **The Mud Flats**
+          - Find 3x*Glyph*
           - Get to **The Submerged Passage**
-          - Grab Waypoint
         hints:
           - Little streams connect the 3 Rhoa nests
           - Usually form a triangle, but will rarely form a line
-      - id: 6
-        title: Kill Hailrake
-        description: |-
-          - Waypoint to **The Coast**
-          - Go right to **The Tidal Island**
-          - Find and kill **Hailrake**, take *Medicine Chest*
-          - Relog
-        quests:
-          - name: Breaking some Eggs
-            status: completed
-          - name: Mercy Mission
-            status: completed
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 6
+                  title: Kill Hailrake
+                  description: |-
+                    - Waypoint to **The Coast**
+                    - Get to **The Tidal Island**
+                    - Find and kill **Hailrake**, take *Medicine Chest*
+                    - log out
+                    - Hand in *Breaking Some Eggs*
+                    - Hand in *Mercy Mission*
+                  hints:
+                    - Go left
+                    - If you find a ledge, turn around and go right
+                    - 'Recommended Level: 4'
+            - label: Twinked / later
+              steps:
+                - id: 7
+                  title: 'Hand in: Breaking Some Eggs'
+                  description: |-
+                    - Waypoint to **Lioneye's Watch**
+                    - Hand in *Breaking Some Eggs*
       - id: 8
         title: Get to The Climb
         description: |-
@@ -46,70 +73,100 @@ sections:
           - Find bridge, place Portal
           - Get to **The Ledge**
           - Get to **The Climb**
-          - Get To **The Lower Prison**
-          - Grab Waypoint, port to Lioneye's Watch
-          - Take **Portal** to **The Submerged Passage**
-        hints:
-          - For The Ledge -> The Climb -> Lower Prison go up
       - id: 9
         title: Kill The Dweller of the Deep
         description: |-
+          - Get to **The Lower Prison**
+          - Waypoint to **Lioneye's Watch**
+          - Take Portal
           - Get to **The Flooded Depths**
           - Find and kill **The Dweller of the Deep**
-          - Relog
-          - Waypoint to **The Lower Prison**
-        quests:
-          - name: The Dweller of the Deep
-            status: completed
-          - name: The Caged Brute
-            status: completed
-      - id: 10
-        title: 'Brutus, Lord Incarcerator'
-        description: |-
-          - Get to **The Upper Prison**
-          - Get to **The Warden's Quarters**
-          - Kill **Brutus, Lord Incarcerator**
-          - Relog
-          - Waypoint to **Prisoner's Gate**
-        warnings:
-          - "Complete **Trial of Ascendancy**"
-        quests:
-          - name: The Caged Brute
-            status: completed
+          - log out
+          - Hand in *The Dweller of the Deep*
+          - Hand in *The Caged Brute*
         hints:
-          - For the Chemist's Strongbox look for a map icon, access with nearby switch
+          - Go right of the bridge to find **The Dweller of the Deep**
+          - Search opposite the entrance
+          - Look for the large empty room
+      - id: 10
+        title: 'Waypoint: The Lower Prison'
+        description: Waypoint to **The Lower Prison**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 11
+                  title: Trial
+                  description: Complete Trial
+                  hints:
+                    - Usually up-right
+            - label: Twinked / later
+              steps:
+                - id: 12
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 13
+        title: Get to The Upper Prison
+        description: Get to **The Upper Prison**
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 14
+                  title: Find Chemist's Strongbox
+                  description: Find Chemist's Strongbox
+                  hints:
+                    - Look for map icon, access with nearby switch
+                    - High chance for Quicksilver Flask
+                    - Vendor Quicksilver Flask + Orb of Augmentation + Normal Boots
+                    - Vendor Quicksilver Flask + Orb of Augmentation + Movement Speed Boots
+            - label: Twinked / later
+              steps:
+                - id: 15
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 16
+        title: Kill Brutus, Lord Incarcerator
+        description: |-
+          - Get to **The Warden's Quarters**, kill **Brutus, Lord Incarcerator**
+          - log out
+          - Hand in *The Caged Brute*
+        hints:
+          - 'Recommended Level: 8'
       - id: 17
         title: Get to The Ship Graveyard
         description: |-
+          - Waypoint to **Prisoner's Gate**
           - Get to **The Ship Graveyard**
           - Find **The Ship Graveyard Cave**, place Portal
-          - Get to **The Cavern of Wrath**
-          - Waypoint to **Lioneye's Watch**
-          - Take Portal to **The Ship Graveyard**
         hints:
           - Go down the ledge next to the road
       - id: 18
-        title: Captain Farigraves
+        title: Get to The Ship Graveyard Cave
         description: |-
-          - Find **Slave Girl**, take **Allflame**
-          - Exit the **Ship Graveyard**
-          - Talk to **Captain Fairgraves**, complete Quest
-          - Relog
-          - Waypoint to **Merveil's Caverns**
-        quests:
-          - name: The Marooned Mariner
-            status: completed
-          - name: The Siren's Cadence
-            status: completed
+          - Get to **The Cavern of Wrath**
+          - Waypoint to **Lioneye's Watch**
+          - Take Portal
+          - Get to **The Ship Graveyard Cave**
+          - Find *Slave Girl*, take *Allflame*
         hints:
           - Search opposite the entrance
       - id: 19
-        title: Merveil
+        title: Kill Captain Fairgraves
         description: |-
+          - Get to **The Ship Graveyard**, kill **Captain Fairgraves**
+          - log out
+          - Hand in *The Marooned Mariner*
+          - Hand in *The Siren's Cadence*
+      - id: 20
+        title: Kill Merveil, the Siren
+        description: |-
+          - Waypoint to **The Cavern of Wrath**
           - Get to **The Cavern of Anger**
-          - Get to **Merveil's Lair**
-          - Kill **Merveil, the Siren**
-          - Exit to **The Southern Forest**
+          - Get to **Merveil's Lair**, kill **Merveil, the Siren**
         hints:
+          - Follow the water to find **Merveil, the Siren**
           - Follow the water
-          - Treasure chests spawn enemies
+          - 'Recommended Level: 12'

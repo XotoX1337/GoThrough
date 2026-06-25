@@ -10,75 +10,124 @@ sections:
   - title: The Old Fields to the Vaal Oversoul
     steps:
       - id: 1
-        title: Get to The Crossroads
+        title: Get to The Forest Encampment
         description: |-
           - Get to **The Southern Forest**
           - Get to **The Forest Encampment**
-          - Get to **The Old Fields**
-          - Find **The Den**, place Portal
-          - Get to **The Crossroads**
-          - Grab Waypoint
+      - id: 2
+        title: Get to The Old Fields
+        description: Get to **The Old Fields**
         hints:
           - Go up-right
-          - Follow the road
-      - id: 6
-        title: Kill The Great White Beast
-        description: |-
-          - Waypoint to **The Forest Encampment**
-          - Take Portal to **The Den**
-          - Find and kill **The Great White Beast**
-          - Relog
-          - Waypoint to **The Crossroads**
-        quests:
-          - name: The Great White Beast
-            status: completed
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 3
+                  title: Get to The Den
+                  description: Find **The Den**, place Portal
+            - label: Twinked / later
+              steps:
+                - id: 4
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 5
+        title: Get to The Crossroads
+        description: Get to **The Crossroads**
         hints:
-          - Follow the road to find **The Great White Beast**
+          - Follow the road
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 6
+                  title: Kill The Great White Beast
+                  description: |-
+                    - Waypoint to **The Forest Encampment**
+                    - Take Portal
+                    - Get to **The Den**
+                    - Find and kill **The Great White Beast**
+                    - log out
+                    - Hand in *The Great White Beast*
+                  hints:
+                    - Follow the road to find **The Great White Beast**
+                - id: 7
+                  title: 'Waypoint: The Crossroads'
+                  description: Waypoint to **The Crossroads**
+            - label: Twinked / later
+              steps:
+                - id: 8
+                  title: Get Waypoint
+                  description: Get Waypoint
       - id: 9
         title: Get to The Chamber of Sins Level 2
         description: |-
           - Get to **The Chamber of Sins Level 1**
           - Get to **The Chamber of Sins Level 2**
-        warnings:
-          - "Complete **Trial of Ascendancy**"
         hints:
           - Go up-left
           - Go in same direction as Waypoint
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 10
+                  title: Trial
+                  description: Complete Trial
+            - label: Twinked / later
+              steps:
+                - id: 11
+                  title: Skip — overleveled / twinked, no detour needed
       - id: 12
         title: Kill Fidelitas, the Mourning
         description: |-
           - Kill **Fidelitas, the Mourning**, take *Baleful Gem*
-          - Relog
-        quests:
-          - name: Intruders in Black
-            status: completed
+          - log out
+          - Hand in *Intruders in Black*
         hints:
           - Look for the long hallway
+          - 'Recommended Level: 14-15'
       - id: 13
         title: Get to The Crypt Level 1
         description: |-
           - Waypoint to **The Crossroads**
           - Get to **The Fellshrine Ruins**
           - Get to **The Crypt Level 1**
-          - Get to **The Crypt Level 2**
-          - Find *Altar*, take *Golden Hand*
-          - Relog
-        warnings:
-          - "Complete **Trial of Ascendancy**"
-        quests:
-          - name: Through Sacred Ground
-            status: completed
         hints:
           - Go down-right
           - Follow the road
+      - branch:
+          persistKey: league_start
+          title: League start? (fresh league — underleveled, no twink gear)
+          options:
+            - label: League start
+              steps:
+                - id: 14
+                  title: Trial
+                  description: Complete Trial
+            - label: Twinked / later
+              steps:
+                - id: 15
+                  title: Skip — overleveled / twinked, no detour needed
+      - id: 16
+        title: 'Hand in: Through Sacred Ground'
+        description: |-
+          - Get to **The Crypt Level 2**
+          - Find *Altar*, take *Golden Hand*
+          - log out
+          - Hand in *Through Sacred Ground*
       - id: 17
         title: Get to The Western Forest
         description: |-
-          - Waypoint to **The Crossroads**
           - Get to **The Riverways**
-          - Grab Waypoint
+          - Get Waypoint
           - Get to **The Western Forest**
-          - Grab Waypoint
+          - Get Waypoint
         hints:
           - Go down-left
           - Follow the road
@@ -86,28 +135,26 @@ sections:
         title: Kill The Weaver
         description: |-
           - Get to **The Weaver's Chambers**
-          - Get to **The Weaver's Nest**
-          - Kill **The Weaver**, take *Maligaro's Spike*
-          - Relog
-        quests:
-          - name: Sharp and Cruel
-            status: completed
+          - Get to **The Weaver's Nest**, kill **The Weaver**, take *Maligaro's Spike*
+          - log out
+          - Hand in *Sharp and Cruel*
         hints:
           - Search the side of road opposite Waypoint
           - Try go left, if it's blocked go up-right
+          - 'Recommended Level: 16'
       - id: 19
         title: Kill Kraityn, Scarbearer
         description: |-
           - Waypoint to **The Crossroads**
           - Get to **The Broken Bridge**
           - Kill **Kraityn, Scarbearer**, take *Kraityn's Amulet*
-          - Relog
+          - log out
         hints:
           - 'Bandit reward: instead of killing all three you may spare one bandit for a permanent bonus — Oak (life & physical), Kraityn (attack/cast/move speed), Alira (mana regen, crit multi, resistances). Killing all three (the route below) grants 2 passive skill points instead.'
           - Go up-right to find **Kraityn, Scarbearer**
           - Follow the road
       - id: 20
-        title: Deal with the Bandits
+        title: 'Hand in: Deal with the Bandits'
         description: |-
           - Waypoint to **The Riverways**
           - Get to **The Wetlands**
@@ -116,10 +163,8 @@ sections:
           - Kill **Alira Darktongue**, take *Alira's Amulet*
           - Kill **Captain Arteri**
           - Take *Thaumetic Emblem*, activate *Thaumetic Seal*
-          - Relog, take *The Apex*
-        quests:
-          - name: Deal with the Bandits
-            status: completed
+          - log out
+          - Hand in *Deal with the Bandits*, take *The Apex*
         hints:
           - Look for 2 pillars near Waypoint, follow the trail
           - Search opposite direction of the encampment entrance
@@ -130,16 +175,12 @@ sections:
         title: 'Hand in: The Way Forward'
         description: |-
           - Waypoint to **Lioneye's Watch**
-          - Relog
-        quests:
-          - name: The Way Forward
-            status: completed
+          - Hand in *The Way Forward*
       - id: 22
         title: Get to The Vaal Ruins
         description: |-
           - Waypoint to **The Wetlands**
-          - Poison the *Tree Roots*
-          - Get to **The Vaal Ruins**
+          - Poison the *Tree Roots*, get to **The Vaal Ruins**
       - id: 23
         title: Get to The Caverns
         description: |-
@@ -152,9 +193,9 @@ sections:
         title: Kill Vaal Oversoul
         description: |-
           - Get to **The Ancient Pyramid**
-          - Get to **Pyramid Apex**
-          - Kill **Vaal Oversoul**
+          - Get to **Pyramid Apex**, kill **Vaal Oversoul**
           - Get Crafting recipe
         hints:
           - First floor exit will be in one of the 3 corners
           - Remaining floors will have the exit diagonally across from the entrance
+          - 'Recommended Level: 20-22'
