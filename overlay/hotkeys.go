@@ -16,10 +16,11 @@ import (
 // are Ctrl+Alt+arrows / H / Q) and can be rebound at runtime via apply, which
 // unregisters the old set and registers the new one.
 //
-//	next        → next step
-//	prev        → previous step
-//	toggleHide  → toggle overlay visibility
-//	quit        → quit the overlay
+//	next         → next step
+//	prev         → previous step
+//	toggleHide   → toggle overlay visibility
+//	focusOverlay → warp the mouse into the overlay and raise it (see cursor_*.go)
+//	quit         → quit the overlay
 
 // hotkeyManager owns the registered global hotkeys for the overlay's lifetime.
 // It is safe for concurrent use: apply (HUD thread, on rebind) and stop
@@ -53,6 +54,7 @@ func (m *hotkeyManager) apply(hk settings.Hotkeys) {
 	m.bindLocked("next", hk.Next, m.app.next)
 	m.bindLocked("prev", hk.Prev, m.app.prev)
 	m.bindLocked("toggleHide", hk.ToggleHide, m.toggleVisible)
+	m.bindLocked("focusOverlay", hk.FocusOverlay, m.focusOverlay)
 	m.bindLocked("quit", hk.Quit, m.quit)
 
 	// One mouse hook serves all mouse bindings; Start is a no-op (no hook
@@ -84,6 +86,11 @@ func (m *hotkeyManager) registerMouseLocked(name string, b settings.Binding, act
 }
 
 func (m *hotkeyManager) quit() { runtime.Quit(m.ctx) }
+
+// focusOverlay warps the mouse pointer into the overlay window and raises it, so
+// a player whose mouse is captured by the game can reach the HUD. The actual
+// pointer move is platform-specific (cursor_windows.go / cursor_other.go).
+func (m *hotkeyManager) focusOverlay() { focusCursor(m.ctx) }
 
 // registerLocked binds one global hotkey and spawns a listener that runs act on
 // each keydown until the current done channel is closed. A binding that can't be

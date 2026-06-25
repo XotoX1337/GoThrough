@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,10 +11,88 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* --- Themes --------------------------------------------------------
+           Colours are tokenised so the HUD can switch skins at runtime via
+           html[data-theme]. Most surfaces use rgba(var(--gt-fg), α) for text/
+           borders/hover, so flipping --gt-fg + --gt-panel-rgb inverts the bulk
+           of the UI; coloured callouts (warnings/branch) get explicit overrides
+           per theme. --gt-panel-rgb feeds the opacity slider (see .panel). */
+        :root, html[data-theme="dark"] {
+            --gt-panel-rgb: 15, 17, 21;
+            --gt-fg: 255, 255, 255;          /* foreground, used with alpha */
+            --gt-text: #e8e9ec;              /* default body text */
+            --gt-accent-rgb: 236, 237, 240;  /* progress fill, done mark, primary btn */
+            --gt-accent-fg: #0d1014;         /* text on the accent */
+            --gt-good: 126, 211, 159;        /* completed / "abgeschlossen" green */
+            --gt-branch-rgb: 150, 180, 255;  /* decision/branch accent */
+            --gt-shadow: rgba(0, 0, 0, 0.5);
+        }
+        html[data-theme="light"] {
+            --gt-panel-rgb: 247, 248, 251;
+            --gt-fg: 18, 22, 30;
+            --gt-text: #14171d;
+            --gt-accent-rgb: 45, 104, 232;   /* vivid blue — progress fill, done mark, primary btn */
+            --gt-accent-fg: #ffffff;          /* white reads on the blue accent */
+            --gt-good: 22, 128, 76;
+            --gt-branch-rgb: 64, 96, 196;
+            --gt-shadow: rgba(20, 24, 34, 0.28);
+        }
+        html[data-theme="contrast"] {
+            --gt-panel-rgb: 0, 0, 0;
+            --gt-fg: 255, 255, 255;
+            --gt-text: #ffffff;
+            --gt-accent-rgb: 255, 214, 0;    /* high-vis signal yellow */
+            --gt-accent-fg: #000000;
+            --gt-good: 64, 230, 140;
+            --gt-branch-rgb: 120, 190, 255;
+            --gt-shadow: rgba(0, 0, 0, 0.85);
+        }
+
+        /* Coloured callouts that don't simply invert get explicit per-theme
+           overrides (the [data-theme] prefix out-specifies the base rules). */
+        html[data-theme="light"] .info-block.warnings { background: rgba(241, 138, 90, 0.16); border-color: rgba(200, 110, 60, 0.5); }
+        html[data-theme="light"] .info-block.warnings .info-head { color: rgba(170, 78, 28, 0.95); }
+        html[data-theme="light"] .info-block.warnings .info-list { color: rgba(140, 64, 24, 0.95); }
+        html[data-theme="light"] .branch-card { background: rgba(64, 96, 196, 0.1); }
+        html[data-theme="light"] .row.is-branch .row-label { color: rgba(48, 78, 170, 0.95); }
+        html[data-theme="light"] .branch-opt-tag { background: rgba(var(--gt-branch-rgb), 0.9); color: #fff; }
+        html[data-theme="light"] .combo.capturing { color: #1b3a66; border-color: rgba(64, 96, 196, 0.7); }
+
+        /* Light theme: dark-on-light text at the dark theme's low alphas washes
+           out on the pale panel. Lift the muted/label texts so they stay legible. */
+        html[data-theme="light"] .progress-label,
+        html[data-theme="light"] .now-label,
+        html[data-theme="light"] .settings-kicker,
+        html[data-theme="light"] .picker-kicker,
+        html[data-theme="light"] .picker-game,
+        html[data-theme="light"] .info-head,
+        html[data-theme="light"] .section-head { color: rgba(var(--gt-fg), 0.66); }
+        html[data-theme="light"] .now-meta,
+        html[data-theme="light"] .row-meta,
+        html[data-theme="light"] .picker-meta,
+        html[data-theme="light"] .quest-status,
+        html[data-theme="light"] .quest-note,
+        html[data-theme="light"] .settings-hint,
+        html[data-theme="light"] .progress-count { color: rgba(var(--gt-fg), 0.7); }
+        html[data-theme="light"] .row.done .row-label { color: rgba(var(--gt-fg), 0.5); }
+        html[data-theme="light"] .info-block.hints .info-list { color: rgba(var(--gt-fg), 0.8); }
+        html[data-theme="light"] .now-desc { color: rgba(var(--gt-fg), 0.92); }
+
+        html[data-theme="contrast"] .panel { border-color: rgba(var(--gt-fg), 0.6); }
+        html[data-theme="contrast"] .now-card,
+        html[data-theme="contrast"] .branch-opt,
+        html[data-theme="contrast"] .combo,
+        html[data-theme="contrast"] .lock-btn,
+        html[data-theme="contrast"] .picker-browse { border-color: rgba(var(--gt-fg), 0.45); }
+        html[data-theme="contrast"] .info-block.warnings { background: rgba(241, 138, 90, 0.2); border-color: rgba(255, 160, 90, 0.9); }
+        html[data-theme="contrast"] .info-block.warnings .info-head,
+        html[data-theme="contrast"] .info-block.warnings .info-list { color: rgba(255, 190, 140, 1); }
+        html[data-theme="contrast"] .row.is-branch .row-label { color: rgba(150, 200, 255, 1); }
+
         body {
             font-family: 'Hanken Grotesk', system-ui, sans-serif;
             background: transparent; /* real overlay: the game shows through */
-            color: #e8e9ec;
+            color: var(--gt-text);
             overflow: hidden;
             user-select: none;
         }
@@ -28,20 +106,22 @@
             outline-offset: 3px;
             transition: outline 0.2s ease;
         }
-        .mover.editing { outline: 1px dashed rgba(255, 255, 255, 0.35); }
+        .mover.editing { outline: 1px dashed rgba(var(--gt-fg), 0.35); }
         .mover.dragging { transition: none; }
 
         /* --- Panel: the frostglass container ------------------------------- */
         .panel {
             width: 100%;
+            display: flex;
+            flex-direction: column;
             border-radius: 12px;
             padding: 13px;
-            background: rgba(15, 17, 21, var(--gt-opacity, 1));
+            background: rgba(var(--gt-panel-rgb), var(--gt-opacity, 1));
             backdrop-filter: blur(18px) saturate(125%);
             -webkit-backdrop-filter: blur(18px) saturate(125%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(var(--gt-fg), 0.1);
+            box-shadow: 0 12px 34px var(--gt-shadow),
+                        inset 0 1px 0 rgba(var(--gt-fg), 0.08);
         }
 
         /* --- Header -------------------------------------------------------- */
@@ -59,11 +139,11 @@
         .editing .header { cursor: move; }
 
         .header-left { display: flex; align-items: flex-start; gap: 7px; min-width: 0; }
-        .grip { font-size: 13px; color: rgba(255, 255, 255, 0.4); line-height: 1.1; margin-top: 1px; flex-shrink: 0; }
+        .grip { font-size: 13px; color: rgba(var(--gt-fg), 0.4); line-height: 1.1; margin-top: 1px; flex-shrink: 0; }
         .kicker {
             font-size: 9px;
             letter-spacing: 0.12em;
-            color: rgba(255, 255, 255, 0.42);
+            color: rgba(var(--gt-fg), 0.42);
             text-transform: uppercase;
         }
         .quest-title { font-size: 15.5px; font-weight: 600; line-height: 1.25; margin-top: 3px; }
@@ -79,11 +159,11 @@
             white-space: nowrap;
             transition: all 0.18s ease;
             flex-shrink: 0;
-            color: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(var(--gt-fg), 0.5);
+            border: 1px solid rgba(var(--gt-fg), 0.12);
         }
-        .editing .lock-btn { color: rgba(255, 255, 255, 0.78); border-color: rgba(255, 255, 255, 0.32); }
-        .lock-btn:hover { background: rgba(255, 255, 255, 0.08); }
+        .editing .lock-btn { color: rgba(var(--gt-fg), 0.78); border-color: rgba(var(--gt-fg), 0.32); }
+        .lock-btn:hover { background: rgba(var(--gt-fg), 0.08); }
 
         .close-btn {
             cursor: pointer;
@@ -91,7 +171,7 @@
             border-radius: 6px;
             font-size: 12px;
             line-height: 1;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(var(--gt-fg), 0.5);
             display: flex;
             align-items: center;
             transition: all 0.18s ease;
@@ -105,41 +185,41 @@
             border-radius: 6px;
             display: flex;
             align-items: center;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(var(--gt-fg), 0.5);
             transition: all 0.18s ease;
         }
-        .icon-btn:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); }
-        .icon-btn.active { background: rgba(255, 255, 255, 0.13); color: #fff; }
+        .icon-btn:hover { background: rgba(var(--gt-fg), 0.08); color: rgba(var(--gt-fg), 0.85); }
+        .icon-btn.active { background: rgba(var(--gt-fg), 0.13); color: #fff; }
         .icon-btn svg { display: block; width: 14px; height: 14px; }
 
-        .quest-title { display: flex; align-items: center; cursor: pointer; }
+        .quest-title { display: flex; align-items: center; }
         .editing .quest-title { cursor: move; }
 
         /* --- Settings view (hotkey rebinding + opacity) --------------------- */
         .settings-view { margin-top: 12px; }
-        .settings-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
+        .settings-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(var(--gt-fg), 0.45); text-transform: uppercase; }
         .setting-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
             padding: 9px 2px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(var(--gt-fg), 0.06);
         }
         .setting-row:last-child { border-bottom: none; }
-        .setting-name { font-size: 14.5px; color: rgba(255, 255, 255, 0.9); }
+        .setting-name { font-size: 14.5px; color: rgba(var(--gt-fg), 0.9); }
         .combo {
             font-size: 10.5px;
             padding: 4px 9px;
             border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(var(--gt-fg), 0.14);
+            background: rgba(var(--gt-fg), 0.05);
+            color: rgba(var(--gt-fg), 0.85);
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.18s ease;
         }
-        .combo:hover { background: rgba(255, 255, 255, 0.1); }
+        .combo:hover { background: rgba(var(--gt-fg), 0.1); }
         .combo.capturing {
             border-color: rgba(120, 180, 255, 0.7);
             color: #cfe2ff;
@@ -153,7 +233,7 @@
             width: 110px;
             height: 4px;
             border-radius: 2px;
-            background: rgba(255, 255, 255, 0.18);
+            background: rgba(var(--gt-fg), 0.18);
             outline: none;
             cursor: pointer;
         }
@@ -163,47 +243,64 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(var(--gt-fg), 0.85);
             cursor: pointer;
         }
 
-        .settings-hint { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 11px; line-height: 1.45; }
+        /* Theme switcher (segmented control) */
+        .theme-switch { display: inline-flex; gap: 4px; }
+        .theme-opt {
+            font-size: 10.5px; padding: 4px 9px; border-radius: 6px; cursor: pointer;
+            font-family: inherit; white-space: nowrap; transition: all 0.18s ease;
+            border: 1px solid rgba(var(--gt-fg), 0.14);
+            background: rgba(var(--gt-fg), 0.05); color: rgba(var(--gt-fg), 0.7);
+        }
+        .theme-opt:hover { background: rgba(var(--gt-fg), 0.1); }
+        .theme-opt.active {
+            background: rgba(var(--gt-accent-rgb), 0.92); color: var(--gt-accent-fg);
+            border-color: transparent;
+        }
+
+        .settings-hint { font-size: 10px; color: rgba(var(--gt-fg), 0.4); margin-top: 11px; line-height: 1.45; }
         .settings-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; min-height: 1em; }
 
         /* --- "Now" card ---------------------------------------------------- */
         .now-card {
+            flex: 0 1 auto;          /* shrinks + scrolls internally when taller than the window */
+            min-height: 0;
+            overflow-y: auto;
             margin-top: 12px;
             padding: 11px 12px 13px;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(var(--gt-fg), 0.06);
+            border: 1px solid rgba(var(--gt-fg), 0.08);
         }
-        .now-label { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; }
+        .now-label { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(var(--gt-fg), 0.45); text-transform: uppercase; }
         .now-step { font-size: 17px; font-weight: 600; line-height: 1.3; margin-top: 5px; }
-        .now-meta { font-size: 11px; color: rgba(255, 255, 255, 0.4); margin-top: 5px; letter-spacing: 0.02em; }
+        .now-meta { font-size: 11px; color: rgba(var(--gt-fg), 0.4); margin-top: 5px; letter-spacing: 0.02em; }
         .now-desc {
             font-size: 15px;
-            color: rgba(255, 255, 255, 0.78);
+            color: rgba(var(--gt-fg), 0.78);
             line-height: 1.55;
             margin-top: 9px;
         }
         .now-desc p { margin: 0 0 4px; }
         .now-desc ul, .info-list { margin: 4px 0 0; padding-left: 16px; }
         .now-desc li, .info-list li { margin-bottom: 3px; line-height: 1.45; }
-        .now-desc strong, .info-block strong { color: rgba(255, 255, 255, 0.96); font-weight: 600; }
+        .now-desc strong, .info-block strong { color: rgba(var(--gt-fg), 0.96); font-weight: 600; }
 
         .opt-badge, .row-opt {
             display: inline-block; font-size: 8.5px; letter-spacing: 0.06em;
             text-transform: uppercase; padding: 1px 5px; border-radius: 5px;
-            background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.55);
+            background: rgba(var(--gt-fg), 0.1); color: rgba(var(--gt-fg), 0.55);
             vertical-align: middle;
         }
         .row-opt { margin-left: 6px; font-size: 8px; padding: 0 4px; }
 
         /* --- Info blocks (quests / hints / warnings) ---------------------- */
         .info-block { margin-top: 10px; }
-        .info-head { font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.42); margin-bottom: 3px; }
-        .info-block.hints .info-list { color: rgba(255, 255, 255, 0.66); font-size: 14px; }
+        .info-head { font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--gt-fg), 0.42); margin-bottom: 3px; }
+        .info-block.hints .info-list { color: rgba(var(--gt-fg), 0.66); font-size: 14px; }
         .info-block.warnings {
             background: rgba(241, 138, 90, 0.1); border: 1px solid rgba(241, 138, 90, 0.28);
             border-radius: 8px; padding: 7px 9px;
@@ -211,97 +308,130 @@
         .info-block.warnings .info-head { color: rgba(244, 162, 122, 0.95); }
         .info-block.warnings .info-list { color: rgba(247, 198, 173, 0.95); font-size: 14px; }
         .quest { font-size: 15px; margin-bottom: 4px; line-height: 1.45; }
-        .quest-name { color: rgba(255, 255, 255, 0.82); }
-        .quest-status { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
-        .quest-status.done { color: rgba(126, 211, 159, 0.95); }
-        .quest-note { font-size: 14px; color: rgba(255, 255, 255, 0.5); margin-top: 1px; }
+        .quest-name { color: rgba(var(--gt-fg), 0.82); }
+        .quest-status { font-size: 12px; color: rgba(var(--gt-fg), 0.45); }
+        .quest-status.done { color: rgba(var(--gt-good), 0.95); }
+        .quest-note { font-size: 14px; color: rgba(var(--gt-fg), 0.5); margin-top: 1px; }
 
         /* --- Branch decision --------------------------------------------- */
-        .branch-card { border-color: rgba(150, 180, 255, 0.3); background: rgba(120, 150, 230, 0.08); }
+        .branch-card { border-color: rgba(var(--gt-branch-rgb), 0.3); background: rgba(120, 150, 230, 0.08); }
         .branch-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
         .branch-opt {
             text-align: left; cursor: pointer; border-radius: 8px;
             padding: 8px 10px; color: inherit; font: inherit;
-            background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(var(--gt-fg), 0.07); border: 1px solid rgba(var(--gt-fg), 0.14);
             transition: background 0.16s ease, border-color 0.16s ease;
         }
-        .branch-opt:hover { background: rgba(255, 255, 255, 0.13); border-color: rgba(150, 180, 255, 0.5); }
-        .branch-opt.chosen { border-color: rgba(150, 180, 255, 0.65); background: rgba(120, 150, 230, 0.18); }
+        .branch-opt:hover { background: rgba(var(--gt-fg), 0.13); border-color: rgba(var(--gt-branch-rgb), 0.5); }
+        .branch-opt.chosen { border-color: rgba(var(--gt-branch-rgb), 0.65); background: rgba(120, 150, 230, 0.18); }
         .branch-opt-tag {
             font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
             padding: 1px 5px; border-radius: 5px; vertical-align: middle;
-            background: rgba(150, 180, 255, 0.28); color: rgba(210, 224, 255, 0.95);
+            background: rgba(var(--gt-branch-rgb), 0.28); color: rgba(210, 224, 255, 0.95);
         }
         .branch-opt-label { display: block; font-size: 15px; font-weight: 600; }
-        .branch-opt-desc { display: block; font-size: 13px; color: rgba(255, 255, 255, 0.58); margin-top: 2px; line-height: 1.4; }
+        .branch-opt-desc { display: block; font-size: 13px; color: rgba(var(--gt-fg), 0.58); margin-top: 2px; line-height: 1.4; }
 
         /* --- End-of-walkthrough hand-off --------------------------------- */
         .next-file-btn {
             display: block; width: 100%; margin-top: 12px; cursor: pointer;
             padding: 9px 10px; border-radius: 8px; font: inherit; font-weight: 600; font-size: 14.5px;
-            color: #0d1014; background: rgba(236, 237, 240, 0.92); border: none;
+            color: var(--gt-accent-fg); background: rgba(var(--gt-accent-rgb), 0.92); border: none;
             transition: background 0.16s ease;
         }
         .next-file-btn:hover { background: #fff; }
 
-        /* --- Checklist section header ------------------------------------ */
-        .section-head {
-            font-size: 8.5px; letter-spacing: 0.13em; text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.38); margin: 10px 0 3px; padding-left: 8px;
-        }
-        .section-head:first-child { margin-top: 2px; }
         .row.is-branch .row-label { color: rgba(170, 195, 255, 0.92); font-style: italic; }
 
         .done-card {
+            flex: 0 0 auto;
             margin-top: 12px;
             padding: 14px 12px;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(var(--gt-fg), 0.06);
             text-align: center;
             font-size: 13px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(var(--gt-fg), 0.7);
         }
 
-        /* --- Collapsible section (progress + checklist) -------------------- */
-        .collapsible {
-            overflow: hidden;
-            max-height: 600px;
-            opacity: 1;
-            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-        }
-        .collapsed .collapsible { max-height: 0; opacity: 0; }
+        /* --- Steps section: always-visible "Schritte" bar + collapsible list.
+           In the expanded steps view the panel is a fixed-height flex column;
+           the now-card keeps its natural height and the list flexes to fill the
+           remainder and scrolls, so the window stays a constant size regardless
+           of how long the current step's description is. */
+        .steps-section { display: flex; flex-direction: column; min-height: 0; margin-top: 13px; }
+        /* Expanded steps view: the now-card is a FIXED-height internal scroll
+           region (50% desktop, capped at 70vh so it can't crowd out the list on
+           a small window), so it never resizes per step. The list takes the rest. */
+        .steps-expanded .now-card { flex: 0 0 auto; height: min(var(--gt-nowh, 38vh), 70vh); }
+        .steps-expanded .steps-section { flex: 1 1 auto; min-height: 120px; }
 
-        /* --- Progress ------------------------------------------------------ */
-        .progress-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 13px;
+        .steps-bar {
+            flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; padding: 3px 4px; border-radius: 6px; cursor: pointer;
+            transition: background 0.18s ease;
         }
-        .progress-label { font-size: 9px; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.42); text-transform: uppercase; }
-        .progress-count { font-size: 9.5px; color: rgba(255, 255, 255, 0.55); }
+        .steps-bar:hover { background: rgba(var(--gt-fg), 0.06); }
+        .steps-bar-left { display: flex; align-items: center; gap: 6px; }
+        .steps-chevron { width: 12px; height: 12px; flex-shrink: 0; color: rgba(var(--gt-fg), 0.5); transition: transform 0.2s ease; }
+        .steps-chevron svg { display: block; width: 12px; height: 12px; }
+        .collapsed .steps-chevron { transform: rotate(-90deg); }
+        .progress-label { font-size: 9px; letter-spacing: 0.12em; color: rgba(var(--gt-fg), 0.42); text-transform: uppercase; }
+        .progress-count { font-size: 9.5px; color: rgba(var(--gt-fg), 0.55); flex: 0 0 auto; }
+        /* The progress track lives inside the always-visible bar, so it shows
+           even when the list is collapsed. */
+        .steps-bar .progress-track { flex: 1 1 auto; margin: 0 2px; }
+
+        .collapsible { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        .steps-expanded .collapsible { flex: 1 1 auto; }
+        .collapsed .collapsible { display: none; }
+
         .progress-track {
+            flex: 0 0 auto;
             height: 4px;
             border-radius: 3px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(var(--gt-fg), 0.1);
             overflow: hidden;
-            margin-top: 6px;
+            margin-top: 8px;
         }
         .progress-fill {
             height: 100%;
-            background: rgba(236, 237, 240, 0.88);
+            background: rgba(var(--gt-accent-rgb), 0.88);
             border-radius: 3px;
             transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* --- Checklist ----------------------------------------------------- */
         .checklist {
+            flex: 1 1 auto;
+            min-height: 0;
             overflow-y: auto;
             margin-top: 8px;
             margin-right: -4px;
             padding-right: 4px;
         }
+
+        /* --- Section groups (collapsible, with a "done" badge) ------------ */
+        .section-group { display: flex; flex-direction: column; flex: 0 0 auto; }
+        .section-head {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 8.5px; letter-spacing: 0.13em; text-transform: uppercase;
+            color: rgba(var(--gt-fg), 0.38); margin: 10px 0 3px; padding: 2px 8px;
+            cursor: pointer; border-radius: 6px; transition: background 0.18s ease;
+        }
+        .section-group:first-child .section-head { margin-top: 2px; }
+        .section-head:hover { background: rgba(var(--gt-fg), 0.06); }
+        .section-chevron { width: 9px; height: 9px; flex-shrink: 0; color: rgba(var(--gt-fg), 0.4); transition: transform 0.2s ease; }
+        .section-chevron svg { display: block; width: 9px; height: 9px; }
+        .section-group.sec-collapsed .section-chevron { transform: rotate(-90deg); }
+        .section-done {
+            margin-left: auto; display: flex; align-items: center; gap: 3px;
+            font-size: 8px; letter-spacing: 0.05em; color: rgba(var(--gt-good), 0.95);
+        }
+        .section-rows { display: flex; flex-direction: column; }
+        .section-group.sec-collapsed .section-rows { display: none; }
         .row {
             display: flex;
             gap: 9px;
@@ -311,8 +441,8 @@
             cursor: pointer;
             transition: background 0.18s ease;
         }
-        .row.current { background: rgba(255, 255, 255, 0.07); }
-        .row:hover { background: rgba(255, 255, 255, 0.1); }
+        .row.current { background: rgba(var(--gt-fg), 0.07); }
+        .row:hover { background: rgba(var(--gt-fg), 0.1); }
 
         .mark {
             width: 14px;
@@ -324,16 +454,16 @@
             flex-shrink: 0;
             margin-top: 2px;
             transition: all 0.2s ease;
-            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            border: 1.5px solid rgba(var(--gt-fg), 0.25);
         }
-        .row.current .mark { border-color: rgba(255, 255, 255, 0.7); animation: gt-pulse 2.4s ease-in-out infinite; }
-        .row.done .mark { background: rgba(236, 237, 240, 0.92); border-color: transparent; animation: none; }
-        .mark .check { font-size: 9px; color: #0d1014; font-weight: 700; line-height: 1; }
+        .row.current .mark { border-color: rgba(var(--gt-fg), 0.7); animation: gt-pulse 2.4s ease-in-out infinite; }
+        .row.done .mark { background: rgba(var(--gt-accent-rgb), 0.92); border-color: transparent; animation: none; }
+        .mark .check { font-size: 9px; color: var(--gt-accent-fg); font-weight: 700; line-height: 1; }
 
         .row-main { flex: 1; min-width: 0; }
-        .row-label { font-size: 14.5px; font-weight: 500; line-height: 1.3; color: rgba(255, 255, 255, 0.92); }
-        .row.done .row-label { font-weight: 400; color: rgba(255, 255, 255, 0.42); text-decoration: line-through; }
-        .row-meta { font-size: 9px; color: rgba(255, 255, 255, 0.36); margin-top: 2px; letter-spacing: 0.02em; }
+        .row-label { font-size: 14.5px; font-weight: 500; line-height: 1.3; color: rgba(var(--gt-fg), 0.92); }
+        .row.done .row-label { font-weight: 400; color: rgba(var(--gt-fg), 0.42); text-decoration: line-through; }
+        .row-meta { font-size: 9px; color: rgba(var(--gt-fg), 0.36); margin-top: 2px; letter-spacing: 0.02em; }
 
         /* --- Resize handle (edit mode) ------------------------------------- */
         .resize-handle {
@@ -343,8 +473,8 @@
             width: 14px;
             height: 14px;
             cursor: nesw-resize;
-            border-left: 2px solid rgba(255, 255, 255, 0.5);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            border-left: 2px solid rgba(var(--gt-fg), 0.5);
+            border-bottom: 2px solid rgba(var(--gt-fg), 0.5);
             border-bottom-left-radius: 4px;
             display: none;
         }
@@ -352,32 +482,32 @@
 
         /* --- Picker view --------------------------------------------------- */
         .picker-view { margin-top: 12px; }
-        .picker-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.45); text-transform: uppercase; margin-bottom: 8px; }
+        .picker-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(var(--gt-fg), 0.45); text-transform: uppercase; margin-bottom: 8px; }
         .picker-list { }
         .picker-row {
             padding: 9px 10px;
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.18s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(var(--gt-fg), 0.06);
         }
         .picker-row:last-child { border-bottom: none; }
-        .picker-row:hover { background: rgba(255, 255, 255, 0.08); }
-        .picker-game { font-size: 8.5px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.42); text-transform: uppercase; }
+        .picker-row:hover { background: rgba(var(--gt-fg), 0.08); }
+        .picker-game { font-size: 8.5px; letter-spacing: 0.1em; color: rgba(var(--gt-fg), 0.42); text-transform: uppercase; }
         .picker-title { font-size: 15.5px; font-weight: 600; margin-top: 3px; }
-        .picker-meta { font-size: 9.5px; color: rgba(255, 255, 255, 0.38); margin-top: 2px; }
-        .picker-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+        .picker-meta { font-size: 9.5px; color: rgba(var(--gt-fg), 0.38); margin-top: 2px; }
+        .picker-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(var(--gt-fg), 0.08); }
         .picker-browse {
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.62);
+            color: rgba(var(--gt-fg), 0.62);
             cursor: pointer;
             padding: 7px 10px;
             border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(var(--gt-fg), 0.14);
             text-align: center;
             transition: all 0.18s ease;
         }
-        .picker-browse:hover { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.9); }
+        .picker-browse:hover { background: rgba(var(--gt-fg), 0.08); color: rgba(var(--gt-fg), 0.9); }
         .picker-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; }
         .picker-remote-badge {
             font-size: 9.5px;
@@ -387,17 +517,17 @@
         }
         .picker-empty {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.38);
+            color: rgba(var(--gt-fg), 0.38);
             padding: 14px 0;
             text-align: center;
         }
 
         @keyframes gt-pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.20); }
-            50% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--gt-fg), 0.20); }
+            50% { box-shadow: 0 0 0 4px rgba(var(--gt-fg), 0); }
         }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--gt-fg), 0.14); border-radius: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
@@ -414,9 +544,18 @@
 
     const App = window.go.overlay.App;
 
-    const STORE_KEY = "gt-overlay-v3";
+    const STORE_KEY = "gt-overlay-v7"; // v7: narrower default width + lower min width
     const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } })();
-    const DEFAULT_W = 312;
+    // Size the HUD against the real desktop. screen.availHeight is the work area
+    // (taskbar excluded) in CSS px — the same unit Wails' WindowSetSize uses, so
+    // it's DPI-correct. The now-card is a FIXED golden-ratio (≈38%) scroll region;
+    // the window defaults to that plus room for the list, and can be dragged up to
+    // the full available height.
+    const DESKTOP_H = (window.screen && window.screen.availHeight) || 920;
+    // Fixed now-card height as a fraction of desktop. 0.382 = the golden-ratio
+    // minor part (1/φ²) — sits between 1/3 (too little) and 1/2 (too much).
+    const NOWCARD_H = Math.round(DESKTOP_H * 0.382);
+    const DEFAULT_W = 380, DEFAULT_H = Math.min(DESKTOP_H, NOWCARD_H + 300);
     const state = {
         view: "picker",           // "picker" | "steps" | "settings"
         // --- picker ---
@@ -429,30 +568,38 @@
         current: null,            // live StepInfo of the active item (now-card source of truth)
         activePos: 1,
         nextFile: "",             // `next:` reference for end-of-walkthrough hand-off
+        sectionOverride: {},      // section name → user's explicit open(true)/closed(false)
+        lastScrolledPos: null,    // position auto-scroll last targeted (only scroll on change)
         // --- settings ---
-        settings: null,           // {version, hotkeys, opacity} from App.Settings()
+        settings: null,           // {version, hotkeys, opacity, theme} from App.Settings()
         capturing: null,
         settingsError: "",
         // --- layout ---
         collapsed: false,
         locked: true,             // always start fixed; never persisted
         width: saved.width || DEFAULT_W,
-        listHeight: saved.listHeight ?? null,
-        listMin: saved.listMin ?? null,
+        panelHeight: saved.panelHeight || DEFAULT_H, // fixed window height when expanded
     };
 
-    const MIN_W = DEFAULT_W, MAX_W = 680;
-    const EXTRA_H = 560;
+    const MIN_W = 240, MAX_W = 680;
+    const MIN_H = 240, MAX_H = DESKTOP_H;
 
     const mover = document.getElementById("mover");
     const panel = document.getElementById("panel");
     const resizeHandle = document.getElementById("resize");
+    mover.style.setProperty("--gt-nowh", NOWCARD_H + "px"); // fixed now-card height (≈38% desktop, golden ratio)
+
+    // Chevron icon (▾), rotated via CSS when collapsed.
+    const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
     function save() {
         try {
             localStorage.setItem(STORE_KEY, JSON.stringify({
-                width: state.width,
-                listHeight: state.listHeight, listMin: state.listMin,
+                width: state.width, panelHeight: state.panelHeight,
+                // Cached so the theme can be applied synchronously on next launch,
+                // before the async Settings() round-trip — avoids a wrong-colour
+                // flash of the themed UI (e.g. the progress bar) on restart.
+                theme: state.settings ? state.settings.theme : saved.theme,
             }));
         } catch {}
     }
@@ -515,12 +662,24 @@
         mover.style.setProperty("--gt-opacity", (v != null && v > 0) ? v : 1);
     }
 
+    // --- Theme ------------------------------------------------------------
+    const THEMES = [
+        { key: "dark",     label: "Dunkel" },
+        { key: "light",    label: "Hell" },
+        { key: "contrast", label: "Kontrast" },
+    ];
+    function applyTheme(t) {
+        // Sets html[data-theme]; the stylesheet's token blocks do the rest.
+        document.documentElement.dataset.theme = THEMES.some(x => x.key === t) ? t : "dark";
+    }
+
     // --- Hotkeys ----------------------------------------------------------
     const HOTKEY_ACTIONS = [
-        { key: "next",       label: "Nächster Schritt" },
-        { key: "prev",       label: "Vorheriger Schritt" },
-        { key: "toggleHide", label: "Overlay ein/aus" },
-        { key: "quit",       label: "Overlay schließen" },
+        { key: "next",         label: "Nächster Schritt" },
+        { key: "prev",         label: "Vorheriger Schritt" },
+        { key: "toggleHide",   label: "Overlay ein/aus" },
+        { key: "focusOverlay", label: "Maus ins Overlay" },
+        { key: "quit",         label: "Overlay schließen" },
     ];
 
     const MOD_LABEL = { ctrl: "Ctrl", alt: "Alt", shift: "Shift", win: "Win" };
@@ -586,8 +745,13 @@
             renderSteps();
         }
 
+        // The panel is a fixed-height flex column only in the expanded steps
+        // view; the "steps-expanded" class arms the flex chain (see CSS).
+        panel.classList.toggle("steps-expanded", state.view === "steps" && !state.collapsed);
+
         applyLayout();
         wireEvents();
+        scrollToCurrent();
     }
 
     function renderPicker() {
@@ -625,6 +789,53 @@
                 ${state.pickerError ? `<div class="picker-error">${esc(state.pickerError)}</div>` : ''}
                 ${remoteBadge}
             </div>`;
+    }
+
+    // rowHTML renders one checklist item (step or branch decision).
+    function rowHTML(s, i) {
+        const pos = i + 1;
+        const done = pos < state.activePos;
+        const isCurrent = pos === state.activePos;
+        const label = s.isBranch ? `⑂ ${esc(s.title)}` : esc(s.title);
+        const optBadge = s.optional ? `<span class="row-opt">optional</span>` : "";
+        return `
+            <div class="row${done ? " done" : ""}${isCurrent ? " current" : ""}${s.isBranch ? " is-branch" : ""}" data-index="${i}">
+                <div class="mark">${done ? '<span class="check">✓</span>' : ""}</div>
+                <div class="row-main">
+                    <div class="row-label">${label}${optBadge}</div>
+                </div>
+            </div>`;
+    }
+
+    // buildChecklist groups consecutive steps by section. Named sections become
+    // collapsible groups; a fully-done section gets a green "abgeschlossen" badge
+    // and collapses by default (until the user toggles it). Unsectioned steps
+    // render as loose rows. Open state defaults to "open while in progress,
+    // closed once done", overridable per section via state.sectionOverride.
+    function buildChecklist() {
+        const groups = [];
+        let cur = null;
+        state.steps.forEach((s, i) => {
+            const sec = s.section || "";
+            if (!cur || cur.section !== sec) { cur = { section: sec, items: [] }; groups.push(cur); }
+            cur.items.push({ s, i });
+        });
+        return groups.map(g => {
+            const rows = g.items.map(({ s, i }) => rowHTML(s, i)).join("");
+            if (!g.section) return rows; // unsectioned steps render loose
+            const allDone = g.items.every(({ i }) => (i + 1) < state.activePos);
+            const ov = state.sectionOverride[g.section];
+            const open = ov === undefined ? !allDone : ov;
+            const badge = allDone ? `<span class="section-done mono">✓ abgeschlossen</span>` : "";
+            return `<div class="section-group${open ? "" : " sec-collapsed"}">
+                <div class="section-head mono" data-section="${esc(g.section)}">
+                    <span class="section-chevron">${CHEVRON_SVG}</span>
+                    <span>${esc(g.section)}</span>
+                    ${badge}
+                </div>
+                <div class="section-rows">${rows}</div>
+            </div>`;
+        }).join("");
     }
 
     function renderSteps() {
@@ -669,28 +880,7 @@
                </div>`;
         }
 
-        let lastSection = null;
-        const rowsHTML = state.steps.map((s, i) => {
-            const pos = i + 1;
-            const done = pos < state.activePos;
-            const isCurrent = pos === state.activePos;
-            let header = "";
-            if (s.section && s.section !== lastSection) {
-                header = `<div class="section-head mono">${esc(s.section)}</div>`;
-                lastSection = s.section;
-            } else if (!s.section) {
-                lastSection = null;
-            }
-            const label = s.isBranch ? `⑂ ${esc(s.title)}` : esc(s.title);
-            const optBadge = s.optional ? `<span class="row-opt">optional</span>` : "";
-            return header + `
-            <div class="row${done ? " done" : ""}${isCurrent ? " current" : ""}${s.isBranch ? " is-branch" : ""}" data-index="${i}">
-                <div class="mark">${done ? '<span class="check">✓</span>' : ""}</div>
-                <div class="row-main">
-                    <div class="row-label">${label}${optBadge}</div>
-                </div>
-            </div>`;
-        }).join("");
+        const rowsHTML = buildChecklist();
 
         const settingsHTML = `
             <div class="settings-view">
@@ -708,6 +898,13 @@
                     <input type="range" class="opacity-slider" id="opacitySlider"
                         min="10" max="100" step="5"
                         value="${Math.round((state.settings ? (state.settings.opacity ?? 1) : 1) * 100)}">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-name">Design</span>
+                    <span class="theme-switch">${THEMES.map(t => {
+                        const active = (state.settings && state.settings.theme || "dark") === t.key;
+                        return `<button class="theme-opt${active ? " active" : ""}" data-theme="${t.key}">${esc(t.label)}</button>`;
+                    }).join("")}</span>
                 </div>
                 <div class="settings-error">${esc(state.settingsError)}</div>
                 <div class="settings-hint">Klick auf ein Kürzel, dann Tasten- oder Maustasten-Kombination drücken. Esc bricht ab.</div>
@@ -734,13 +931,18 @@
             </div>
             ${inSettings ? settingsHTML : `
             ${nowHTML}
-            <div class="collapsible">
-                <div class="progress-row">
-                    <span class="progress-label mono">Schritte</span>
+            <div class="steps-section">
+                <div class="steps-bar" id="stepsBar">
+                    <span class="steps-bar-left">
+                        <span class="steps-chevron">${CHEVRON_SVG}</span>
+                        <span class="progress-label mono">Schritte</span>
+                    </span>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
                     <span class="progress-count mono">${doneCount} / ${total}</span>
                 </div>
-                <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-                <div class="checklist">${rowsHTML}</div>
+                <div class="collapsible">
+                    <div class="checklist">${rowsHTML}</div>
+                </div>
             </div>`}`;
     }
 
@@ -748,15 +950,32 @@
         mover.style.left = "0px";
         mover.style.top = "0px";
         mover.style.width = state.width + "px";
+        // Fixed panel height ONLY in the expanded steps view: the now-card keeps
+        // its natural size and the scrollable list flexes to fill the rest, so
+        // the window stays a constant size across steps (no jumping). Picker,
+        // settings and the collapsed view shrink-wrap to their content (auto).
+        const expanded = state.view === "steps" && !state.collapsed;
+        panel.style.height = expanded ? state.panelHeight + "px" : "auto";
+    }
+
+    // scrollToCurrent brings the active step to the top of the list when the
+    // position actually changes (advancing/jumping), so done steps scroll off the
+    // top. Manual scrolling between navigations is left alone — render() isn't
+    // called then, and the guard avoids re-yanking on cosmetic re-renders (theme,
+    // collapse). The current row is never inside a collapsed (done) section.
+    function scrollToCurrent() {
+        if (state.view !== "steps" || state.collapsed) return;
+        if (state.lastScrolledPos === state.activePos) return;
         const cl = panel.querySelector(".checklist");
-        if (cl) {
-            if (state.listHeight == null) {
-                cl.style.height = "auto";
-                const base = Math.ceil(cl.scrollHeight);
-                state.listMin = state.listMin || base;
-                state.listHeight = Math.max(base, state.listMin);
-            }
-            cl.style.height = state.listHeight + "px";
+        const row = cl && cl.querySelector(".row.current");
+        if (cl && row) {
+            // Leave a little room above the current step so the most recently
+            // checked-off step (or its section header) stays in view — feels
+            // calmer than slamming the current row to the very top.
+            const PEEK = 40;
+            const r = row.getBoundingClientRect(), c = cl.getBoundingClientRect();
+            cl.scrollTop = Math.max(0, cl.scrollTop + (r.top - c.top) - PEEK);
+            state.lastScrolledPos = state.activePos;
         }
     }
 
@@ -775,8 +994,8 @@
             state.current = current;
             state.activePos = current.current;
             state.nextFile = nextFile || "";
-            state.listHeight = null; // reset so layout recalculates for new content
-            state.listMin = null;
+            state.sectionOverride = {}; // fresh walkthrough → fresh section state
+            state.lastScrolledPos = null;
             state.view = "steps";
             render();
         }).catch(err => {
@@ -794,8 +1013,7 @@
                 state.current = current;
                 state.activePos = current.current;
                 state.nextFile = nextFile || "";
-                state.listHeight = null;
-                state.listMin = null;
+                state.lastScrolledPos = null; // re-target auto-scroll after reshape
                 render();
             });
     }
@@ -807,6 +1025,7 @@
     // refreshAfterSwap re-fetches everything after the active walkthrough is
     // replaced (a `next:` hand-off swaps meta, steps and current all at once).
     function refreshAfterSwap() {
+        state.sectionOverride = {}; // hand-off to a new file → fresh section state
         return App.Meta().then(meta => { state.meta = meta; return reloadSteps(); });
     }
 
@@ -855,8 +1074,14 @@
         }
 
         // steps / settings view
-        const title = document.getElementById("questTitle");
-        if (title) title.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+        const stepsBar = document.getElementById("stepsBar");
+        if (stepsBar) {
+            stepsBar.addEventListener("click", () => { state.collapsed = !state.collapsed; render(); });
+        }
+
+        panel.querySelectorAll(".section-head").forEach(head => {
+            head.addEventListener("click", () => toggleSection(head.dataset.section));
+        });
 
         const homeBtn = document.getElementById("homeBtn");
         if (homeBtn) {
@@ -901,6 +1126,39 @@
                 App.SaveOpacity(v).then(s => { state.settings = s; });
             });
         }
+
+        panel.querySelectorAll(".theme-opt").forEach(btn => {
+            btn.addEventListener("mousedown", stopProp);
+            btn.addEventListener("click", () => selectTheme(btn.dataset.theme));
+        });
+    }
+
+    // toggleSection flips a named section's open/closed state, recording an
+    // explicit override (so a done section the user opened stays open, and vice
+    // versa). The effective open state is recomputed exactly as buildChecklist
+    // does — open while in progress, closed once done, unless overridden.
+    function toggleSection(name) {
+        if (!name) return;
+        const items = state.steps.filter(s => (s.section || "") === name);
+        const allDone = items.length > 0 &&
+            state.steps.every((s, i) => (s.section || "") !== name || (i + 1) < state.activePos);
+        const ov = state.sectionOverride[name];
+        const open = ov === undefined ? !allDone : ov;
+        state.sectionOverride[name] = !open;
+        render();
+    }
+
+    // selectTheme applies a theme immediately (so it feels instant) and persists
+    // it; on a save error the previous theme is restored.
+    function selectTheme(theme) {
+        const prev = state.settings ? state.settings.theme : "dark";
+        applyTheme(theme);
+        App.SaveTheme(theme).then(s => { state.settings = s; save(); render(); })
+            .catch(err => {
+                applyTheme(prev);
+                state.settingsError = String(err && err.message ? err.message : err);
+                render();
+            });
     }
 
     // --- Settings panel + hotkey rebinding --------------------------------
@@ -970,15 +1228,14 @@
         if (state.locked) return;
         e.preventDefault();
         e.stopPropagation();
-        drag = { sx: e.screenX, sy: e.screenY, ow: state.width, oh: state.listHeight };
+        drag = { sx: e.screenX, sy: e.screenY, ow: state.width, oh: state.panelHeight };
         mover.classList.add("dragging");
     }
 
     function onMove(e) {
         if (!drag) return;
         state.width = Math.max(MIN_W, Math.min(drag.ow - (e.screenX - drag.sx), MAX_W));
-        const minH = state.listMin || 0;
-        state.listHeight = Math.max(minH, Math.min(drag.oh + (e.screenY - drag.sy), minH + EXTRA_H));
+        state.panelHeight = Math.max(MIN_H, Math.min(drag.oh + (e.screenY - drag.sy), MAX_H));
         applyLayout();
     }
 
@@ -1025,19 +1282,34 @@
     window.addEventListener("mouseup", onWinUp);
 
     // --- FitWindow --------------------------------------------------------
+    // In the expanded steps view the window size is pinned to our own fixed
+    // dimensions rather than the measured panel — this stops the OS window from
+    // jittering as the now-card grows/shrinks per step (sub-pixel reflows,
+    // appearing scrollbars). Picker/settings/collapsed shrink-wrap to content.
     function fitWindow() {
-        const r = panel.getBoundingClientRect();
-        const w = Math.ceil(r.width), h = Math.ceil(r.height);
+        const expanded = state.view === "steps" && !state.collapsed;
+        let w, h;
+        if (expanded) {
+            w = state.width;
+            h = state.panelHeight;
+        } else {
+            const r = panel.getBoundingClientRect();
+            w = Math.ceil(r.width); h = Math.ceil(r.height);
+        }
         if (w > 0 && h > 0) window.go?.overlay?.App?.FitWindow?.(w, h);
     }
     new ResizeObserver(fitWindow).observe(panel);
 
     // --- Boot -------------------------------------------------------------
     async function init() {
+        // Apply the cached theme synchronously first, so the very first paint of
+        // the HUD already uses the right colours (Settings() below is async).
+        applyTheme(saved.theme);
         try {
             const settings = await App.Settings();
             state.settings = settings;
             applyOpacity(settings.opacity ?? 1);
+            applyTheme(settings.theme);
 
             const isPicker = await App.IsPicker();
             if (isPicker) {
