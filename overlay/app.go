@@ -357,11 +357,29 @@ func (a *App) SaveOpacity(opacity float64) (settings.Settings, error) {
 	return ns, nil
 }
 
+// SaveTheme persists the HUD colour theme (dark | light | contrast) and returns
+// the updated settings. An unknown theme is rejected so the frontend can't
+// store a value its CSS doesn't define.
+func (a *App) SaveTheme(theme string) (settings.Settings, error) {
+	switch theme {
+	case "dark", "light", "contrast":
+	default:
+		return a.set.Get(), fmt.Errorf("unknown theme %q", theme)
+	}
+	ns := a.set.Get()
+	ns.Theme = theme
+	if err := a.set.Save(ns); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
+	}
+	return ns, nil
+}
+
 // validateHotkeys checks that every binding resolves to a real key/modifier
 // combination before it is persisted or registered.
 func validateHotkeys(hk settings.Hotkeys) error {
 	for name, b := range map[string]settings.Binding{
-		"next": hk.Next, "prev": hk.Prev, "toggleHide": hk.ToggleHide, "quit": hk.Quit,
+		"next": hk.Next, "prev": hk.Prev, "toggleHide": hk.ToggleHide,
+		"focusOverlay": hk.FocusOverlay, "quit": hk.Quit,
 	} {
 		var err error
 		if b.IsMouse() {

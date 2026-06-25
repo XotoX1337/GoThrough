@@ -41,10 +41,11 @@ func (b Binding) IsMouse() bool { return b.Button != "" }
 
 // Hotkeys holds the binding for each global action the overlay supports.
 type Hotkeys struct {
-	Next       Binding `json:"next"`
-	Prev       Binding `json:"prev"`
-	ToggleHide Binding `json:"toggleHide"`
-	Quit       Binding `json:"quit"`
+	Next         Binding `json:"next"`
+	Prev         Binding `json:"prev"`
+	ToggleHide   Binding `json:"toggleHide"`
+	FocusOverlay Binding `json:"focusOverlay"`
+	Quit         Binding `json:"quit"`
 }
 
 // LastConfig records the walkthrough that was loaded most recently so the app
@@ -61,6 +62,7 @@ type Settings struct {
 	Version    int        `json:"version"`
 	Hotkeys    Hotkeys    `json:"hotkeys"`
 	Opacity    float64    `json:"opacity"`
+	Theme      string     `json:"theme"`
 	LastConfig LastConfig `json:"lastConfig"`
 }
 
@@ -72,12 +74,14 @@ func Defaults() Settings {
 	return Settings{
 		Version: fileVersion,
 		Hotkeys: Hotkeys{
-			Next:       Binding{Mods: ctrlAlt(), Key: "right"},
-			Prev:       Binding{Mods: ctrlAlt(), Key: "left"},
-			ToggleHide: Binding{Mods: ctrlAlt(), Key: "h"},
-			Quit:       Binding{Mods: ctrlAlt(), Key: "q"},
+			Next:         Binding{Mods: ctrlAlt(), Key: "right"},
+			Prev:         Binding{Mods: ctrlAlt(), Key: "left"},
+			ToggleHide:   Binding{Mods: ctrlAlt(), Key: "h"},
+			FocusOverlay: Binding{Mods: ctrlAlt(), Key: "m"},
+			Quit:         Binding{Mods: ctrlAlt(), Key: "q"},
 		},
 		Opacity: 1.0,
+		Theme:   "dark",
 	}
 }
 
