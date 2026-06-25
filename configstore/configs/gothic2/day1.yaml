@@ -1,0 +1,313 @@
+# Schema v2 (v0.7): sections, optional steps, structured quests, hints/warnings, markdown.
+# Manueller Trigger ist Default -> kein `trigger:`-Block mehr nötig.
+schema: 2
+game: Gothic 2
+version: Die Nacht des Raben
+variant: Drachenjäger
+author: XotoX1337
+source: "WoP-Forum Komplettlösung (EL Libertador), Thread 30021 – Der 1.te Tag"
+chapter: 1
+day: 1
+title: "Kapitel 1 – Tag 1: Von Xardas' Turm nach Khorinis"
+# Lineare Fortsetzung in eigener Datei (Hand-off beim letzten Step).
+# Pfad relativ zu dieser Datei; fehlendes Ziel = einfach kein "Weiter"-Button.
+next: "day2.yaml"
+
+sections:
+  - title: "Xardas' Turm"
+    steps:
+      - id: 1
+        title: "Das Auge Innos erhalten"
+        description: |
+          - Nach dem Intro begrüßt euch **Xardas** und schickt euch nach Khorinis.
+          - Lest das **rechte Buch** am Buchständer.
+          - Nehmt die **alte Steintafel** vom Tisch daneben und sprecht Xardas darauf an.
+          - Lest danach das **linke Buch**.
+        quests:
+          - name: "Das Auge Innos"
+            status: received
+        hints:
+          - "Jedes gelesene Buch: **25 EXP**."
+          - "Ansprechen auf die alte Steintafel: **50 EXP**."
+
+      - id: 2
+        title: "Vorraum – erste Waffe & versteckte Truhe"
+        description: |
+          - Links neben dem Kamin liegt ein **Schwerer Ast** – eure erste Waffe.
+          - Rechts am Kamin: **Schalter betätigen** → öffnet den vergitterten Raum in Xardas' Halle.
+          - Plündert dort die **Truhe**.
+        hints:
+          - "**Schwerer Ast**: 10 dmg bei 10 Stärke."
+          - "Truhe (vergitterter Raum): u.a. 1 Feuerball- und 1 Leichte-Wunden-heilen-Spruchrolle."
+
+      - id: 3
+        title: "Bibliothek (2. Stock) – Bücher & Truhe"
+        description: |
+          - Lest im zweiten Stock **alle Bücher**.
+          - Öffnet die **Truhe** mit dem Schlüssel vom Tisch in der Mitte.
+        hints:
+          - "Truhe: u.a. 1 Lichtspruchrolle, **Dolch** (5 dmg bei 5 Stärke), 2 Dietriche."
+
+      - id: 4
+        title: "Außenrundgang am Turm – Spruchrollen einsammeln"
+        description: |
+          - Verlasst die Bibliothek ins Freie (2. Stock, Plattform auf der Seite **ohne** Beliarstatue).
+          - Springt vorsichtig in zwei Stufen hinunter und geht nach links.
+          - Dreht um, lauft gerade zurück und springt hinunter → ihr steht vor Xardas' Turm.
+          - Geht wieder hinein und plündert die **Truhe**.
+        hints:
+          - "Links nach dem Absprung: u.a. 1 Feuerpfeil und 1 Lichtspruchrolle."
+          - "Truhe im Turm: u.a. 2 Feuerball- und 1 Lichtspruchrolle."
+
+      - id: 5
+        title: "Kräuterraum – Stärke-Gürtel"
+        description: |
+          - Im Raum nebenan: jede Menge **Kräuter** und ein **Gürtel**.
+          - Verlasst danach den Turm.
+        hints:
+          - "Kräuter: je 1 Goblinbeere, Drachenwurzel und Snapperkraut."
+          - "**Gürtel**: +5 Stärke."
+
+  - title: "Höhlen & Talkessel"
+    steps:
+      - id: 6
+        title: "Weg zum See – Schatzskelett am Wasserfall"
+        description: |
+          - Folgt dem Weg, biegt beim Schaf links zum **See am Wasserfall** ab und erledigt den Goblin.
+          - Plündert das **Schatzskelett** links am See.
+          - Der Zugang zum Höhlensystem liegt **rechts** am See.
+        hints:
+          - "Tötet alle Monster und Tiere – **außer Schafe** in der Nähe von NPCs."
+          - "Schatzskelett (links): **Kurzbogen** (15 dmg bei 10 Geschick) + 2 Feuerpfeilspruchrollen."
+
+      - id: 7
+        title: "Höhlensystem – Goblins, Feldräuber, Dunkelpilze"
+        description: |
+          - Hinein: 1 Goblin, in der **linken Höhle** 3 weitere bei 2 Kisten.
+          - Sammelt überall **Dunkelpilze**.
+          - Folgt dem **rechten** Höhlengang; in einer Höhle links warten 2 junge Feldräuber.
+          - Weiter dem Gang folgen → Talkessel unterhalb von Xardas' Turm.
+        hints:
+          - "In einer Kiste u.a. ein Apfel."
+          - "Bei den Feldräubern: 1 Feuerpfeilspruchrolle."
+          - "Dauerhaft: **50 Dunkelpilze = +5 Mana**, **25 Äpfel = +1 Stärke**."
+
+      - id: 8
+        title: "Talkessel & Lester"
+        description: |
+          - Geht den Weg hinunter, trefft **Lester**: fragt nach dem Zugang zur Stadt und schickt ihn zu Xardas.
+          - Beseitigt die jungen **Wölfe** im Talkessel.
+        quests:
+          - name: "Kräuter für Constantino"
+            status: received
+        hints:
+          - "Unterwegs nach unten: 1 Feuerball- und 1 Leichte-Wunden-heilen-Spruchrolle."
+          - "Nach den jungen Wölfen erreicht ihr **Stufe 1**."
+
+      - id: 9
+        title: "Riesenrattenhöhle – rostiges Schwert"
+        description: |
+          - Hinter der jungen Blutfliege: Höhle mit 3 jungen Riesenratten (eine vierte kommt dazu).
+          - Plündern, danach Höhle und Talkessel verlassen.
+          - Zurück zum Weg nach Khorinis (beim Xardas-Turm).
+        hints:
+          - "Vorderer Raum: Geldbeutel (**50 Gold**)."
+          - "Hinterer Raum neben Kräutern: **rostiges Schwert** (30 dmg bei 30 Stärke)."
+
+  - title: "Der Weg nach Khorinis"
+    steps:
+      - id: 10
+        title: "Cavalorn – mehrere Quests & Wolfsmesser"
+        description: |
+          - Trefft **Cavalorn**, der gegen Goblins kämpft. Redet mit ihm und fragt nach **Ausrüstung**.
+          - Erkundet das Gebiet **rechts hinter** seinem Lager und kehrt zu ihm zurück.
+        quests:
+          - name: "Cavalorns Alte Hütte"
+            status: received
+            note: "Sagt, dass ihr zurück ins Minental wollt."
+          - name: "Der Ring des Wassers"
+            status: received
+          - name: "Cavalorns Banditen"
+            status: received
+        hints:
+          - "Auf einem Baumstumpf: **rostige Axt** (40 dmg bei 40 Stärke)."
+          - "Von Cavalorn: u.a. **Wolfsmesser** (30 dmg bei 10 Stärke, +3 Einhand)."
+          - "Hinter dem Lager rechts: Beutel Gold (25) + Feuerpfeilspruchrolle; eine weitere bei den 2 Fleischwanzen."
+
+      - id: 11
+        title: "Der Bandit – Steckbriefe und Banditen"
+        description: |
+          - Ein Stück weiter spricht euch ein **Bandit** an und fordert euch auf, ihm zu folgen.
+          - Fragt ihn aus und erzählt, dass ihr **aus der Kolonie** kommt.
+        quests:
+          - name: "Steckbriefe und Banditen"
+            status: received
+
+      - id: 12
+        title: "Innosschrein & Canthar – Pfanne kaufen"
+        description: |
+          - Beim **Innosschrein**: junge Blutfliegen, Wölfe und Goblin beseitigen.
+          - Redet mit dem Händler **Canthar**, lehnt sein Angebot ab.
+          - Verkauft überflüssige Waffen und **kauft eine Pfanne**.
+        hints:
+          - "Neben Canthar: 1 Leichte-Wunden-heilen-Spruchrolle."
+
+      - id: 13
+        title: "Maleth – Banditen bei Lobarts Hof"
+        description: |
+          - Zurück beim Innosschrein steht der Hirte **Maleth** bei seiner Schafherde. Redet mit ihm.
+        quests:
+          - name: "Die Banditen bei Lobarts Hof"
+            status: received
+          - name: "Zugang zur Stadt Khorinis"
+            status: received
+
+      - id: 14
+        title: "Lobart – Rüben ziehn"
+        description: |
+          - Redet mit **Lobart**.
+          - Zieht die **Rüben** und schaut in die Scheune.
+        quests:
+          - name: "Lobarts Arbeiterkleidung"
+            status: received
+          - name: "Rüben ziehn"
+            status: received
+        hints:
+          - "In der Scheune: Geldbeutel (**25 Gold**)."
+
+      - id: 15
+        title: "Rüben- & Pfannen-Kette über Hilda"
+        description: |
+          - Bringt **Lobart** die Rüben.
+          - Bringt die Rüben dann zu **Hilda** und gebt ihr anschließend die **Pfanne**.
+        quests:
+          - name: "Die Rüben zur Hilda bringen"
+            status: completed
+          - name: "Eine Pfanne für Hilda"
+            status: completed
+        hints:
+          - "Rüben an Lobart: **50 EXP**. An Hilda: **50 EXP**. Pfanne an Hilda: **50 EXP** + täglich 1 Eintopf als Gildenloser."
+
+      - id: 16
+        title: "Bandit aufdecken & verfolgen"
+        description: |
+          - Zurück zum **Banditen**: erzählt erst von Maleth, dann von Cavalorn → er flieht.
+          - Folgt ihm und **tötet ihn**.
+        hints:
+          - "Von Maleth erzählen: **50 EXP**. Von Cavalorn erzählen: **50 EXP**."
+          - "Beim toten Banditen: u.a. ein **Degen** (40 dmg bei 20 Geschick)."
+
+      - id: 17
+        title: "Cavalorns Banditen – Die Wassermagier"
+        description: |
+          - Geht zu **Cavalorn** und beseitigt mit ihm die restlichen Banditen.
+          - Findet bei den Banditen den **Brief von Cavalorn**.
+        quests:
+          - name: "Cavalorns Banditen"
+            status: completed
+          - name: "Die Wassermagier"
+            status: received
+        hints:
+          - "Von Cavalorn: **100 EXP** + 50 Gold für die Ausrüstung."
+          - "Bei den Banditen: Brief von Cavalorn, Rum, Goldbrocken."
+          - "Cavalorn unterrichtet Einhand, Bogen und Schleichen (später nutzen)."
+
+      - id: 18
+        title: "Maleth berichten – Stufe 2"
+        description: |
+          - Geht zu **Maleth** und berichtet vom Erfolg.
+        hints:
+          - "Belohnung: **100 EXP** + 3 Weinflaschen. Danach erreicht ihr **Stufe 2**."
+
+      - id: 19
+        title: "Vino & Arbeiterkleidung – Steinkreis"
+        description: |
+          - Gebt **Vino** auf dem Feld eine Flasche Wein.
+          - Holt bei **Lobart** die Arbeiterkleidung (30 Gold; im Haus in einer Truhe – **nur sie nehmen**).
+          - Legt sie an und beseitigt am **Steinkreis** die Feldräuber.
+        quests:
+          - name: "Für eine Flasche Wein"
+            status: completed
+        hints:
+          - "Wein an Vino: **50 EXP**."
+          - "**Arbeiterkleidung**: 15/15/0/0."
+          - "Am Steinkreis: Beutel Gold (25), 1 Goblinbeere, Steintafel Leben 1."
+
+      - id: 20
+        title: "Greg – Der Mann mit der Augenklappe"
+        description: |
+          - Weiter Richtung Stadt. Unterwegs trefft ihr **Greg**.
+        quests:
+          - name: "Der Mann mit der Augenklappe"
+            status: received
+
+  - title: "Vor Khorinis – Burggraben & Hochland"
+    steps:
+      - id: 21
+        title: "Burggraben-Umweg – zwei Ringe & Loot"
+        optional: true
+        description: |
+          - Vor den Stadttorwachen rechts in den **Burg-/Stadtgraben** abbiegen.
+          - Bis zum großen Tal folgen, vorsichtig links vorbei bis zur **Steintreppe**.
+          - Hinauf, dem Weg rechts zur nächsten Steintreppe folgen, hinauf und **links halten** (rechts wäre Akils Hof).
+          - Am Felsen vorbei über den **schmalen Steg**.
+          - Zurück zur Steintreppe bei Akils Hof, hinunter und links.
+        hints:
+          - "Erste Treppe: links Wolf (mit Feuerball), rechts 2 Riesenratten; am Baumstumpf rechts 1 Kronstöckl."
+          - "Schmaler Steg: **Ring +3 Stärke** und **Ring +3 Waffenschutz**."
+          - "Nach der Treppe links: Wolf und Molerats (zu zweit) – mit Feuerpfeilspruchrolle schwächen, im Nahkampf töten."
+          - "Wo sie standen: u.a. **Wolfszahn** (42 dmg bei 22 Stärke)."
+          - "Permanent-Trank-Kräuter: Kronstöckl, Drachenwurzeln, Goblinbeeren, Heilwurzeln, Feuerwurzeln."
+
+      - id: 22
+        title: "Erol & Höhle unter der Steinbrücke"
+        description: |
+          - Dahinter trefft ihr **Erol**.
+          - Säubert die **Höhle unter der Steinbrücke** (2 Molerats).
+          - Zurück Richtung Stadt; beim letzten der 2 Wölfe rechts den Hügel hoch in die Höhle.
+        quests:
+          - name: "Händlerüberfall"
+            status: received
+        hints:
+          - "Höhle unter der Steinbrücke: Geldbeutel."
+          - "Höhle am Hügel: mehrere Fleischwanzen + je 1 Feuerpfeil-, Eispfeil- und Mittlere-Wunden-heilen-Spruchrolle."
+        warnings:
+          - "**NICHT** in den hinteren Raum – dort wartet ein **Orkkrieger**."
+
+      - id: 23
+        title: "Aufstieg ins Hochland – Orkaxt & Keiler-Trick"
+        description: |
+          - Schleicht rechts an **Mika** (Milizsoldat vorm Osttor) vorbei, Blutfliegen mit dem Bogen töten.
+          - Ins kleine Tal links des Weges, Tiere beseitigen, in der Höhle rechts im Tal die **leichte Orkaxt** aus dem Boden holen (Höhle sofort verlassen – hinten Banditen).
+          - Dem Weg ins Hochland folgen: Keiler im **Zickzack** zwischen die Bäume locken, auf tiefer liegende Felsenvorsprünge ausweichen.
+          - Über die Felsen zur Stadtmauer klettern, auf die Mauer springen und in die Stadt.
+        hints:
+          - "**Leichte Orkaxt**: 50 dmg bei 70 Stärke."
+          - "Im kleinen Tal: Riesenratten, Fleischwanzen und Molerats."
+
+  - title: "In Khorinis"
+    steps:
+      - id: 24
+        title: "Khorinis & Lares – Stufe 3"
+        description: |
+          - Ihr steht neben der **Milizkaserne** zwischen Unterstadt und Hafenviertel.
+          - Rechts hinunter zum **Hafen** an die Kaimauer, bis ihr **Lares** trefft.
+        hints:
+          - "Lares treffen: **500 EXP** und **Stufe 3**."
+          - "Lares unterrichtet Stärke und Geschicklichkeit und ist der Spion der Söldner."
+          - "Empfehlung: **20 LP in Geschicklichkeit**, danach den Degen anlegen."
+
+      - id: 25
+        title: "Constantinos Kräuter abgeben & Lothar – Tagesende"
+        description: |
+          - Von Lares Richtung Unterstadt zum **Westtor**, vorsichtig rechts am Paladin **Lothar** vorbei, hinaus Richtung Lobarts Hof.
+          - Stadt erneut betreten und den Torwachen sagen, dass ihr die **Kräuter für Constantino** bringt.
+          - Drinnen spricht euch **Lothar** an: Diego ist wieder im Minental.
+          - Sobald das Gespräch endet, ist **Tag 1 zu Ende**.
+        quests:
+          - name: "Kräuter für Constantino"
+            status: completed
+          - name: "Wo sind die vermissten Leute"
+            status: received
+        hints:
+          - "Den Torwachen die Kräuter ankündigen: **100 EXP**."

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -19,20 +21,56 @@ import (
 // via a global hotkey (button-driven changes return the new state directly).
 const stepChangedEvent = "step:changed"
 
-// StepInfo is the data shape sent to the Wails frontend.
+// configChangedEvent is emitted when the active walkthrough is swapped out from
+// under the frontend (e.g. a hotkey hand-off to the `next:` file). It carries no
+// payload — the frontend re-fetches meta + steps + current, as a full reload.
+const configChangedEvent = "config:changed"
+
+// QuestInfo is a quest-log reference sent to the frontend.
+type QuestInfo struct {
+	Name   string `json:"name"`
+	Status string `json:"status,omitempty"` // received | completed | ""
+	Note   string `json:"note,omitempty"`
+}
+
+// BranchOptionInfo is one selectable path of a branch decision.
+type BranchOptionInfo struct {
+	Label       string `json:"label"`
+	Description string `json:"description,omitempty"`
+}
+
+// StepInfo is the data shape sent to the Wails frontend. It represents one
+// position in the resolved sequence: a normal step, OR a branch decision when
+// IsBranch is true (in which case Title is the decision question, BranchKey
+// identifies it, and Options are the choices). Description is Markdown.
 type StepInfo struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Current     int    `json:"current"`
-	Total       int    `json:"total"`
-	IsFirst     bool   `json:"isFirst"`
-	IsLast      bool   `json:"isLast"`
+	Current int    `json:"current"`
+	Total   int    `json:"total"`
+	IsFirst bool   `json:"isFirst"`
+	IsLast  bool   `json:"isLast"`
+	Section string `json:"section,omitempty"`
+
+	// Branch decision (IsBranch == true)
+	IsBranch  bool               `json:"isBranch,omitempty"`
+	BranchKey string             `json:"branchKey,omitempty"`
+	Selected  string             `json:"selected,omitempty"` // chosen option label ("" while undecided)
+	Options   []BranchOptionInfo `json:"options,omitempty"`
+
+	// Step content (IsBranch == false)
+	ID          int         `json:"id,omitempty"`
+	Title       string      `json:"title"`
+	Description string      `json:"description,omitempty"`
+	Optional    bool        `json:"optional,omitempty"`
+	Quests      []QuestInfo `json:"quests,omitempty"`
+	Hints       []string    `json:"hints,omitempty"`
+	Warnings    []string    `json:"warnings,omitempty"`
 }
 
 // MetaInfo describes the loaded walkthrough for the HUD header.
 type MetaInfo struct {
-	Game  string `json:"game"`
-	Title string `json:"title"`
+	Game    string `json:"game"`
+	Title   string `json:"title"`
+	Variant string `json:"variant,omitempty"`
 }
 
 // App is the Go backend exposed to the frontend via Wails bindings.
@@ -47,6 +85,11 @@ type App struct {
 
 	set     *settings.Store
 	hotkeys *hotkeyManager // set in OnStartup, once the window (and ctx) exist
+
+	// Current config reference, kept so a `next:` hand-off can be resolved
+	// relative to the file the active walkthrough was loaded from.
+	curPath     string
+	curEmbedded bool
 }
 
 // IsPicker reports whether the app is in config-picker mode (no walkthrough loaded).
@@ -104,12 +147,16 @@ func (a *App) LoadConfig(path string, embedded bool) error {
 
 	a.mu.Lock()
 	a.eng = eng
+	a.curPath = path
+	a.curEmbedded = embedded
 	hm := a.hotkeys
 	a.mu.Unlock()
 
 	if hm != nil {
 		hm.apply(a.set.Get().Hotkeys)
 	}
+	// Remember this as the walkthrough to reopen on next launch.
+	a.saveLastConfig(settings.LastConfig{Path: path, Embedded: embedded})
 	return nil
 }
 
@@ -117,7 +164,41 @@ func (a *App) LoadConfig(path string, embedded bool) error {
 func (a *App) UnloadConfig() {
 	a.mu.Lock()
 	a.eng = nil
+	a.curPath = ""
+	a.curEmbedded = false
 	a.mu.Unlock()
+	// Returning to the picker is now the remembered state; clear the auto-load.
+	a.saveLastConfig(settings.LastConfig{})
+}
+
+// saveLastConfig persists the last-loaded walkthrough reference. It is
+// best-effort: a write failure must not stop the walkthrough from loading.
+func (a *App) saveLastConfig(lc settings.LastConfig) {
+	ns := a.set.Get()
+	ns.LastConfig = lc
+	_ = a.set.Save(ns)
+}
+
+// restoreLastConfig reopens the walkthrough recorded by the previous session,
+// turning startup-in-picker-mode into startup-in-the-last-walkthrough. It does
+// nothing if a walkthrough is already loaded (e.g. launched via `run <config>`)
+// or if none was remembered. A stale reference (config moved, deleted, or no
+// longer bundled) is cleared so the app falls back to the picker cleanly.
+func (a *App) restoreLastConfig() {
+	a.mu.Lock()
+	loaded := a.eng != nil
+	a.mu.Unlock()
+	if loaded {
+		return
+	}
+
+	lc := a.set.Get().LastConfig
+	if lc.Path == "" {
+		return
+	}
+	if err := a.LoadConfig(lc.Path, lc.Embedded); err != nil {
+		a.saveLastConfig(settings.LastConfig{})
+	}
 }
 
 // Meta returns the walkthrough header info (game + title).
@@ -127,30 +208,72 @@ func (a *App) Meta() MetaInfo {
 	if a.eng == nil {
 		return MetaInfo{}
 	}
-	return MetaInfo{Game: a.eng.Game(), Title: a.eng.Title()}
+	return MetaInfo{Game: a.eng.Game(), Title: a.eng.Title(), Variant: a.eng.Variant()}
 }
 
-// Steps returns every step in the walkthrough so the HUD can render its checklist.
+// Steps returns every item in the resolved sequence so the HUD can render its
+// (section-grouped) checklist. Branch decisions appear as items too.
 func (a *App) Steps() []StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.eng == nil {
 		return nil
 	}
-	steps := a.eng.Steps()
-	total := len(steps)
+	items := a.eng.Items()
+	total := len(items)
 	out := make([]StepInfo, total)
-	for i, s := range steps {
-		out[i] = StepInfo{
-			Title:       s.Title,
-			Description: s.Description,
-			Current:     i + 1,
-			Total:       total,
-			IsFirst:     i == 0,
-			IsLast:      i == total-1,
-		}
+	for i, it := range items {
+		out[i] = itemInfo(it, i+1, total, a.eng.Done() && i == total-1)
 	}
 	return out
+}
+
+// Choose records the option for the branch the user is currently facing and
+// returns the new active item (the chosen option's first step).
+func (a *App) Choose(persistKey, label string) StepInfo {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.eng == nil {
+		return StepInfo{}
+	}
+	_ = a.eng.Choose(persistKey, label)
+	return a.stepInfo()
+}
+
+// NextFile returns the raw `next:` reference of the active walkthrough, or ""
+// if there is no follow-up file. The HUD shows a hand-off button when this is
+// non-empty and the user reaches the end.
+func (a *App) NextFile() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.eng == nil {
+		return ""
+	}
+	return a.eng.NextFile()
+}
+
+// LoadNext resolves the active walkthrough's `next:` reference relative to the
+// current config and loads it, handing off to the follow-up walkthrough.
+func (a *App) LoadNext() error {
+	a.mu.Lock()
+	next := ""
+	if a.eng != nil {
+		next = a.eng.NextFile()
+	}
+	curPath, embedded := a.curPath, a.curEmbedded
+	a.mu.Unlock()
+	if next == "" {
+		return fmt.Errorf("no next file")
+	}
+
+	var resolved string
+	if embedded {
+		// Embedded paths use forward slashes (embed.FS); resolve in that space.
+		resolved = path.Join(path.Dir(curPath), next)
+	} else {
+		resolved = filepath.Join(filepath.Dir(curPath), next)
+	}
+	return a.LoadConfig(resolved, embedded)
 }
 
 func (a *App) CurrentStep() StepInfo {
@@ -269,9 +392,40 @@ func (a *App) FitWindow(width, height int) {
 	runtime.WindowSetPosition(ctx, right-width, y)
 }
 
-// next/prev are the hotkey-driven counterparts to Next/Prev.
-func (a *App) next() { a.advance((*engine.Engine).Next) }
+// next/prev are the hotkey-driven counterparts to Next/Prev. When "next" is
+// pressed on the final step of a walkthrough that has a `next:` file, it hands
+// off to that file instead of doing nothing — the same action the on-screen
+// "Weiter" button performs.
+func (a *App) next() {
+	a.mu.Lock()
+	if a.eng == nil {
+		a.mu.Unlock()
+		return
+	}
+	handoff := a.eng.Done() && a.eng.NextFile() != ""
+	a.mu.Unlock()
+	if handoff {
+		a.handOff()
+		return
+	}
+	a.advance((*engine.Engine).Next)
+}
+
 func (a *App) prev() { a.advance((*engine.Engine).Prev) }
+
+// handOff loads the active walkthrough's `next:` file and tells the frontend to
+// reload from scratch. Used by the hotkey "next" at the end of a walkthrough.
+func (a *App) handOff() {
+	if err := a.LoadNext(); err != nil {
+		return
+	}
+	a.mu.Lock()
+	ctx := a.ctx
+	a.mu.Unlock()
+	if ctx != nil {
+		runtime.EventsEmit(ctx, configChangedEvent, nil)
+	}
+}
 
 func (a *App) advance(move func(*engine.Engine) error) {
 	a.mu.Lock()
@@ -288,18 +442,47 @@ func (a *App) advance(move func(*engine.Engine) error) {
 	}
 }
 
-// stepInfo builds the StepInfo for the active step. Caller must hold a.mu.
+// stepInfo builds the StepInfo for the active item. Caller must hold a.mu.
 func (a *App) stepInfo() StepInfo {
 	current, total := a.eng.Progress()
-	step := a.eng.Current()
-	return StepInfo{
-		Title:       step.Title,
-		Description: step.Description,
-		Current:     current,
-		Total:       total,
-		IsFirst:     current == 1,
-		IsLast:      a.eng.Done(),
+	it := a.eng.Current()
+	if it == nil {
+		return StepInfo{Current: current, Total: total}
 	}
+	return itemInfo(*it, current, total, a.eng.Done())
+}
+
+// itemInfo converts an engine.Item into the frontend StepInfo shape. pos is the
+// 1-based position; last marks whether this is the final (completed) item.
+func itemInfo(it engine.Item, pos, total int, last bool) StepInfo {
+	info := StepInfo{
+		Current: pos,
+		Total:   total,
+		IsFirst: pos == 1,
+		IsLast:  last,
+		Section: it.Section,
+	}
+	if it.IsBranch() {
+		info.IsBranch = true
+		info.Title = it.Branch.Title
+		info.BranchKey = it.Branch.PersistKey
+		info.Selected = it.Selected
+		for _, o := range it.Branch.Options {
+			info.Options = append(info.Options, BranchOptionInfo{Label: o.Label, Description: o.Description})
+		}
+		return info
+	}
+	s := it.Step
+	info.ID = s.ID
+	info.Title = s.Title
+	info.Description = s.Description
+	info.Optional = s.Optional
+	info.Hints = s.Hints
+	info.Warnings = s.Warnings
+	for _, q := range s.Quests {
+		info.Quests = append(info.Quests, QuestInfo{Name: q.Name, Status: q.Status, Note: q.Note})
+	}
+	return info
 }
 
 // attachProgress wires the engine to the on-disk progress store. fresh=true
@@ -315,8 +498,8 @@ func attachProgress(eng *engine.Engine, wt *config.Walkthrough, fresh bool) {
 	}
 	h := store.For(wt)
 	if !fresh {
-		if index, stepID, ok := h.Load(); ok {
-			eng.Restore(index, stepID)
+		if index, stepID, branches, ok := h.Load(); ok {
+			eng.Restore(index, stepID, branches)
 		}
 	}
 	eng.UsePersister(h)

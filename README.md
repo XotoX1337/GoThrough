@@ -11,10 +11,13 @@ A game-agnostic walkthrough overlay platform written in Go. Load a YAML config f
 ## Features
 
 - Game-agnostic YAML config format
-- Semi-transparent always-on-top overlay (HUD-style), anchored top-right
+- Always-on-top overlay (HUD-style), anchored top-right
+- Config picker on launch — double-click the binary, pick a walkthrough, go
+- Reopens your last walkthrough automatically on the next launch
 - Quest-checklist sidebar: click any step to jump to it
 - Global hotkeys that work while the game has focus (next/prev/hide/quit)
-- Movable, resizable, lockable window (drag only when unlocked, clamped to screen)
+- Movable, lockable window (drag only when unlocked, clamped to screen)
+- Adjustable overlay opacity (solid by default, dial it down to a glassy HUD)
 - Progress is saved automatically and resumes where you left off (per walkthrough)
 - Manual step progression (Next/Prev) — no fragile auto-detection to lead you astray
 - In-HUD settings panel (gear icon) with rebindable global hotkeys
@@ -31,14 +34,9 @@ The defaults are:
 | `Ctrl+Alt+H` | Toggle overlay visibility |
 | `Ctrl+Alt+Q` | Quit |
 
-> **Mouse buttons can be bound too** (e.g. `Ctrl+Alt+MiddleClick`, side buttons).
-> Keyboard combos go through Win32 `RegisterHotKey` (and `XGrabKey` on X11); mouse
-> buttons — which those APIs don't cover — go through a separate global backend
-> (`mousehook`): a low-level mouse hook (`WH_MOUSE_LL`) on Windows, `XGrabButton`
-> on Linux/X11. Only the bound button of a matched combo is swallowed; a bare
-> click (or a different modifier set) passes straight through to the game.
-> Mouse-button hotkeys are unsupported under Wayland and on macOS (the same
-> global-hotkey limitation the keyboard side already has there).
+> Mouse buttons can be bound too (e.g. `Ctrl+Alt+MiddleClick`, side buttons). A bare
+> click still passes straight through to the game. Mouse-button hotkeys are unsupported
+> under Wayland and on macOS.
 
 ## Stack
 
@@ -62,43 +60,19 @@ The defaults are:
 
 ```bash
 wails build -s                                              # build → build/bin/GoThrough.exe
-./build/bin/GoThrough.exe run configs/gothic2/chapter1.yaml # run a walkthrough
-./build/bin/GoThrough.exe run config.yaml --fresh           # ignore saved progress, start at step 1
-make run                                                    # shortcut: build + run
+./build/bin/GoThrough.exe                                   # open the config picker
+./build/bin/GoThrough.exe run path/to/walkthrough.yaml      # run a walkthrough directly
+./build/bin/GoThrough.exe run path/to/walkthrough.yaml --fresh # ignore saved progress, start at step 1
+make run                                                    # shortcut: build + open the picker
 ```
 
-> State is stored as JSON under the OS user-config dir (`os.UserConfigDir()`),
-> as two separate files:
->
-> | File | Holds | Windows | Linux |
-> |---|---|---|---|
-> | `progress.json` | Saved step per walkthrough (auto-saved, restored on launch; `--fresh` ignores it) | `%AppData%\GoThrough\` | `~/.config/GoThrough/` |
-> | `settings.json` | User settings, e.g. hotkey bindings (defaults used when absent) | `%AppData%\GoThrough\` | `~/.config/GoThrough/` |
->
-> They're kept separate on purpose: progress is rewritten on every step change and
-> reset by `--fresh`, while settings change rarely and must survive a fresh start.
-
-> `-s` skips Wails' npm pipeline — assets are embedded directly via `//go:embed`.
-
-### Iterating on the UI (devui)
-
-For fast HUD iteration without rebuilding the Wails app, `tools/devui` is a
-pure-Go (stdlib only, no Node) dev server that serves the untouched
-`overlay/frontend/index.html` with the Wails bindings mocked against real step
-data and live-reloads on save:
-
-```bash
-go run ./tools/devui                       # → http://localhost:34116 (gothic2/chapter1)
-go run ./tools/devui -config path/to.yaml  # preview any walkthrough
-go run ./tools/devui -bg screenshot.png    # use a real game screenshot as the scene
-```
-
-> devui approximates the glassmorphism/blur look but cannot reproduce true window
-> transparency — verify the final result with `wails build -s` over a running game.
+> Progress and settings are saved automatically under your OS user-config dir
+> (`%AppData%\GoThrough\` on Windows, `~/.config/GoThrough/` on Linux). Delete that
+> folder to reset, or use `--fresh` to ignore saved progress for one run.
 
 ## Config Format
 
-Walkthroughs are defined as YAML files:
+Walkthroughs are defined as YAML files. The minimal form is a flat list of steps:
 
 ```yaml
 game: Gothic 2
@@ -111,50 +85,65 @@ steps:
   - id: 1
     title: "Leave Xardas' Tower"
     description: "Go down the stairs and exit the tower."
-    trigger:
-      type: manual
 
   - id: 2
     title: "Head to Khorinis"
     description: "Follow the southern path to the city gate."
-    trigger:
-      type: manual
 ```
 
-### Trigger types
+Progression is user-driven: steps advance on a Next click or hotkey. `trigger`
+defaults to `manual` and can be omitted. Automatic triggers (OCR, memory-reading)
+were intentionally left out — a game-agnostic tool has no reliable way to read quest state.
 
-| Type | Description | Status |
-|---|---|---|
-| `manual` | User clicks Next or presses a hotkey | v0.1+ |
+### Sections, branches & richer steps (schema 2)
 
-> Automatic triggers (OCR, memory-reading) were intentionally dropped: a game-agnostic
-> tool has no reliable way to read quest state, so progression is user-driven by design.
->
-> Exception left open for the future: games that expose a clean modding/scripting API
-> (e.g. Elder Scrolls) *could* gain an opt-in, per-game automatic trigger that reads real
-> quest state through that API — manual stays the baseline.
+Larger walkthroughs can group steps into **sections**, fork into **branches**
+(decision points that re-converge), and chain across files with **`next`**.
+Steps support **Markdown** descriptions plus `hints`, `warnings`, `quests`, and
+an `optional` flag. Everything is additive — flat `steps`-only configs keep
+loading unchanged.
 
-## Project Structure
+```yaml
+schema: 2
+game: Gothic 2
+version: Die Nacht des Raben
+variant: Drachenjäger          # whole-file path label
+author: yourname
+source: "Forum walkthrough X"  # attribution
+chapter: 1
+day: 1
+title: "Chapter 1 - Day 1"
+next: "day2.yaml"              # hand-off to the next file when finished
 
-```
-GoThrough/
-├── cmd/               # Cobra CLI commands
-├── config/            # YAML config loader & validator
-├── engine/            # Step management & navigation
-├── progress/          # JSON progress persistence (resume per walkthrough)
-├── settings/          # JSON user settings — hotkey rebinding etc. (v0.5)
-├── mousehook/         # Global mouse-button hotkeys (WH_MOUSE_LL / XGrabButton)
-├── overlay/           # Wails UI window
-│   ├── app.go         # Go backend (bound to frontend)
-│   ├── overlay.go     # Wails app setup
-│   └── frontend/      # HTML/CSS/JS HUD
-├── configs/           # Community walkthrough YAML files
-│   └── gothic2/
-│       └── chapter1.yaml
-├── tools/
-│   └── devui/         # Pure-Go live-reload dev server for the HUD
-├── scripts/           # Dev scripts
-└── Makefile
+sections:                      # use EITHER sections OR a flat `steps:` list
+  - title: "Khorinis"
+    steps:
+      - id: 1
+        title: "Reach the city"
+        optional: true
+        description: |         # Markdown: bullets, **bold**, *italic*
+          - Follow the path **south**.
+          - Avoid the *field raiders*.
+        quests:
+          - { name: "Into the city", status: received }   # received | completed
+        hints:    ["Chest near the gate holds **50 gold**."]
+        warnings: ["Don't enter the back room — an orc waits there."]
+
+  - title: "Guild choice"
+    steps:
+      - branch:                # fork; the choice is saved in progress.json
+          persistKey: guild
+          title: "Which guild do you join?"
+          options:
+            - label: "Militia"
+              description: "City & order."
+              steps:
+                - { id: 100, title: "Join the militia" }
+            - label: "Mercenary"
+              steps:
+                - { id: 200, title: "Join the mercenaries" }
+      - id: 2
+        title: "Shared ending"  # steps after the branch re-converge for every option
 ```
 
 ## Roadmap
@@ -164,12 +153,10 @@ GoThrough/
 - [x] v0.3 — Always-on-top + global hotkeys; HUD wired to the engine *(verified in-game over Gothic 2)*
 - [x] v0.4 — Progress persistence (auto-saved per walkthrough, resumes on launch)
 - [x] v0.5 — Settings: persistent user config + rebindable hotkeys (in-HUD panel)
-- [ ] v0.6 — Branching & sections in the config format (e.g. Gothic 2's guild choice)
+- [x] v0.6 — UX & distribution polish: config picker, double-click launch, opacity, reopen last walkthrough, binary signing
+- [x] v0.7 — Branching & sections in the config format (Gothic 2's guild choice), Markdown steps, hints/warnings/quests, `next`-file chaining
 - [ ] v1.0 — First full Gothic 2 walkthrough config
-
-> Automatic progress tracking (OCR / memory-reading) was evaluated and dropped — see
-> [Trigger types](#trigger-types).
 
 ## Community Configs
 
-The `configs/` directory is meant to grow into a community-maintained library of walkthrough configs. If you write one, open a PR.
+Walkthroughs bundled with the binary live under `configstore/configs/`, meant to grow into a community-maintained library. If you write one, open a PR.

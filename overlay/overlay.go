@@ -32,10 +32,12 @@ type Overlay struct {
 	hotkeys *hotkeyManager
 }
 
-// New creates an Overlay for the given engine and settings store.
-// Pass eng=nil to start in config-picker mode.
-func New(eng *engine.Engine, set *settings.Store) *Overlay {
-	return &Overlay{app: &App{eng: eng, set: set}}
+// New creates an Overlay for the given engine and settings store. srcPath is the
+// on-disk path the walkthrough was loaded from (CLI `run`), so a `next:` hand-off
+// can be resolved relative to it; pass "" in picker mode (the picker sets it via
+// LoadConfig). Pass eng=nil to start in config-picker mode.
+func New(eng *engine.Engine, set *settings.Store, srcPath string) *Overlay {
+	return &Overlay{app: &App{eng: eng, set: set, curPath: srcPath, curEmbedded: false}}
 }
 
 // Run opens the overlay window and blocks until the user closes it.
@@ -76,6 +78,11 @@ func (o *Overlay) onStartup(ctx context.Context) {
 	log.Println("onStartup: creating hotkey manager")
 	o.hotkeys = newHotkeyManager(ctx, o.app)
 	o.app.hotkeys = o.hotkeys
+	// Reopen the last walkthrough (if any and still valid) before the frontend
+	// queries IsPicker(), so the app starts where the user left off. No-op when
+	// launched via `run <config>` (a walkthrough is already loaded).
+	log.Println("onStartup: restoring last config")
+	o.app.restoreLastConfig()
 	log.Printf("onStartup: applying hotkeys: %+v", o.app.set.Get().Hotkeys)
 	o.hotkeys.apply(o.app.set.Get().Hotkeys)
 	log.Println("onStartup: done")
@@ -123,4 +130,3 @@ func primaryScreenWidth(ctx context.Context) int {
 	}
 	return screen.Width
 }
-

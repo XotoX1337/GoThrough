@@ -37,7 +37,25 @@ func runWalkthrough(_ *cobra.Command, args []string) error {
 	eng := engine.New(wt)
 	attachProgressCLI(eng, wt)
 
-	return overlay.New(eng, openSettings()).Run()
+	set := openSettings()
+	abs := rememberLastConfig(set, args[0])
+	return overlay.New(eng, set, abs).Run()
+}
+
+// rememberLastConfig records a CLI-loaded walkthrough so a later double-click
+// (picker entry) reopens it, and returns the absolute path it stored. The path
+// is absolute because the next launch may have a different working directory,
+// and so a `next:` hand-off resolves correctly regardless of CWD. Best-effort:
+// a failure to persist must not stop the walkthrough from running.
+func rememberLastConfig(set *settings.Store, path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = path
+	}
+	ns := set.Get()
+	ns.LastConfig = settings.LastConfig{Path: abs, Embedded: false}
+	_ = set.Save(ns)
+	return abs
 }
 
 // openSettings loads the user settings store, falling back to an in-memory
@@ -72,8 +90,8 @@ func attachProgressCLI(eng *engine.Engine, wt *config.Walkthrough) {
 
 	h := store.For(wt)
 	if !freshStart {
-		if index, stepID, ok := h.Load(); ok {
-			eng.Restore(index, stepID)
+		if index, stepID, branches, ok := h.Load(); ok {
+			eng.Restore(index, stepID, branches)
 		}
 	}
 	eng.UsePersister(h)

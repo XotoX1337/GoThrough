@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 Double-click the binary (or run with no arguments) to open the config picker.
 Use 'gothrough run <config.yaml>' to start a specific walkthrough directly.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
-		return overlay.New(nil, openSettings()).Run()
+		return overlay.New(nil, openSettings(), "").Run()
 	},
 }
 

@@ -1,0 +1,134 @@
+# Schema v2 (v0.7) – Diamant-Demo: geteilter Anfang -> branch (Gildenwahl) -> geteiltes Ende.
+# Lockt die letzten Format-Ecken an echtem Content: `branch` (mit persistKey + Re-Konvergenz)
+# und `next` (Verkettung). Inhalt ist repräsentativ, nicht als vollständige Komplettlösung gedacht.
+schema: 2
+game: Gothic 2
+version: Die Nacht des Raben
+variant: Drachenjäger
+author: XotoX1337
+source: "WoP-Forum Komplettlösung (EL Libertador)"
+chapter: 1
+day: 2
+title: "Kapitel 1 – Tag 2: Khorinis & die Gildenwahl"
+# Nach dem letzten Step Hand-off in die nächste Datei:
+next: "day3.yaml"
+
+sections:
+  - title: "Khorinis – vor der Entscheidung"
+    steps:
+      - id: 1
+        title: "Constantino die Kräuter bringen"
+        description: |
+          - Geht zum Alchemisten **Constantino** in der Unterstadt.
+          - Übergebt die gesammelten **Kräuter** und kassiert die Belohnung.
+        quests:
+          - { name: "Kräuter für Constantino", status: completed }
+        hints:
+          - "Belohnung: **Gold** + ein **Heiltrank**."
+
+      - id: 2
+        title: "Lord Hagen – Zugang zum Minental"
+        description: |
+          - Geht zum **Paladin Lord Hagen** in der Oberstadt.
+          - Er erklärt: ins **Minental** kommt nur, wer einer anerkannten **Gilde** angehört.
+        quests:
+          - { name: "Ins Minental", status: received, note: "Erst einer Gilde anschließen." }
+        warnings:
+          - "Ab hier ist die Gildenwahl **endgültig** – sie bestimmt den Rest des Kapitels."
+
+      - id: 3
+        title: "Stadt erkunden (optional)"
+        optional: true
+        description: |
+          - Lohnt sich vor der Festlegung: Händler, Diebesgilde, Trainer abklappern.
+        hints:
+          - "Bei **Bosper** (Jäger): Bogen-Training. Bei **Thorben**: Rüstungen."
+
+  - title: "Gildenwahl"
+    steps:
+      - branch:
+          persistKey: guild
+          title: "Welcher Gilde schließt du dich an?"
+          options:
+            - label: "Miliz / Paladine"
+              description: "Stadt & Ordnung. Führt zur Paladin-Laufbahn."
+              steps:
+                - id: 100
+                  title: "Lord Andre aufsuchen"
+                  description: |
+                    - Sprecht den **Milizhauptmann Andre** in der Kaserne an.
+                    - Er verlangt, dass ihr euch bei den Bürgern bewährt.
+                  quests:
+                    - { name: "Der Miliz beitreten", status: received }
+                - id: 101
+                  title: "Für die Miliz bewähren"
+                  description: |
+                    - Erledigt Andres Aufträge in der Stadt.
+                    - Lasst euch von angesehenen Bürgern **empfehlen**.
+                - id: 102
+                  title: "Milizrüstung erhalten"
+                  description: |
+                    - Andre nimmt euch auf und gibt euch die **Milizrüstung**.
+                  hints:
+                    - "**Milizrüstung**: solider Früh-Schutz, Zugang zur Oberstadt."
+
+            - label: "Söldner / Drachenjäger"
+              description: "Onars Hof, Lees Söldner. Im Addon die Drachenjäger-Laufbahn."
+              steps:
+                - id: 200
+                  title: "Zu Onars Hof"
+                  description: |
+                    - Verlasst die Stadt Richtung **Onars Bauernhof** im Land.
+                    - Meldet euch bei den **Söldnern** am Hof.
+                  quests:
+                    - { name: "Den Söldnern beitreten", status: received }
+                - id: 201
+                  title: "Lee überzeugen"
+                  description: |
+                    - Sprecht den Söldner-Anführer **Lee** an.
+                    - Arbeitet für **Onar**, um aufgenommen zu werden.
+                - id: 202
+                  title: "Söldnerrüstung erhalten"
+                  description: |
+                    - Lee nimmt euch auf; ihr erhaltet die **Söldnerrüstung**.
+                  hints:
+                    - "Hoher Nahkampf-Fokus; später Pfad zum **Drachenjäger**."
+
+            - label: "Feuermagier / Kloster"
+              description: "Magier-Laufbahn im Kloster. Braucht Empfehlung + 1000 Gold."
+              steps:
+                - id: 300
+                  title: "Empfehlungsschreiben besorgen"
+                  description: |
+                    - Besorgt euch ein **Empfehlungsschreiben** für das Kloster.
+                  quests:
+                    - { name: "Novize werden", status: received }
+                - id: 301
+                  title: "1000 Gold zusammenbekommen"
+                  description: |
+                    - Sammelt die **1000 Gold**, die als Novize verlangt werden.
+                  warnings:
+                    - "Ohne die **1000 Gold** nimmt euch das Kloster **nicht** auf."
+                - id: 302
+                  title: "Pyrokar im Kloster"
+                  description: |
+                    - Geht zum **Kloster** und sprecht **Pyrokar** an.
+                    - Ihr werdet **Novize** und erhaltet die Novizenrobe.
+
+  - title: "Aufbruch ins Minental"
+    steps:
+      - id: 90
+        title: "Bei Lord Hagen melden"
+        description: |
+          - Kehrt – **egal welche Gilde** – zu **Lord Hagen** zurück.
+          - Als Gildenmitglied dürft ihr euch der **Expedition ins Minental** anschließen.
+        quests:
+          - { name: "Ins Minental", status: completed }
+        hints:
+          - "Ab hier laufen alle Pfade wieder zusammen."
+
+      - id: 91
+        title: "Tagesende – Aufbruch"
+        description: |
+          - Bereitet euch aus (Tränke, Reparaturen) und brecht mit den Paladinen auf.
+          - Mit dem Aufbruch ins Minental endet **Kapitel 1**.
