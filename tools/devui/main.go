@@ -280,7 +280,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
   const api = (p, opts) => fetch(p, opts).then(r => r.json());
   // Mock settings — mirrors settings.Defaults() (settings/settings.go). Save methods
   // just store and echo back; real registration/persistence only in the Wails build.
-  const settings = { version: 1, opacity: 1.0, theme: 'dark', hotkeys: {
+  const settings = { version: 1, opacity: 1.0, theme: 'dark', language: 'en', hotkeys: {
     next:         { mods: ['ctrl', 'alt'], key: 'right' },
     prev:         { mods: ['ctrl', 'alt'], key: 'left'  },
     toggleHide:   { mods: ['ctrl', 'alt'], key: 'h'     },
@@ -307,6 +307,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
     SaveHotkeys:  (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
     SaveOpacity:  (v) => { settings.opacity = v; return Promise.resolve(settings); },
     SaveTheme:    (t) => { settings.theme = t; return Promise.resolve(settings); },
+    SaveLanguage: (l) => { settings.language = l; return Promise.resolve(settings); },
   } } };
   window.runtime = {
     Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),

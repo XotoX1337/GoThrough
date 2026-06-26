@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -253,16 +253,16 @@
             cursor: pointer;
         }
 
-        /* Theme switcher (segmented control) */
+        /* Theme + language switchers (segmented control) */
         .theme-switch { display: inline-flex; gap: 4px; }
-        .theme-opt {
+        .theme-opt, .lang-opt {
             font-size: 10.5px; padding: 4px 9px; border-radius: 6px; cursor: pointer;
             font-family: inherit; white-space: nowrap; transition: all 0.18s ease;
             border: 1px solid rgba(var(--gt-fg), 0.14);
             background: rgba(var(--gt-fg), 0.05); color: rgba(var(--gt-fg), 0.7);
         }
-        .theme-opt:hover { background: rgba(var(--gt-fg), 0.1); }
-        .theme-opt.active {
+        .theme-opt:hover, .lang-opt:hover { background: rgba(var(--gt-fg), 0.1); }
+        .theme-opt.active, .lang-opt.active {
             background: rgba(var(--gt-accent-rgb), 0.92); color: var(--gt-accent-fg);
             border-color: transparent;
         }
@@ -667,18 +667,90 @@
         return out.join("");
     }
 
+    // --- i18n -------------------------------------------------------------
+    // UI strings keyed by language. English is the default; German is selectable
+    // in settings (state.settings.language). Values are either plain strings or
+    // functions for the few parametric/word-order-sensitive ones (resolved via
+    // tf()). Walkthrough content itself is authored in the config, not here.
+    const I18N = {
+        en: {
+            adjust: "Adjust", lock: "Lock", close: "Close",
+            openFile: "Open file…", chooseGame: "Choose game", backToGames: "← Games",
+            chapterLabel: n => "Chapter " + n,
+            chaptersCount: n => n + (n === 1 ? " chapter" : " chapters"),
+            by: a => "by " + a,
+            noChapters: "No chapters found.",
+            noConfigs: "No bundled configs found.",
+            remoteBadge: n => "↑ " + n + " new config" + (n > 1 ? "s" : "") + " available — update GoThrough",
+            switchWalkthrough: "Switch walkthrough", settingsTitle: "Settings", closeOverlay: "Close overlay",
+            steps: "Steps", noSteps: "No steps loaded", now: "Now", decision: "Decision",
+            stepCount: (a, b) => "Step " + a + " / " + b,
+            chosen: "chosen", nextFile: f => "Continue ➜ " + f, optional: "optional",
+            quests: "Quests", completed: "✓ completed", received: "received",
+            warning: "Caution", info: "Info", hints: "Hints",
+            shortcuts: "Shortcuts", pressKey: "Press key/mouse…",
+            opacity: "Opacity", design: "Theme", language: "Language",
+            settingsHint: "Click a shortcut, then press a key or mouse combo. Esc cancels.",
+            hkNext: "Next step", hkPrev: "Previous step", hkToggle: "Toggle overlay",
+            hkFocus: "Mouse into overlay", hkQuit: "Close overlay",
+            themeDark: "Dark", themeLight: "Light", themeContrast: "Contrast",
+            mouseL: "Mouse L", mouseM: "Mouse M", mouseR: "Mouse R", mouse4: "Mouse 4", mouse5: "Mouse 5",
+        },
+        de: {
+            adjust: "Anpassen", lock: "Fixieren", close: "Schließen",
+            openFile: "Datei öffnen…", chooseGame: "Spiel wählen", backToGames: "← Spiele",
+            chapterLabel: n => "Kapitel " + n,
+            chaptersCount: n => n + (n === 1 ? " Kapitel" : " Kapitel"),
+            by: a => "von " + a,
+            noChapters: "Keine Kapitel gefunden.",
+            noConfigs: "Keine eingebetteten Configs gefunden.",
+            remoteBadge: n => "↑ " + n + " neue Config" + (n > 1 ? "s" : "") + " verfügbar — GoThrough aktualisieren",
+            switchWalkthrough: "Anderes Walkthrough", settingsTitle: "Einstellungen", closeOverlay: "Overlay schließen",
+            steps: "Schritte", noSteps: "Keine Schritte geladen", now: "Jetzt", decision: "Entscheidung",
+            stepCount: (a, b) => "Schritt " + a + " / " + b,
+            chosen: "gewählt", nextFile: f => "Weiter ➜ " + f, optional: "optional",
+            quests: "Quests", completed: "✓ abgeschlossen", received: "erhalten",
+            warning: "Achtung", info: "Info", hints: "Hinweise",
+            shortcuts: "Tastenkürzel", pressKey: "Taste/Maus drücken…",
+            opacity: "Transparenz", design: "Design", language: "Sprache",
+            settingsHint: "Klick auf ein Kürzel, dann Tasten- oder Maustasten-Kombination drücken. Esc bricht ab.",
+            hkNext: "Nächster Schritt", hkPrev: "Vorheriger Schritt", hkToggle: "Overlay ein/aus",
+            hkFocus: "Maus ins Overlay", hkQuit: "Overlay schließen",
+            themeDark: "Dunkel", themeLight: "Hell", themeContrast: "Kontrast",
+            mouseL: "Maus L", mouseM: "Maus M", mouseR: "Maus R", mouse4: "Maus 4", mouse5: "Maus 5",
+        },
+    };
+    const LANGUAGES = [
+        { key: "en", label: "English" },
+        { key: "de", label: "Deutsch" },
+    ];
+    function lang() {
+        const l = state.settings && state.settings.language;
+        return I18N[l] ? l : "en";
+    }
+    function t(key) {
+        const v = I18N[lang()][key];
+        return v != null ? v : (I18N.en[key] != null ? I18N.en[key] : key);
+    }
+    // tf resolves a (possibly parametric) string: passes args through if the
+    // entry is a function, otherwise returns the plain string.
+    function tf(key, ...args) {
+        const v = t(key);
+        return typeof v === "function" ? v(...args) : v;
+    }
+
     function renderQuests(quests) {
         if (!quests || !quests.length) return "";
         const rows = quests.map(q => {
             const status = q.status === "completed"
-                ? `<span class="quest-status done">✓ abgeschlossen</span>`
-                : (q.status === "received" ? `<span class="quest-status">erhalten</span>` : "");
+                ? `<span class="quest-status done">${t("completed")}</span>`
+                : (q.status === "received" ? `<span class="quest-status">${t("received")}</span>` : "");
             const note = q.note ? `<div class="quest-note">${mdInline(q.note)}</div>` : "";
             return `<div class="quest ${esc(q.status || "")}">
                         <div class="quest-line"><span class="quest-name">${esc(q.name)}</span> ${status}</div>${note}
                     </div>`;
         }).join("");
-        return `<div class="info-block"><div class="info-head mono">Quests</div>${rows}</div>`;
+        return `<div class="info-block"><div class="info-head mono">${t("quests")}</div>${rows}</div>`;
     }
     function renderList(items, head, cls) {
         if (!items || !items.length) return "";
@@ -687,10 +759,9 @@
     }
     // renderTasks renders a step's actionable sub-steps. Each task is a bullet;
     // an optional per-task info/warning/hint renders as a small callout beneath it.
-    const CALLOUT_TAG = { info: "Info", warning: "Achtung", hint: "Tipp" };
     function taskCallout(kind, text) {
         if (!text) return "";
-        const tag = kind === "hint" ? "" : `<span class="task-callout-tag mono">${CALLOUT_TAG[kind]}</span>`;
+        const tag = kind === "hint" ? "" : `<span class="task-callout-tag mono">${t(kind)}</span>`;
         return `<span class="task-callout ${kind}">${tag}${mdInline(text)}</span>`;
     }
     function renderTasks(tasks) {
@@ -709,9 +780,9 @@
 
     // --- Theme ------------------------------------------------------------
     const THEMES = [
-        { key: "dark",     label: "Dunkel" },
-        { key: "light",    label: "Hell" },
-        { key: "contrast", label: "Kontrast" },
+        { key: "dark",     labelKey: "themeDark" },
+        { key: "light",    labelKey: "themeLight" },
+        { key: "contrast", labelKey: "themeContrast" },
     ];
     function applyTheme(t) {
         // Sets html[data-theme]; the stylesheet's token blocks do the rest.
@@ -720,20 +791,22 @@
 
     // --- Hotkeys ----------------------------------------------------------
     const HOTKEY_ACTIONS = [
-        { key: "next",         label: "Nächster Schritt" },
-        { key: "prev",         label: "Vorheriger Schritt" },
-        { key: "toggleHide",   label: "Overlay ein/aus" },
-        { key: "focusOverlay", label: "Maus ins Overlay" },
-        { key: "quit",         label: "Overlay schließen" },
+        { key: "next",         labelKey: "hkNext" },
+        { key: "prev",         labelKey: "hkPrev" },
+        { key: "toggleHide",   labelKey: "hkToggle" },
+        { key: "focusOverlay", labelKey: "hkFocus" },
+        { key: "quit",         labelKey: "hkQuit" },
     ];
 
     const MOD_LABEL = { ctrl: "Ctrl", alt: "Alt", shift: "Shift", win: "Win" };
     const KEY_LABEL = { left: "←", right: "→", up: "↑", down: "↓", space: "Space", return: "Enter", escape: "Esc", delete: "Del", tab: "Tab" };
-    const BUTTON_LABEL = { left: "Maus L", middle: "Maus M", right: "Maus R", back: "Maus 4", x1: "Maus 4", forward: "Maus 5", x2: "Maus 5" };
+    // Mouse-button labels are localised ("Mouse L" / "Maus L"); the keys map a
+    // binding's button name to an I18N key.
+    const BUTTON_KEY = { left: "mouseL", middle: "mouseM", right: "mouseR", back: "mouse4", x1: "mouse4", forward: "mouse5", x2: "mouse5" };
     function formatBinding(b) {
         if (!b) return "—";
         let trigger;
-        if (b.button) trigger = BUTTON_LABEL[b.button] || b.button;
+        if (b.button) trigger = BUTTON_KEY[b.button] ? t(BUTTON_KEY[b.button]) : b.button;
         else if (b.key) trigger = KEY_LABEL[b.key] || b.key.toUpperCase();
         else return "—";
         const parts = (b.mods || []).map(m => MOD_LABEL[m] || m);
@@ -783,6 +856,7 @@
         mover.classList.toggle("editing", !state.locked);
         mover.classList.toggle("collapsed", state.collapsed && state.view === "steps");
         applyOpacity(state.settings ? state.settings.opacity : 1);
+        document.documentElement.lang = lang();
 
         if (state.view === "picker") {
             renderPicker();
@@ -810,28 +884,28 @@
             kicker = esc(state.pickerGame);
             const rows = chapters.map(c => `
                 <div class="picker-row" data-path="${esc(c.path)}" data-embedded="true">
-                    ${c.chapter ? `<div class="picker-game mono">Kapitel ${c.chapter}</div>` : ''}
+                    ${c.chapter ? `<div class="picker-game mono">${esc(tf("chapterLabel", c.chapter))}</div>` : ''}
                     <div class="picker-title">${esc(c.title)}</div>
-                    ${c.author ? `<div class="picker-meta mono">von ${esc(c.author)}</div>` : ''}
+                    ${c.author ? `<div class="picker-meta mono">${esc(tf("by", c.author))}</div>` : ''}
                 </div>`).join('');
-            rowsHTML = `<div class="picker-back mono" id="pickerBack">← Spiele</div>` +
-                (rows || `<div class="picker-empty">Keine Kapitel gefunden.</div>`);
+            rowsHTML = `<div class="picker-back mono" id="pickerBack">${t("backToGames")}</div>` +
+                (rows || `<div class="picker-empty">${t("noChapters")}</div>`);
         } else {
-            kicker = "Spiel wählen";
+            kicker = t("chooseGame");
             const games = [...new Set(state.configs.map(c => c.game))].sort();
             rowsHTML = games.length
                 ? games.map(g => {
                     const n = state.configs.filter(c => c.game === g).length;
                     return `<div class="picker-row" data-game="${esc(g)}">
                         <div class="picker-title">${esc(g)}</div>
-                        <div class="picker-meta mono">${n} Kapitel</div>
+                        <div class="picker-meta mono">${esc(tf("chaptersCount", n))}</div>
                     </div>`;
                 }).join('')
-                : `<div class="picker-empty">Keine eingebetteten Configs gefunden.</div>`;
+                : `<div class="picker-empty">${t("noConfigs")}</div>`;
         }
 
         const remoteBadge = state.remoteCount > 0
-            ? `<div class="picker-remote-badge mono">↑ ${state.remoteCount} neue Config${state.remoteCount > 1 ? 's' : ''} verfügbar — GoThrough aktualisieren</div>`
+            ? `<div class="picker-remote-badge mono">${esc(tf("remoteBadge", state.remoteCount))}</div>`
             : '';
 
         panel.innerHTML = `
@@ -842,15 +916,15 @@
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
-                    <div class="close-btn" id="closeBtn" title="Schließen">✕</div>
+                    <div class="lock-btn mono" id="lockBtn">${state.locked ? t("adjust") : t("lock")}</div>
+                    <div class="close-btn" id="closeBtn" title="${t("close")}">✕</div>
                 </div>
             </div>
             <div class="picker-view">
                 <div class="picker-kicker mono">${kicker}</div>
                 <div class="picker-list" id="pickerList">${rowsHTML}</div>
                 <div class="picker-actions">
-                    <div class="picker-browse mono" id="pickerBrowse">Datei öffnen…</div>
+                    <div class="picker-browse mono" id="pickerBrowse">${t("openFile")}</div>
                 </div>
                 ${state.pickerError ? `<div class="picker-error">${esc(state.pickerError)}</div>` : ''}
                 ${remoteBadge}
@@ -863,7 +937,7 @@
         const done = pos < state.activePos;
         const isCurrent = pos === state.activePos;
         const label = s.isChoice ? `⑂ ${esc(s.title)}` : esc(s.title);
-        const optBadge = s.optional ? `<span class="row-opt">optional</span>` : "";
+        const optBadge = s.optional ? `<span class="row-opt">${t("optional")}</span>` : "";
         return `
             <div class="row${done ? " done" : ""}${isCurrent ? " current" : ""}${s.isChoice ? " is-choice" : ""}" data-index="${i}">
                 <div class="mark">${done ? '<span class="check">✓</span>' : ""}</div>
@@ -892,7 +966,7 @@
             const allDone = g.items.every(({ i }) => (i + 1) < state.activePos);
             const ov = state.sectionOverride[g.section];
             const open = ov === undefined ? !allDone : ov;
-            const badge = allDone ? `<span class="section-done mono">✓ abgeschlossen</span>` : "";
+            const badge = allDone ? `<span class="section-done mono">${t("completed")}</span>` : "";
             return `<div class="section-group${open ? "" : " sec-collapsed"}">
                 <div class="section-head mono" data-section="${esc(g.section)}">
                     <span class="section-chevron">${CHEVRON_SVG}</span>
@@ -914,36 +988,36 @@
 
         let nowHTML;
         if (!current) {
-            nowHTML = `<div class="done-card">Keine Schritte geladen</div>`;
+            nowHTML = `<div class="done-card">${t("noSteps")}</div>`;
         } else if (current.isChoice) {
             const opts = (current.options || []).map(o => {
                 const chosen = current.selected && o.value === current.selected;
                 return `
                 <button class="choice-opt${chosen ? " chosen" : ""}" data-key="${esc(current.choiceKey)}" data-value="${esc(o.value)}">
-                    <span class="choice-opt-label">${esc(o.label)}${chosen ? ' <span class="choice-opt-tag">gewählt</span>' : ""}</span>
+                    <span class="choice-opt-label">${esc(o.label)}${chosen ? ` <span class="choice-opt-tag">${t("chosen")}</span>` : ""}</span>
                     ${o.description ? `<span class="choice-opt-desc">${mdInline(o.description)}</span>` : ""}
                 </button>`;
             }).join("");
             nowHTML = `<div class="now-card choice-card">
-                   <div class="now-label mono">Entscheidung</div>
+                   <div class="now-label mono">${t("decision")}</div>
                    <div class="now-step">${esc(current.title)}</div>
-                   <div class="now-meta mono">Schritt ${state.activePos} / ${total}${current.section ? " · " + esc(current.section) : ""}</div>
+                   <div class="now-meta mono">${esc(tf("stepCount", state.activePos, total))}${current.section ? " · " + esc(current.section) : ""}</div>
                    <div class="choice-options">${opts}</div>
                </div>`;
         } else {
-            const optBadge = current.optional ? `<span class="opt-badge">optional</span>` : "";
+            const optBadge = current.optional ? `<span class="opt-badge">${t("optional")}</span>` : "";
             const handoff = (current.isLast && state.nextFile)
-                ? `<button class="next-file-btn" id="nextFileBtn">Weiter ➜ ${esc(state.nextFile)}</button>` : "";
+                ? `<button class="next-file-btn" id="nextFileBtn">${esc(tf("nextFile", state.nextFile))}</button>` : "";
             nowHTML = `<div class="now-card">
-                   <div class="now-label mono">Jetzt</div>
+                   <div class="now-label mono">${t("now")}</div>
                    <div class="now-step">${esc(current.title)} ${optBadge}</div>
-                   <div class="now-meta mono">Schritt ${state.activePos} / ${total}${current.section ? " · " + esc(current.section) : ""}</div>
+                   <div class="now-meta mono">${esc(tf("stepCount", state.activePos, total))}${current.section ? " · " + esc(current.section) : ""}</div>
                    ${current.description ? `<div class="now-desc">${md(current.description)}</div>` : ""}
                    ${renderTasks(current.tasks)}
-                   ${renderList(current.warnings, "Achtung", "warnings")}
-                   ${renderList(current.infos, "Info", "infos")}
+                   ${renderList(current.warnings, t("warning"), "warnings")}
+                   ${renderList(current.infos, t("info"), "infos")}
                    ${renderQuests(current.quests)}
-                   ${renderList(current.hints, "Hinweise", "hints")}
+                   ${renderList(current.hints, t("hints"), "hints")}
                    ${handoff}
                </div>`;
         }
@@ -952,30 +1026,37 @@
 
         const settingsHTML = `
             <div class="settings-view">
-                <div class="settings-kicker mono">Tastenkürzel</div>
+                <div class="settings-kicker mono">${t("shortcuts")}</div>
                 ${HOTKEY_ACTIONS.map(a => {
                     const b = state.settings && state.settings.hotkeys[a.key];
                     const capturing = state.capturing === a.key;
                     return `<div class="setting-row">
-                        <span class="setting-name">${esc(a.label)}</span>
-                        <span class="combo mono${capturing ? " capturing" : ""}" data-action="${a.key}">${capturing ? "Taste/Maus drücken…" : esc(formatBinding(b))}</span>
+                        <span class="setting-name">${esc(t(a.labelKey))}</span>
+                        <span class="combo mono${capturing ? " capturing" : ""}" data-action="${a.key}">${capturing ? t("pressKey") : esc(formatBinding(b))}</span>
                     </div>`;
                 }).join("")}
                 <div class="setting-row">
-                    <span class="setting-name">Transparenz</span>
+                    <span class="setting-name">${t("opacity")}</span>
                     <input type="range" class="opacity-slider" id="opacitySlider"
                         min="10" max="100" step="5"
                         value="${Math.round((state.settings ? (state.settings.opacity ?? 1) : 1) * 100)}">
                 </div>
                 <div class="setting-row">
-                    <span class="setting-name">Design</span>
-                    <span class="theme-switch">${THEMES.map(t => {
-                        const active = (state.settings && state.settings.theme || "dark") === t.key;
-                        return `<button class="theme-opt${active ? " active" : ""}" data-theme="${t.key}">${esc(t.label)}</button>`;
+                    <span class="setting-name">${t("design")}</span>
+                    <span class="theme-switch">${THEMES.map(th => {
+                        const active = (state.settings && state.settings.theme || "dark") === th.key;
+                        return `<button class="theme-opt${active ? " active" : ""}" data-theme="${th.key}">${esc(t(th.labelKey))}</button>`;
+                    }).join("")}</span>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-name">${t("language")}</span>
+                    <span class="theme-switch">${LANGUAGES.map(l => {
+                        const active = lang() === l.key;
+                        return `<button class="lang-opt${active ? " active" : ""}" data-lang="${l.key}">${esc(l.label)}</button>`;
                     }).join("")}</span>
                 </div>
                 <div class="settings-error">${esc(state.settingsError)}</div>
-                <div class="settings-hint">Klick auf ein Kürzel, dann Tasten- oder Maustasten-Kombination drücken. Esc bricht ab.</div>
+                <div class="settings-hint">${t("settingsHint")}</div>
             </div>`;
 
         panel.innerHTML = `
@@ -987,14 +1068,14 @@
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="lock-btn mono" id="lockBtn">${state.locked ? "Anpassen" : "Fixieren"}</div>
-                    <div class="icon-btn" id="homeBtn" title="Anderes Walkthrough">
+                    <div class="lock-btn mono" id="lockBtn">${state.locked ? t("adjust") : t("lock")}</div>
+                    <div class="icon-btn" id="homeBtn" title="${t("switchWalkthrough")}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     </div>
-                    <div class="icon-btn${inSettings ? " active" : ""}" id="settingsBtn" title="Einstellungen">
+                    <div class="icon-btn${inSettings ? " active" : ""}" id="settingsBtn" title="${t("settingsTitle")}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     </div>
-                    <div class="close-btn" id="closeBtn" title="Overlay schließen">✕</div>
+                    <div class="close-btn" id="closeBtn" title="${t("closeOverlay")}">✕</div>
                 </div>
             </div>
             ${inSettings ? settingsHTML : `
@@ -1003,7 +1084,7 @@
                 <div class="steps-bar" id="stepsBar">
                     <span class="steps-bar-left">
                         <span class="steps-chevron">${CHEVRON_SVG}</span>
-                        <span class="progress-label mono">Schritte</span>
+                        <span class="progress-label mono">${t("steps")}</span>
                     </span>
                     <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
                     <span class="progress-count mono">${doneCount} / ${total}</span>
@@ -1211,6 +1292,11 @@
             btn.addEventListener("mousedown", stopProp);
             btn.addEventListener("click", () => selectTheme(btn.dataset.theme));
         });
+
+        panel.querySelectorAll(".lang-opt").forEach(btn => {
+            btn.addEventListener("mousedown", stopProp);
+            btn.addEventListener("click", () => selectLanguage(btn.dataset.lang));
+        });
     }
 
     // toggleSection flips a named section's open/closed state, recording an
@@ -1226,6 +1312,18 @@
         const open = ov === undefined ? !allDone : ov;
         state.sectionOverride[name] = !open;
         render();
+    }
+
+    // selectLanguage persists the interface language and re-renders (English is
+    // the default; German is the alternative). On a save error the message is
+    // surfaced and the previous language stays in effect.
+    function selectLanguage(l) {
+        if (l === lang()) return;
+        App.SaveLanguage(l).then(s => { state.settings = s; render(); })
+            .catch(err => {
+                state.settingsError = String(err && err.message ? err.message : err);
+                render();
+            });
     }
 
     // selectTheme applies a theme immediately (so it feels instant) and persists

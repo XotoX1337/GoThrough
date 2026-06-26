@@ -386,6 +386,23 @@ func (a *App) SaveTheme(theme string) (settings.Settings, error) {
 	return ns, nil
 }
 
+// SaveLanguage persists the HUD interface language (en | de) and returns the
+// updated settings. An unknown code is rejected so the frontend can't store a
+// value its string table doesn't define.
+func (a *App) SaveLanguage(lang string) (settings.Settings, error) {
+	switch lang {
+	case "en", "de":
+	default:
+		return a.set.Get(), fmt.Errorf("unknown language %q", lang)
+	}
+	ns := a.set.Get()
+	ns.Language = lang
+	if err := a.set.Save(ns); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
+	}
+	return ns, nil
+}
+
 // validateHotkeys checks that every binding resolves to a real key/modifier
 // combination before it is persisted or registered.
 func validateHotkeys(hk settings.Hotkeys) error {
