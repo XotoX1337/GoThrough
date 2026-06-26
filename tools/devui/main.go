@@ -71,6 +71,7 @@ func main() {
 	mux.HandleFunc("/", serveHarness)
 	mux.HandleFunc("/app", serveApp)
 	mux.HandleFunc("/app.js", serveAppJS)
+	mux.HandleFunc("/app.css", serveAppCSS)
 	mux.HandleFunc("/__reload", hub.handleSSE)
 	srv.routes(mux)
 	if *bgPath != "" {
@@ -371,6 +372,16 @@ func serveAppJS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	http.ServeFile(w, r, filepath.Join(frontendDir, "app.js"))
+}
+
+// serveAppCSS serves the transpiled HUD stylesheet (frontend/app.css), which
+// the injected index.html loads via <link rel="stylesheet" href="app.css">. The
+// watcher keeps it in sync with frontend/src/app.css; here we just hand back the
+// file on disk.
+func serveAppCSS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	http.ServeFile(w, r, filepath.Join(frontendDir, "app.css"))
 }
 
 // serveHarness renders the faux game scene with the HUD framed at real size

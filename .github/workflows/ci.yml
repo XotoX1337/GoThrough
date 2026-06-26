@@ -22,13 +22,14 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      # The HUD's app.js is generated from frontend/src/app.ts by esbuild (Go API,
-      # no npm) and committed. Regenerate it and fail if it drifts from the source,
-      # so a forgotten `go generate` can't ship a stale bundle.
-      - name: Frontend bundle up to date
+      # The HUD's app.js/app.css are generated from frontend/src/app.ts and
+      # frontend/src/app.css by esbuild (Go API, no npm) and committed. Regenerate
+      # them and fail if they drift from the source, so a forgotten `go generate`
+      # can't ship a stale bundle.
+      - name: Frontend bundles up to date
         run: |
           go generate ./...
-          git diff --exit-code overlay/frontend/app.js
+          git diff --exit-code overlay/frontend/app.js overlay/frontend/app.css
 
       - name: Test
         run: go test ./config/ ./engine/ ./progress/ ./settings/ ./mousehook/ ./configstore/
