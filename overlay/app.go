@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -99,9 +100,34 @@ type App struct {
 	hotkeys *hotkeyManager // set in OnStartup, once the window (and ctx) exist
 
 	// Current config reference, kept so a `next:` hand-off can be resolved
-	// relative to the file the active walkthrough was loaded from.
+	// relative to the file the active walkthrough was loaded from. curEmbedded
+	// true means a catalog config (resolved against the on-disk cache); false
+	// means an absolute path the user browsed to.
 	curPath     string
 	curEmbedded bool
+
+	// catalog is the walkthrough catalog, fetched once from the CDN index.json
+	// (with the embedded index.json as the offline fallback) and cached for the
+	// process lifetime.
+	catalogOnce sync.Once
+	catalogVal  []configstore.Entry
+}
+
+// catalog returns the walkthrough catalog. The first call fetches index.json
+// from the CDN with a short timeout; on any failure it falls back to the
+// embedded index.json so the picker always has content. The result is cached
+// for the process, so repeated picker visits don't re-hit the network.
+func (a *App) catalog() []configstore.Entry {
+	a.catalogOnce.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2500*time.Millisecond)
+		defer cancel()
+		if entries, err := configstore.ListRemote(ctx); err == nil {
+			a.catalogVal = entries
+			return
+		}
+		a.catalogVal = configstore.ListEmbedded()
+	})
+	return a.catalogVal
 }
 
 // IsPicker reports whether the app is in config-picker mode (no walkthrough loaded).
@@ -111,9 +137,37 @@ func (a *App) IsPicker() bool {
 	return a.eng == nil
 }
 
-// ListConfigs returns all walkthrough configs bundled in the binary.
+// ListConfigs returns the walkthrough catalog (remote-fetched once at startup,
+// embedded fallback when offline).
 func (a *App) ListConfigs() []configstore.Entry {
-	return configstore.List()
+	return a.catalog()
+}
+
+// DownloadGame downloads every chapter of the given game into the on-disk cache
+// so chapters load instantly and offline — including `next:` hand-offs across
+// files. Called when the user picks a game in the two-level picker. Returns an
+// error only when a chapter is neither freshly downloaded nor already cached.
+func (a *App) DownloadGame(game string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	return configstore.DownloadGame(ctx, a.catalog(), game)
+}
+
+// refreshUpdates auto-updates already-cached games whose chapters changed
+// upstream (hash mismatch) or gained new chapters, then pushes the fresh catalog
+// to the frontend so the picker reflects it. Runs in the background at startup.
+func (a *App) refreshUpdates() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	catalog := a.catalog()
+	configstore.RefreshUpdates(ctx, catalog)
+
+	a.mu.Lock()
+	wctx := a.ctx
+	a.mu.Unlock()
+	if wctx != nil {
+		runtime.EventsEmit(wctx, "configs:remote", catalog)
+	}
 }
 
 // OpenBrowse opens a native file dialog so the user can pick a walkthrough
@@ -134,14 +188,16 @@ func (a *App) OpenBrowse() string {
 	return path
 }
 
-// LoadConfig loads a walkthrough from the embedded store (embedded=true) or
-// from a file path on disk (embedded=false), wires up progress persistence,
-// and transitions the app from picker mode into walkthrough mode.
+// LoadConfig loads a walkthrough. When embedded is true, path is a catalog-
+// relative path read from the on-disk cache (the game must have been downloaded
+// first); when false, path is an absolute file the user browsed to. It wires up
+// progress persistence and transitions the app from picker mode into
+// walkthrough mode.
 func (a *App) LoadConfig(path string, embedded bool) error {
 	var data []byte
 	var err error
 	if embedded {
-		data, err = configstore.Open(path)
+		data, err = configstore.ReadCached(path)
 	} else {
 		data, err = os.ReadFile(path)
 	}
@@ -280,7 +336,8 @@ func (a *App) LoadNext() error {
 
 	var resolved string
 	if embedded {
-		// Embedded paths use forward slashes (embed.FS); resolve in that space.
+		// Catalog paths use forward slashes; resolve in that space, then read
+		// the follow-up from the cache (DownloadGame fetched all chapters).
 		resolved = path.Join(path.Dir(curPath), next)
 	} else {
 		resolved = filepath.Join(filepath.Dir(curPath), next)

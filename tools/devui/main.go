@@ -289,7 +289,8 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
   } };
   window.go = { overlay: { App: {
     IsPicker:     () => Promise.resolve(false), // devui always starts in steps view
-    ListConfigs:  () => api('/api/meta').then(m => [{ game: m.game, title: m.title, author: '', chapter: 1, path: '(devui)', embedded: true }]),
+    ListConfigs:  () => api('/api/meta').then(m => [{ game: m.game, title: m.title, author: '', chapter: 1, path: '(devui)', hash: '' }]),
+    DownloadGame: () => Promise.resolve(), // no cache in devui; catalog is the single live config
     OpenBrowse:   () => Promise.resolve(''),
     LoadConfig:   () => Promise.resolve(),
     UnloadConfig: () => Promise.resolve(),

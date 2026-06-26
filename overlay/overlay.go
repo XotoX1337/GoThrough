@@ -12,7 +12,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/XotoX1337/GoThrough/configstore"
 	"github.com/XotoX1337/GoThrough/engine"
 	"github.com/XotoX1337/GoThrough/settings"
 )
@@ -87,17 +86,10 @@ func (o *Overlay) onStartup(ctx context.Context) {
 	o.hotkeys.apply(o.app.set.Get().Hotkeys)
 	log.Println("onStartup: done")
 
-	// Background: check for configs in the repo newer than the bundled set.
-	go func() {
-		entries, err := configstore.FetchNewRemote(ctx)
-		if err != nil {
-			runtime.LogInfof(ctx, "configstore: remote check failed (offline?): %v", err)
-			return
-		}
-		if len(entries) > 0 {
-			runtime.EventsEmit(ctx, "configs:remote", entries)
-		}
-	}()
+	// Background: refresh the catalog from the CDN and auto-update any
+	// already-cached games whose chapters changed upstream. Pushes the fresh
+	// catalog to the frontend when done. The binary is fully usable offline.
+	go o.app.refreshUpdates()
 }
 
 func (o *Overlay) onShutdown(_ context.Context) {

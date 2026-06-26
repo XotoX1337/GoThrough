@@ -1,0 +1,42 @@
+name: index
+
+# Regenerates configstore/configs/index.json whenever a walkthrough YAML
+# changes, so the embedded catalog (and the CDN-served index the app fetches at
+# runtime) never drifts from the actual config files. The generator runs here,
+# not locally. The paths filter only matches *.yaml/*.yml — index.json itself is
+# JSON, so the bot's commit below can't retrigger this workflow.
+on:
+  push:
+    branches: [main, 'v*']
+    paths:
+      - 'configstore/configs/**.yaml'
+      - 'configstore/configs/**.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  genindex:
+    name: Regenerate index.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Generate index.json
+        run: go run ./tools/genindex
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- configstore/configs/index.json; then
+            echo "index.json already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add configstore/configs/index.json
+          git commit -m "chore(configstore): regenerate index.json"
+          git push

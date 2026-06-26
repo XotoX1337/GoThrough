@@ -539,12 +539,24 @@
         }
         .picker-back:hover { color: rgba(var(--gt-fg), 0.85); }
         .picker-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; }
-        .picker-remote-badge {
-            font-size: 9.5px;
-            color: rgba(255, 200, 100, 0.82);
+        .picker-loading {
+            font-size: 10.5px;
+            color: rgba(var(--gt-fg), 0.6);
             margin-top: 10px;
             line-height: 1.45;
         }
+        .picker-loading::before {
+            content: "";
+            display: inline-block;
+            width: 9px; height: 9px;
+            margin-right: 7px;
+            vertical-align: -1px;
+            border: 1.5px solid rgba(var(--gt-fg), 0.25);
+            border-top-color: rgba(var(--gt-accent-rgb), 1);
+            border-radius: 50%;
+            animation: gt-spin 0.7s linear infinite;
+        }
+        @keyframes gt-spin { to { transform: rotate(360deg); } }
         .picker-empty {
             font-size: 12px;
             color: rgba(var(--gt-fg), 0.38);
@@ -589,9 +601,9 @@
     const state = {
         view: "picker",           // "picker" | "steps" | "settings"
         // --- picker ---
-        configs: [],              // []configstore.Entry from App.ListConfigs()
+        configs: [],              // []configstore.Entry catalog from App.ListConfigs()
         pickerGame: null,         // selected game in the two-level picker (null = game list)
-        remoteCount: 0,           // new configs found in the remote repo
+        pickerLoading: "",        // game currently being downloaded ("" = none)
         pickerError: "",
         // --- steps ---
         meta: { game: "", title: "" },
@@ -684,8 +696,8 @@
             chaptersCount: n => n + (n === 1 ? " chapter" : " chapters"),
             by: a => "by " + a,
             noChapters: "No chapters found.",
-            noConfigs: "No bundled configs found.",
-            remoteBadge: n => "↑ " + n + " new config" + (n > 1 ? "s" : "") + " available — update GoThrough",
+            noConfigs: "No configs found.",
+            downloading: g => "Downloading " + g + "…",
             switchWalkthrough: "Switch walkthrough", settingsTitle: "Settings", closeOverlay: "Close overlay",
             steps: "Steps", noSteps: "No steps loaded", now: "Now", decision: "Decision",
             stepCount: (a, b) => "Step " + a + " / " + b,
@@ -707,8 +719,8 @@
             chaptersCount: n => n + (n === 1 ? " Kapitel" : " Kapitel"),
             by: a => "von " + a,
             noChapters: "Keine Kapitel gefunden.",
-            noConfigs: "Keine eingebetteten Configs gefunden.",
-            remoteBadge: n => "↑ " + n + " neue Config" + (n > 1 ? "s" : "") + " verfügbar — GoThrough aktualisieren",
+            noConfigs: "Keine Configs gefunden.",
+            downloading: g => "Lade " + g + "…",
             switchWalkthrough: "Anderes Walkthrough", settingsTitle: "Einstellungen", closeOverlay: "Overlay schließen",
             steps: "Schritte", noSteps: "Keine Schritte geladen", now: "Jetzt", decision: "Entscheidung",
             stepCount: (a, b) => "Schritt " + a + " / " + b,
@@ -910,8 +922,8 @@
                 : `<div class="picker-empty">${t("noConfigs")}</div>`;
         }
 
-        const remoteBadge = state.remoteCount > 0
-            ? `<div class="picker-remote-badge mono">${esc(tf("remoteBadge", state.remoteCount))}</div>`
+        const loadingBadge = state.pickerLoading
+            ? `<div class="picker-loading mono">${esc(tf("downloading", state.pickerLoading))}</div>`
             : '';
 
         panel.innerHTML = `
@@ -934,7 +946,7 @@
                     <div class="picker-browse mono" id="pickerBrowse">${t("openFile")}</div>
                 </div>
                 ${state.pickerError ? `<div class="picker-error">${esc(state.pickerError)}</div>` : ''}
-                ${remoteBadge}
+                ${loadingBadge}
             </div>`;
     }
 
@@ -1162,6 +1174,25 @@
         App.Goto(index).then(info => { state.activePos = info.current; state.current = info; render(); });
     }
 
+    // downloadGame fetches all chapters of a game into the cache, then drills
+    // into its chapter list. On failure it still drills in (already-cached
+    // chapters remain playable) and surfaces the error.
+    function downloadGame(game) {
+        state.pickerLoading = game;
+        state.pickerError = "";
+        render();
+        App.DownloadGame(game).then(() => {
+            state.pickerLoading = "";
+            state.pickerGame = game;
+            render();
+        }).catch(err => {
+            state.pickerLoading = "";
+            state.pickerGame = game;
+            state.pickerError = String(err && err.message ? err.message : err);
+            render();
+        });
+    }
+
     function loadConfig(path, embedded) {
         state.pickerError = "";
         App.LoadConfig(path, embedded).then(() => {
@@ -1244,10 +1275,9 @@
         if (state.view === "picker") {
             panel.querySelectorAll(".picker-row").forEach(row => {
                 row.addEventListener("click", () => {
-                    if (row.dataset.game) {        // level 1: drill into a game
-                        state.pickerGame = row.dataset.game;
-                        render();
-                    } else if (row.dataset.path) { // level 2: load the chapter
+                    if (row.dataset.game) {        // level 1: download the game, then drill in
+                        downloadGame(row.dataset.game);
+                    } else if (row.dataset.path) { // level 2: load the chapter (from cache)
                         loadConfig(row.dataset.path, row.dataset.embedded === "true");
                     }
                 });
@@ -1557,9 +1587,13 @@
             });
             // A hotkey hand-off swapped the whole walkthrough — reload everything.
             window.runtime.EventsOn("config:changed", () => { refreshAfterSwap(); });
+            // The background catalog refresh finished — adopt the fresh list so
+            // the picker reflects any newly-added games/chapters.
             window.runtime.EventsOn("configs:remote", entries => {
-                state.remoteCount = Array.isArray(entries) ? entries.length : 0;
-                if (state.view === "picker") render();
+                if (Array.isArray(entries) && entries.length) {
+                    state.configs = entries;
+                    if (state.view === "picker") render();
+                }
             });
         }
     }

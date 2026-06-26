@@ -1,37 +1,54 @@
 package configstore
 
 import (
-	"io/fs"
-	"strings"
+	"encoding/json"
 	"testing"
-
-	"github.com/XotoX1337/GoThrough/config"
 )
 
-// TestEmbeddedConfigsAreValid loads every bundled YAML directly. List() skips
-// invalid configs silently (so the picker stays usable), which means a broken
-// bundled file would just vanish — this test fails loudly instead.
-func TestEmbeddedConfigsAreValid(t *testing.T) {
-	count := 0
-	err := fs.WalkDir(embedded, "configs", func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".yaml") {
-			return err
-		}
-		data, rerr := embedded.ReadFile(path)
-		if rerr != nil {
-			t.Errorf("%s: read: %v", path, rerr)
-			return nil
-		}
-		if _, lerr := config.LoadBytes(data); lerr != nil {
-			t.Errorf("%s: %v", path, lerr)
-		}
-		count++
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("walk: %v", err)
+// TestEmbeddedIndexValid checks that the embedded index.json parses, is
+// non-empty, and that every entry carries the fields the picker and the
+// update-detection path rely on. genindex builds this file from the real
+// configs, so a malformed or stale index fails here loudly rather than leaving
+// the picker silently empty.
+func TestEmbeddedIndexValid(t *testing.T) {
+	var idx Index
+	if err := json.Unmarshal(embeddedIndex, &idx); err != nil {
+		t.Fatalf("embedded index.json does not parse: %v", err)
 	}
-	if count == 0 {
-		t.Fatal("no embedded configs found")
+	if idx.Schema != 1 {
+		t.Errorf("schema = %d, want 1", idx.Schema)
+	}
+	if len(idx.Configs) == 0 {
+		t.Fatal("embedded index has no configs")
+	}
+	for i, e := range idx.Configs {
+		if e.Game == "" {
+			t.Errorf("config %d: missing game", i)
+		}
+		if e.Title == "" {
+			t.Errorf("config %d (%s): missing title", i, e.Path)
+		}
+		if e.Path == "" {
+			t.Errorf("config %d: missing path", i)
+		}
+		if len(e.Hash) != 64 {
+			t.Errorf("config %d (%s): hash %q is not a 64-char sha256-hex", i, e.Path, e.Hash)
+		}
+	}
+}
+
+// TestListEmbeddedSorted verifies the embedded catalog comes back ordered by
+// game then chapter, the order the two-level picker renders in.
+func TestListEmbeddedSorted(t *testing.T) {
+	entries := ListEmbedded()
+	if len(entries) == 0 {
+		t.Fatal("ListEmbedded returned nothing")
+	}
+	for i := 1; i < len(entries); i++ {
+		prev, cur := entries[i-1], entries[i]
+		if prev.Game > cur.Game || (prev.Game == cur.Game && prev.Chapter > cur.Chapter) {
+			t.Errorf("not sorted at %d: %q/%d after %q/%d",
+				i, cur.Game, cur.Chapter, prev.Game, prev.Chapter)
+		}
 	}
 }
