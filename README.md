@@ -62,13 +62,27 @@ The defaults are:
 wails build -s                                              # build → build/bin/GoThrough.exe
 ./build/bin/GoThrough.exe                                   # open the config picker
 ./build/bin/GoThrough.exe run path/to/walkthrough.yaml      # run a walkthrough directly
-./build/bin/GoThrough.exe run path/to/walkthrough.yaml --fresh # ignore saved progress, start at step 1
 make run                                                    # shortcut: build + open the picker
 ```
 
 > Progress and settings are saved automatically under your OS user-config dir
-> (`%AppData%\GoThrough\` on Windows, `~/.config/GoThrough/` on Linux). Delete that
-> folder to reset, or use `--fresh` to ignore saved progress for one run.
+> (`%AppData%\GoThrough\` on Windows, `~/.config/GoThrough/` on Linux).
+
+### Resetting state
+
+The `clear` subcommands reset persisted state without launching the overlay:
+
+```bash
+./build/bin/GoThrough.exe clear progress "Gothic 2"      # reset a whole game's progress
+./build/bin/GoThrough.exe clear progress "Gothic 2" 1    # reset one chapter
+./build/bin/GoThrough.exe clear settings                 # restore default settings
+./build/bin/GoThrough.exe clear cache                    # delete the downloaded config cache
+./build/bin/GoThrough.exe clear all                      # progress + settings + cache
+```
+
+The same actions are available from the overlay: a reset button on each picker
+row (game and chapter), **Clear cache** in the picker, and **Reset to defaults**
+in the settings panel.
 
 ## Config Format
 

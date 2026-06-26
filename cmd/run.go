@@ -14,8 +14,6 @@ import (
 	"github.com/XotoX1337/GoThrough/settings"
 )
 
-var freshStart bool
-
 var runCmd = &cobra.Command{
 	Use:   "run <config.yaml>",
 	Short: "Start a walkthrough from a YAML file",
@@ -24,7 +22,6 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	runCmd.Flags().BoolVar(&freshStart, "fresh", false, "ignore saved progress and start at step 1")
 	rootCmd.AddCommand(runCmd)
 }
 
@@ -74,8 +71,9 @@ func openSettings() *settings.Store {
 	return store
 }
 
-// attachProgressCLI wires the engine to the on-disk progress store for the
-// CLI run command, honouring the --fresh flag.
+// attachProgressCLI wires the engine to the on-disk progress store for the CLI
+// run command, restoring any saved position. Use `gothrough clear progress` to
+// reset.
 func attachProgressCLI(eng *engine.Engine, wt *config.Walkthrough) {
 	path, err := progress.DefaultPath()
 	if err != nil {
@@ -89,10 +87,8 @@ func attachProgressCLI(eng *engine.Engine, wt *config.Walkthrough) {
 	}
 
 	h := store.For(wt)
-	if !freshStart {
-		if index, stepID, branches, ok := h.Load(); ok {
-			eng.Restore(index, stepID, branches)
-		}
+	if index, stepID, choices, ok := h.Load(); ok {
+		eng.Restore(index, stepID, choices)
 	}
 	eng.UsePersister(h)
 }

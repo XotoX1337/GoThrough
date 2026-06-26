@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "configs": [
+    {
+      "game": "Gothic 2",
+      "title": "Kapitel 1 – Tag 1: Von Xardas' Turm nach Khorinis",
+      "author": "XotoX1337",
+      "chapter": 1,
+      "path": "gothic2/day1.yaml",
+      "hash": "42fae117b469d44fc65741b82f652051a9f6be1d7873ca8fe28417e65d022079"
+    },
+    {
+      "game": "Gothic 2",
+      "title": "Kapitel 1 – Tag 2: Khorinis \u0026 die Gildenwahl",
+      "author": "XotoX1337",
+      "chapter": 1,
+      "path": "gothic2/day2.yaml",
+      "hash": "89f805e7ce0a44c4568e83e3b25376738ef831d5a687ace44a5142f30f61afcf"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 1: The Coast to Merveil",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 1,
+      "path": "poe/act1.yaml",
+      "hash": "e2879fdb03547d2dea13d68c75ed77217e5037e1b4ca96fd465d0a91f2fd1210"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 2: The Old Fields to the Vaal Oversoul",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 2,
+      "path": "poe/act2.yaml",
+      "hash": "58f70026d3b0856fc72859f09af3d57ed426be50d03042a878e46729d0c4422b"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 3: The City of Sarn to Dominus",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 3,
+      "path": "poe/act3.yaml",
+      "hash": "78be0467de6d14d41abeb617bd14d08b55cb5b9f7d130e248d835fdf3e273f8e"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 4: The Aqueduct to Malachai",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 4,
+      "path": "poe/act4.yaml",
+      "hash": "ec1ac11ee50d9483e42f508e39e75bd83021f1046eff47293b4055234d02703c"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 5: The Slave Pens to Kitava",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 5,
+      "path": "poe/act5.yaml",
+      "hash": "5ce49267a1a7aa427a8f5523aa76a2ac89cfe7f1c909544628737e3ad24a187c"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 6: The Twilight Strand to the Brine King",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 6,
+      "path": "poe/act6.yaml",
+      "hash": "2455d79eaa5544ec92b6c1de1683a5c91152235291ba9c75854cbefe7b9be170"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 7: The Bridge Encampment to Arakaali",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 7,
+      "path": "poe/act7.yaml",
+      "hash": "53c926c6d408d9ee1f1f8aa102b62bbfdae43fbeaf83dde2c02dcca0fc235a6c"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 8: The Sarn Ramparts to Yugul",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 8,
+      "path": "poe/act8.yaml",
+      "hash": "792652b4aafc47bf3944b510212378601a2eae80dde24d83777fd5aa9db27922"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 9: Highgate to the Depraved Trinity",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 9,
+      "path": "poe/act9.yaml",
+      "hash": "0d14e0151f088a4cfbfbb37156aaa266da5c81234ed658390690ec7c1c8e2855"
+    },
+    {
+      "game": "Path of Exile",
+      "title": "Act 10: Oriath Docks to Kitava",
+      "author": "exile-leveling (heartofphos) + poe-leveling.com",
+      "chapter": 10,
+      "path": "poe/act10.yaml",
+      "hash": "530a851e054b72eba4e9c4895de255a7b4d55d0f8ab8a978fe2c874846c56b61"
+    }
+  ]
+}
