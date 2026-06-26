@@ -605,6 +605,7 @@
         settings: null,           // {version, hotkeys, opacity, theme} from App.Settings()
         capturing: null,
         settingsError: "",
+        settingsFrom: "picker",   // view to return to when settings is closed ("picker" | "steps")
         // --- layout ---
         collapsed: false,
         locked: true,             // always start fixed; never persisted
@@ -622,6 +623,9 @@
 
     // Chevron icon (▾), rotated via CSS when collapsed.
     const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+    // Header icons, shared across the picker / steps / settings headers.
+    const HOME_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>';
+    const GEAR_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
 
     function save() {
         try {
@@ -860,6 +864,8 @@
 
         if (state.view === "picker") {
             renderPicker();
+        } else if (state.view === "settings") {
+            renderSettings();
         } else {
             renderSteps();
         }
@@ -917,6 +923,7 @@
                 </div>
                 <div class="header-right">
                     <div class="lock-btn mono" id="lockBtn">${state.locked ? t("adjust") : t("lock")}</div>
+                    <div class="icon-btn" id="settingsBtn" title="${t("settingsTitle")}">${GEAR_SVG}</div>
                     <div class="close-btn" id="closeBtn" title="${t("close")}">✕</div>
                 </div>
             </div>
@@ -984,7 +991,6 @@
         // steps array — the array's per-item isLast/Done flags are only accurate
         // for the engine's position at fetch time, which breaks the hand-off button.
         const current = state.current || state.steps[state.activePos - 1] || null;
-        const inSettings = state.view === "settings";
 
         let nowHTML;
         if (!current) {
@@ -1024,7 +1030,42 @@
 
         const rowsHTML = buildChecklist();
 
-        const settingsHTML = `
+        panel.innerHTML = `
+            <div class="header" id="header">
+                <div class="header-left">
+                    <div>
+                        <div class="kicker mono">${esc(state.meta.game)}</div>
+                        <div class="quest-title" id="questTitle">${esc(state.meta.title)}</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="lock-btn mono" id="lockBtn">${state.locked ? t("adjust") : t("lock")}</div>
+                    <div class="icon-btn" id="homeBtn" title="${t("switchWalkthrough")}">${HOME_SVG}</div>
+                    <div class="icon-btn" id="settingsBtn" title="${t("settingsTitle")}">${GEAR_SVG}</div>
+                    <div class="close-btn" id="closeBtn" title="${t("closeOverlay")}">✕</div>
+                </div>
+            </div>
+            ${nowHTML}
+            <div class="steps-section">
+                <div class="steps-bar" id="stepsBar">
+                    <span class="steps-bar-left">
+                        <span class="steps-chevron">${CHEVRON_SVG}</span>
+                        <span class="progress-label mono">${t("steps")}</span>
+                    </span>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+                    <span class="progress-count mono">${doneCount} / ${total}</span>
+                </div>
+                <div class="collapsible">
+                    <div class="checklist">${rowsHTML}</div>
+                </div>
+            </div>`;
+    }
+
+    // settingsBodyHTML builds the settings panel body (hotkey rebinding, opacity,
+    // theme, language). Independent of any loaded walkthrough, so it serves the
+    // settings view whether opened from the picker or from an active walkthrough.
+    function settingsBodyHTML() {
+        return `
             <div class="settings-view">
                 <div class="settings-kicker mono">${t("shortcuts")}</div>
                 ${HOTKEY_ACTIONS.map(a => {
@@ -1058,41 +1099,29 @@
                 <div class="settings-error">${esc(state.settingsError)}</div>
                 <div class="settings-hint">${t("settingsHint")}</div>
             </div>`;
+    }
 
+    // renderSettings draws the settings view with its own header. It can be reached
+    // from the picker (no walkthrough loaded) or from an active walkthrough — the
+    // header shows the walkthrough meta + a home button only when one is loaded.
+    function renderSettings() {
+        const loaded = state.settingsFrom === "steps"; // opened from an active walkthrough
         panel.innerHTML = `
             <div class="header" id="header">
                 <div class="header-left">
                     <div>
-                        <div class="kicker mono">${esc(state.meta.game)}</div>
-                        <div class="quest-title" id="questTitle">${esc(state.meta.title)}</div>
+                        <div class="kicker mono">${loaded ? esc(state.meta.game) : "GoThrough"}</div>
+                        ${loaded ? `<div class="quest-title">${esc(state.meta.title)}</div>` : ""}
                     </div>
                 </div>
                 <div class="header-right">
                     <div class="lock-btn mono" id="lockBtn">${state.locked ? t("adjust") : t("lock")}</div>
-                    <div class="icon-btn" id="homeBtn" title="${t("switchWalkthrough")}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    </div>
-                    <div class="icon-btn${inSettings ? " active" : ""}" id="settingsBtn" title="${t("settingsTitle")}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    </div>
-                    <div class="close-btn" id="closeBtn" title="${t("closeOverlay")}">✕</div>
+                    ${loaded ? `<div class="icon-btn" id="homeBtn" title="${t("switchWalkthrough")}">${HOME_SVG}</div>` : ""}
+                    <div class="icon-btn active" id="settingsBtn" title="${t("settingsTitle")}">${GEAR_SVG}</div>
+                    <div class="close-btn" id="closeBtn" title="${loaded ? t("closeOverlay") : t("close")}">✕</div>
                 </div>
             </div>
-            ${inSettings ? settingsHTML : `
-            ${nowHTML}
-            <div class="steps-section">
-                <div class="steps-bar" id="stepsBar">
-                    <span class="steps-bar-left">
-                        <span class="steps-chevron">${CHEVRON_SVG}</span>
-                        <span class="progress-label mono">${t("steps")}</span>
-                    </span>
-                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-                    <span class="progress-count mono">${doneCount} / ${total}</span>
-                </div>
-                <div class="collapsible">
-                    <div class="checklist">${rowsHTML}</div>
-                </div>
-            </div>`}`;
+            ${settingsBodyHTML()}`;
     }
 
     function applyLayout() {
@@ -1205,6 +1234,12 @@
         const closeBtn = document.getElementById("closeBtn");
         closeBtn.addEventListener("mousedown", stopProp);
         closeBtn.addEventListener("click", () => { window.runtime?.Quit?.(); });
+
+        const pickerSettingsBtn = state.view === "picker" && document.getElementById("settingsBtn");
+        if (pickerSettingsBtn) {
+            pickerSettingsBtn.addEventListener("mousedown", stopProp);
+            pickerSettingsBtn.addEventListener("click", toggleSettings);
+        }
 
         if (state.view === "picker") {
             panel.querySelectorAll(".picker-row").forEach(row => {
@@ -1341,7 +1376,12 @@
 
     // --- Settings panel + hotkey rebinding --------------------------------
     function toggleSettings() {
-        state.view = state.view === "settings" ? "steps" : "settings";
+        if (state.view === "settings") {
+            state.view = state.settingsFrom || "steps";
+        } else {
+            state.settingsFrom = state.view; // "picker" or "steps" — return here on close
+            state.view = "settings";
+        }
         state.capturing = null;
         state.settingsError = "";
         render();
