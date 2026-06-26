@@ -520,6 +520,19 @@ func (a *App) SaveLanguage(lang string) (settings.Settings, error) {
 	return ns, nil
 }
 
+// SaveWindowPos persists the overlay window's on-screen position (logical px,
+// top-left corner) so it is restored on the next launch instead of re-anchoring
+// to the top-right corner. Called by the frontend at the end of a window drag.
+// Best-effort: a write failure is reported but never blocks dragging.
+func (a *App) SaveWindowPos(x, y int) error {
+	ns := a.set.Get()
+	ns.WindowPos = settings.WindowPos{X: x, Y: y, Set: true}
+	if err := a.set.Save(ns); err != nil {
+		return fmt.Errorf("saving window position: %w", err)
+	}
+	return nil
+}
+
 // validateHotkeys checks that every binding resolves to a real key/modifier
 // combination before it is persisted or registered.
 func validateHotkeys(hk settings.Hotkeys) error {

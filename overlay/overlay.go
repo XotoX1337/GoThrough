@@ -72,8 +72,8 @@ func (o *Overlay) Run() error {
 func (o *Overlay) onStartup(ctx context.Context) {
 	log.Println("onStartup: begin")
 	o.app.ctx = ctx
-	log.Println("onStartup: anchoring window")
-	anchorTopRight(ctx)
+	log.Println("onStartup: positioning window")
+	o.restoreWindowPos(ctx)
 	log.Println("onStartup: creating hotkey manager")
 	o.hotkeys = newHotkeyManager(ctx, o.app)
 	o.app.hotkeys = o.hotkeys
@@ -99,16 +99,64 @@ func (o *Overlay) onShutdown(_ context.Context) {
 	}
 }
 
+// restoreWindowPos places the window where the user last left it, or anchors it
+// to the top-right corner when no position has been saved yet. A saved position
+// is clamped to the primary screen so a window saved on a monitor that is no
+// longer present can't end up off-screen.
+func (o *Overlay) restoreWindowPos(ctx context.Context) {
+	pos := o.app.set.Get().WindowPos
+	if !pos.Set {
+		anchorTopRight(ctx)
+		return
+	}
+	x, y := clampToScreen(ctx, pos.X, pos.Y)
+	runtime.WindowSetPosition(ctx, x, y)
+}
+
 func anchorTopRight(ctx context.Context) {
-	if w := primaryScreenWidth(ctx); w > 0 {
+	if w, _ := primaryScreenSize(ctx); w > 0 {
 		runtime.WindowSetPosition(ctx, w-overlayWidth-screenMargin, screenMargin)
 	}
 }
 
-func primaryScreenWidth(ctx context.Context) int {
+// clampToScreen keeps a window's top-left corner within the primary screen so
+// the overlay stays reachable. It mirrors the maxX/maxY clamp the frontend uses
+// while dragging (Wails' Screen exposes only size, not monitor origin, so a
+// precise multi-monitor clamp isn't possible — this is the same primary-screen
+// approximation the drag handler already relies on).
+func clampToScreen(ctx context.Context, x, y int) (int, int) {
+	w, h := primaryScreenSize(ctx)
+	if w > 0 {
+		maxX := w - overlayWidth
+		if maxX < 0 {
+			maxX = 0
+		}
+		if x < 0 {
+			x = 0
+		} else if x > maxX {
+			x = maxX
+		}
+	}
+	if h > 0 {
+		maxY := h - overlayHeight
+		if maxY < 0 {
+			maxY = 0
+		}
+		if y < 0 {
+			y = 0
+		} else if y > maxY {
+			y = maxY
+		}
+	}
+	return x, y
+}
+
+// primaryScreenSize returns the primary screen's logical-pixel size (the unit
+// Wails' WindowSetPosition/Size use), or 0,0 if it can't be determined.
+func primaryScreenSize(ctx context.Context) (int, int) {
 	screens, err := runtime.ScreenGetAll(ctx)
 	if err != nil || len(screens) == 0 {
-		return 0
+		return 0, 0
 	}
 	screen := screens[0]
 	for _, s := range screens {
@@ -117,8 +165,12 @@ func primaryScreenWidth(ctx context.Context) int {
 			break
 		}
 	}
-	if screen.Size.Width != 0 {
-		return screen.Size.Width
+	w, h := screen.Size.Width, screen.Size.Height
+	if w == 0 {
+		w = screen.Width
 	}
-	return screen.Width
+	if h == 0 {
+		h = screen.Height
+	}
+	return w, h
 }

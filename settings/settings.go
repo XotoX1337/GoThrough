@@ -48,6 +48,17 @@ type Hotkeys struct {
 	Quit         Binding `json:"quit"`
 }
 
+// WindowPos records the overlay window's last on-screen position (logical px,
+// top-left corner) so it can be restored on the next launch instead of always
+// re-anchoring to the top-right corner. Set distinguishes a real saved position
+// from the zero value (0,0 is a valid position): when false, the overlay falls
+// back to the default top-right anchor.
+type WindowPos struct {
+	X   int  `json:"x"`
+	Y   int  `json:"y"`
+	Set bool `json:"set"`
+}
+
 // LastConfig records the walkthrough that was loaded most recently so the app
 // can reopen it on the next launch. An empty Path means "none" — start in the
 // config picker. Embedded distinguishes a bundled config (configstore key) from
@@ -65,6 +76,7 @@ type Settings struct {
 	Theme      string     `json:"theme"`
 	Language   string     `json:"language"`
 	LastConfig LastConfig `json:"lastConfig"`
+	WindowPos  WindowPos  `json:"windowPos"`
 }
 
 // Defaults returns the built-in settings, used when no file exists yet. The

@@ -1787,10 +1787,20 @@
         if (!winDrag) return;
         const nx = Math.max(0, Math.min(winDrag.ox + (e.screenX - winDrag.sx), winDrag.maxX));
         const ny = Math.max(0, Math.min(winDrag.oy + (e.screenY - winDrag.sy), winDrag.maxY));
-        window.runtime.WindowSetPosition(Math.round(nx), Math.round(ny));
+        winDrag.lastX = Math.round(nx);
+        winDrag.lastY = Math.round(ny);
+        window.runtime.WindowSetPosition(winDrag.lastX, winDrag.lastY);
     }
 
-    function onWinUp() { winDrag = null; }
+    // Persist the position only once, at the end of a drag (not on every
+    // mousemove), so the overlay reopens where the user left it. lastX is unset
+    // if the window never actually moved, so a plain click won't write.
+    function onWinUp() {
+        if (winDrag && winDrag.lastX != null) {
+            App.SaveWindowPos?.(winDrag.lastX, winDrag.lastY);
+        }
+        winDrag = null;
+    }
 
     window.addEventListener("mousemove", onWinMove);
     window.addEventListener("mouseup", onWinUp);
