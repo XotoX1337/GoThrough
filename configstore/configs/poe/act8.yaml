@@ -1,0 +1,97 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 8
+title: 'Act 8: The Sarn Ramparts to Yugul'
+next: act9.yaml
+sections:
+  - title: The Sarn Ramparts to Yugul
+    steps:
+      - id: 1
+        title: Doedre the Vile
+        tasks:
+          - Get to **The Sarn Ramparts**
+          - Get to **The Sarn Encampment**
+          - Get to **The Toxic Conduits**
+          - Get to **Doedre's Cesspool**
+          - Get to **The Cauldron**, kill **Doedre the Vile**
+          - Get to the **Sewer Outlet**
+          - Get Crafting recipe
+        hints:
+          - The Toxic Conduits are left
+          - In Doedre's Cesspool, black paint splashes on the ground point the way
+      - id: 2
+        title: Love is Dead
+        tasks:
+          - Get to **The Quay**
+          - Find and take *Ankh of Eternity*
+          - Get to the **Resurrection Site**
+          - Talk to **Clarissa**, kill **Tolman**
+        hints:
+          - The Quay is up-right; the Ankh is along the left wall
+          - The Resurrection Site is down-right
+      - id: 3
+        title: 'Dawn, Harbinger of Solaris'
+        tasks:
+          - Get to **The Grain Gate**
+          - Find and kill the **Gemling Legionnaires**
+          - Get to **The Imperial Fields**
+          - Get to **The Solaris Temple Level 1**
+          - Grab Waypoint
+          - Get to **The Solaris Temple Level 2**
+          - Find and kill **Dawn, Harbinger of Solaris**, take *Sun Orb*
+          - Get Crafting recipe
+          - Relog
+        quests:
+          - { name: Essence of the Hag, status: completed }
+          - { name: The Gemling Legion, status: completed }
+          - { name: Love is Dead, status: completed }
+        hints:
+          - Follow the dead guards by the doorways; look for a book icon
+          - Solaris Temple L1 — follow the road to the Waypoint, then go up-left
+      - id: 4
+        title: 'Dusk, Harbinger of Lunaris'
+        tasks:
+          - Waypoint to **The Solaris Temple Level 1**
+          - Get to **The Solaris Concourse**
+          - Get to **The Harbour Bridge**
+          - Get to **The Lunaris Concourse**
+          - Grab Waypoint
+          - Get to **The Lunaris Temple Level 1**
+          - Get to **The Lunaris Temple Level 2**
+          - Find and kill **Dusk, Harbinger of Lunaris**, take *Moon Orb*
+          - Get Crafting recipe
+          - Relog
+        hints:
+          - The Harbour Bridge is down-left; the Lunaris Concourse Waypoint is up-left
+      - id: 5
+        title: Lunaris and Solaris
+        tasks:
+          - Waypoint to **The Lunaris Concourse**
+          - Get to **The Harbour Bridge**
+          - Get to the **Sky Shrine**, activate the **Statue of the Sisters**
+          - Kill **Lunaris, Eternal Moon** & **Solaris, Eternal Sun**
+        hints:
+          - The Harbour Bridge is down-right
+      - id: 6
+        title: Reflection of Terror
+        tasks:
+          - Get to **The Blood Aqueduct**
+          - Get to **Highgate**
+          - Waypoint to **The Lunaris Concourse**
+          - text: Get to **The Bath House**
+            warning: Complete the **Trial of Ascendancy** here (search the left side).
+          - Get Crafting recipe
+          - Get to **The High Gardens**
+          - Get to the **Pools of Terror**, kill **Yugul, Reflection of Terror**
+          - Take Portal
+        quests:
+          - { name: Reflection of Terror, status: completed }
+        infos:
+          - Reaching Highgate via the Blood Aqueduct opens Act 9.
+        hints:
+          - The Bath House is down; search the left side of The High Gardens

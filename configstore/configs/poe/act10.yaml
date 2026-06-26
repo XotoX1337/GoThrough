@@ -1,0 +1,88 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 10
+title: 'Act 10: Oriath Docks to Kitava'
+sections:
+  - title: Oriath Docks to Kitava
+    steps:
+      - id: 1
+        title: Safe Passage
+        tasks:
+          - Get to **The Cathedral Rooftop**
+          - Get to the **Cathedral Apex**, kill **Plaguewing**
+          - Get to **The Ravaged Square**
+          - Place a Portal in the plaza
+          - Get to **The Control Blocks**
+          - Waypoint to **Oriath Docks**
+          - Take Portal
+          - Grab Waypoint
+        quests:
+          - { name: Safe Passage, status: completed }
+        hints:
+          - The Cathedral Apex is up; The Control Blocks are down
+          - Grab the Waypoint up-right
+      - id: 2
+        title: Vilenta's Vengeance
+        tasks:
+          - text: Get to **The Ossuary**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Get Crafting recipe
+          - Relog
+          - Waypoint to **The Control Blocks**
+          - Find and kill **Vilenta**
+          - Relog
+        quests:
+          - { name: Vilenta's Vengeance, status: completed }
+      - id: 3
+        title: The Labyrinth (Merciless Ascendancy)
+        tasks:
+          - Waypoint to the **Aspirants' Plaza**
+          - text: Complete the **Labyrinth** (Merciless)
+            info: Grants 2 more **Ascendancy** points (6 total once finished).
+          - Get Crafting recipe
+      - id: 4
+        title: Death and Rebirth
+        tasks:
+          - Waypoint to **The Ravaged Square**
+          - Get to **The Torched Courts**
+          - Get to **The Desecrated Chambers**
+          - Get Crafting recipe
+          - Get to the **Sanctum of Innocence**, kill **Avarius, Reassembled**, take *The Staff of Purity*
+          - Relog
+          - Talk to **Bannon**
+        quests:
+          - { name: Death and Rebirth, status: completed }
+        hints:
+          - The Torched Courts are down-right; the Desecrated Chambers loop clockwise
+          - Avarius is up-left, in a counter-clockwise spiral
+      - id: 5
+        title: 'Kitava, the Insatiable'
+        tasks:
+          - Waypoint to **The Ravaged Square**
+          - Talk to **Innocence**
+          - Get to **The Canals**
+          - Get to **The Feeding Trough**
+          - Get Crafting recipe
+          - Talk to **Sin**
+          - Get to the **Altar of Hunger**, kill **Kitava, the Insatiable**
+          - Talk to **Sin**, get to **Oriath Docks**
+          - Talk to **Lilly Roth** and set sail from Oriath
+        infos:
+          - Defeating Kitava ends Act 10 and the campaign — the second resistance penalty applies and the Atlas of Worlds (maps) opens up.
+        hints:
+          - Talk to Innocence — go up-right
+      - id: 6
+        title: 'An End to Hunger (Epilogue)'
+        tasks:
+          - Get to **Karui Shores**
+          - Get Crafting recipe
+          - Hand in **An End to Hunger**
+        quests:
+          - { name: An End to Hunger, status: completed }
+        infos:
+          - Type **/passives** in chat to confirm you collected all 23–24 quest passive points.

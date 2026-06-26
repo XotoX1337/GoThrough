@@ -1,0 +1,84 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 6
+title: 'Act 6: The Twilight Strand to the Brine King'
+next: act7.yaml
+sections:
+  - title: The Twilight Strand to the Brine King
+    steps:
+      - id: 1
+        title: Fallen from Grace
+        tasks:
+          - Get to **Lioneye's Watch**
+          - Get to **The Twilight Strand**
+          - Kill everything on the Strand
+          - Relog
+        quests:
+          - { name: Fallen from Grace, status: completed }
+      - id: 2
+        title: 'Tukohama, Karui God of War'
+        tasks:
+          - Get to **The Coast**
+          - Get to **The Mud Flats**
+          - Find and kill **The Dishonoured Queen**, take *Eye of Conquest*
+          - Get to **The Karui Fortress**
+          - Get to **Tukohama's Keep**, kill **Tukohama, Karui God of War**
+          - Get Crafting recipe
+        hints:
+          - The Dishonoured Queen is in the up-right corner, usually by a house
+      - id: 3
+        title: Shavronne & Reassembled Brutus
+        tasks:
+          - text: Get to **The Ridge**
+            warning: Complete the **Trial of Ascendancy** in The Lower Prison ahead.
+          - Get to **The Lower Prison**
+          - Get Crafting recipe
+          - Get to **Shavronne's Tower**
+          - Get to the **Prison Rooftop**, kill **Shavronne the Returned** & **Reassembled Brutus**
+          - Get to **The Warden's Chambers**
+          - Get Crafting recipe
+        hints:
+          - The Ridge is up
+      - id: 4
+        title: The Puppet Mistress
+        tasks:
+          - Get to **Prisoner's Gate**
+          - Get to **The Western Forest**
+          - Get Crafting recipe
+          - Get to **The Riverways**
+          - Grab Waypoint
+          - Get to **The Wetlands**
+          - Get to **The Spawning Ground**, kill **Ryslatha, the Puppet Mistress**
+          - Relog
+        quests:
+          - { name: The Father of War, status: completed }
+          - { name: Essence of Umbra, status: completed }
+          - { name: The Puppet Mistress, status: completed }
+        hints:
+          - Western Forest — follow the road, look for the torch touching the road
+          - Wetlands — look for 2 pillars near the Waypoint; Spawning Ground is up-left
+      - id: 5
+        title: 'Tsoagoth, the Brine King'
+        tasks:
+          - Waypoint to **The Riverways**
+          - Get to **The Southern Forest**
+          - Get to **The Cavern of Anger**
+          - Take *The Black Flag*
+          - Get to **The Beacon**
+          - Get Crafting recipe
+          - Complete the *Pillar Push*
+          - Light the **Beacon** and throw in *The Black Flag*
+          - Talk to **Weylam Roth** and sail to **The Brine King's Reef**
+          - Get to **The Brine King's Throne**, kill **Tsoagoth, the Brine King**
+          - Relog
+          - Select your **Pantheon** power
+        infos:
+          - Defeating the Brine King ends Act 6 and unlocks **Pantheon** powers.
+        hints:
+          - Southern Forest — follow the road, then go down-right
+          - The Beacon — follow the shore

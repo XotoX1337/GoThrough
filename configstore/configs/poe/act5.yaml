@@ -1,0 +1,75 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 5
+title: 'Act 5: The Slave Pens to Kitava'
+next: act6.yaml
+sections:
+  - title: The Slave Pens to Kitava
+    steps:
+      - id: 1
+        title: Return to Oriath
+        tasks:
+          - Get to **The Slave Pens**
+          - Find and kill **Overseer Krow**
+          - Get to **Overseer's Tower**
+        quests:
+          - { name: Return to Oriath, status: completed }
+        hints:
+          - Go down until you find the hanged Kauri, then loop clockwise (down/left)
+      - id: 2
+        title: The Chamber of Innocence
+        tasks:
+          - Get to **The Control Blocks**
+          - Find and take *Miasmeter*
+          - Find and kill **Justicar Casticus**, take *Eyes of Zeal*
+          - Get to **Oriath Square**
+          - Get to **The Templar Courts**
+          - Get to **The Chamber of Innocence**
+          - Get Crafting recipe
+          - Get to the **Sanctum of Innocence**, kill **High Templar Avarius**
+          - Relog
+        quests:
+          - { name: The Key to Freedom, status: completed }
+          - { name: In Service to Science, status: completed }
+          - { name: Death to Purity, status: completed }
+        hints:
+          - Miasmeter is left as much as possible; Justicar is up-right from it
+          - Templar Courts are up-right; Chamber of Innocence loops clockwise
+          - Avarius is up-left, in a counter-clockwise spiral
+      - id: 3
+        title: Kitava's Torments
+        tasks:
+          - Waypoint to **The Chamber of Innocence**
+          - Get to **The Torched Courts**
+          - Get to **The Ruined Square**
+          - Grab Waypoint
+          - Get to **The Ossuary**
+          - Find and take *Sign of Purity*
+          - Get Crafting recipe
+          - Relog
+          - Waypoint to **The Ruined Square**
+          - Get to **The Reliquary**
+          - Find 3x *Kitava's Torment*
+          - Get Crafting recipe
+          - Relog
+        quests:
+          - { name: Kitava's Torments, status: completed }
+        hints:
+          - Ruined Square loops counter-clockwise; Ossuary is up-left
+          - Reliquary is down-left to the plaza, then down — search the corners for the 3 Torments
+      - id: 4
+        title: 'Kitava, the Insatiable'
+        tasks:
+          - Waypoint to **The Ruined Square**
+          - Get to **The Cathedral Rooftop**
+          - Get to the **Cathedral Apex**, kill **Kitava, the Insatiable**
+          - Talk to **Lilly Roth** and sail to Wraeclast
+        infos:
+          - Killing Kitava ends Act 5 and applies the first resistance penalty.
+        hints:
+          - The Cathedral Rooftop is down-left

@@ -1,0 +1,144 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 3
+title: 'Act 3: The City of Sarn to Dominus'
+next: act4.yaml
+sections:
+  - title: The City of Sarn to Dominus
+    steps:
+      - id: 1
+        title: Lost in Love
+        tasks:
+          - Get to **The City of Sarn**
+          - Get Crafting recipe
+          - Talk to **Clarissa**
+          - Get to **The Sarn Encampment**
+          - Get to **The Slums**
+          - text: Get to **The Crematorium**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Find and kill **Piety**, take *Tolman's Bracelet*
+          - Get Crafting recipe
+          - Relog
+          - Talk to **Clarissa**, take *Sewer Keys*
+        quests:
+          - { name: Lost in Love, status: completed }
+        hints:
+          - Go up to reach **The Slums**
+          - Follow the stairs down in **The Crematorium**
+      - id: 2
+        title: Victario's Secrets
+        tasks:
+          - Get to **The Slums**
+          - Get to **The Sewers**
+          - Find 1x *Platinum Bust*
+          - Grab Waypoint
+          - Find 2x *Platinum Bust*
+          - Get to **The Marketplace**
+          - Grab Waypoint
+          - text: Get to **The Catacombs**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Get Crafting recipe
+          - Relog
+        quests:
+          - { name: Victario's Secrets, status: completed }
+        hints:
+          - Go up to reach **The Slums**
+          - 3x *Platinum Bust* total are needed for Victario's Secrets
+          - The Catacombs entrance is near **The Marketplace**
+      - id: 3
+        title: The Ribbon Spool
+        tasks:
+          - Waypoint to **The Marketplace**
+          - Get to **The Battlefront**
+          - Grab Waypoint
+          - Find and take *Ribbon Spool*
+          - Get to **The Solaris Temple Level 1**
+          - Get to **The Solaris Temple Level 2**
+          - Get to the **Eternal Laboratory**, get Crafting recipe
+        hints:
+          - Search up from the Battlefront entrance
+          - Ribbon Spool is down-left; Solaris Temple is up-right
+      - id: 4
+        title: Fiery Dust
+        tasks:
+          - Waypoint to **The Battlefront**
+          - Get to **The Docks**
+          - Find and take *Thaumetic Sulphite*
+          - Relog
+          - Waypoint to **The Solaris Temple Level 2**
+          - Talk to **Lady Dialla**
+          - Take *Infernal Talc*
+        quests:
+          - { name: The Ribbon Spool, status: completed }
+          - { name: Fiery Dust, status: completed }
+        hints:
+          - The Docks entrance is up-left
+      - id: 5
+        title: Sever the Right Hand
+        tasks:
+          - Waypoint to **The Sewers**
+          - Burn the *Undying Blockage* with *Infernal Talc*
+          - Get Crafting recipe
+          - Get to **The Ebony Barracks**
+          - Grab Waypoint
+          - Kill **General Gravicius**
+          - Get to **The Lunaris Temple Level 1**
+          - Get to **The Lunaris Temple Level 2**
+          - Find and kill **Piety**, take *Tower Key*
+          - Get Crafting recipe
+          - Relog
+        quests:
+          - { name: Piety's Pets, status: completed }
+          - { name: Sever the Right Hand, status: completed }
+        hints:
+          - General Gravicius is up-left
+          - In the Lunaris Temple follow the stairs going up
+          - At the fork with wagons take the route with 1 wagon, not 2
+      - id: 6
+        title: Trial in the Imperial Gardens
+        tasks:
+          - Waypoint to **The Ebony Barracks**
+          - text: Get to **The Imperial Gardens**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Grab Waypoint
+          - Get Crafting recipe
+          - Relog
+          - Waypoint to **The Imperial Gardens**
+        hints:
+          - The Imperial Gardens are up-right, then follow the road
+      - id: 7
+        title: A Fixture of Fate
+        tasks:
+          - Get to **The Library**
+          - Grab Waypoint
+          - Find the **Loose Candle**, get to **The Archives**
+          - Get Crafting recipe
+          - Find 4x *Golden Page*
+          - Relog
+          - Waypoint to **The Library**
+          - Hand in to **Siosa**
+          - Waypoint to **The Imperial Gardens**
+        quests:
+          - { name: A Fixture of Fate, status: completed }
+        infos:
+          - Completing this unlocks **Siosa**, who sells every skill gem up to this point — keep currency ready to buy gems.
+        hints:
+          - The Library is up-left from the Imperial Gardens
+          - The Archives candle is in a narrow corridor
+      - id: 8
+        title: 'Dominus, High Templar'
+        tasks:
+          - Get to **The Sceptre of God**
+          - Get to **The Upper Sceptre of God**
+          - Get to the **Tower Rooftop**
+          - Kill **Dominus, High Templar**
+        infos:
+          - Killing Dominus ends Act 3.
+        hints:
+          - In the Upper Sceptre the stairs spawn in one of the corners
+          - Look for barricades

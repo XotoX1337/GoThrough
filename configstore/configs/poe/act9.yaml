@@ -1,0 +1,87 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 9
+title: 'Act 9: Highgate to the Depraved Trinity'
+next: act10.yaml
+sections:
+  - title: Highgate to the Depraved Trinity
+    steps:
+      - id: 1
+        title: The Basilisk
+        tasks:
+          - Get to **The Descent**
+          - Get to **The Vastiri Desert**
+          - Grab Waypoint
+          - Get Crafting recipe
+          - Find and take *The Storm Blade*
+          - Get to **The Foothills**
+          - Grab Waypoint
+          - Get to **The Boiling Lake**
+          - Find and kill **The Basilisk**, take *Basilisk Acid*
+          - Get Crafting recipe
+          - Relog
+          - Talk to **Sin**, hand in your quests, take *Bottled Storm*
+        hints:
+          - Vastiri Desert Waypoint is right; The Foothills are up-left
+          - From the Foothills Waypoint go up-right to the cliff, then up-left
+          - The Basilisk is up-right — look for petrified soldiers
+      - id: 2
+        title: Queen of the Sands
+        tasks:
+          - Waypoint to **The Vastiri Desert**
+          - Get to **The Oasis**
+          - Get to the **Sand Pit**, kill **Shakari, Queen of the Sands**
+          - Relog
+        quests:
+          - { name: Queen of the Sands, status: completed }
+        hints:
+          - The Oasis is up-right
+      - id: 3
+        title: The Ruler of Highgate
+        tasks:
+          - Waypoint to **The Foothills**
+          - text: Get to **The Tunnel**
+            warning: Complete the **Trial of Ascendancy** here, before the Waypoint.
+          - Get Crafting recipe
+          - Get to **The Quarry**
+          - Grab Waypoint
+          - Get Crafting recipe
+          - Get to the **Shrine of the Winds**, kill **Garukhan, Queen of the Winds**, take *Sekhema Feather*
+          - Relog
+        quests:
+          - { name: The Ruler of Highgate, status: completed }
+        hints:
+          - The Tunnel and Quarry Waypoint are up-left; Shrine of the Winds is up-right or down-left
+      - id: 4
+        title: General Adus
+        tasks:
+          - Waypoint to **The Quarry**
+          - Get to **The Refinery**
+          - Get Crafting recipe
+          - Find and kill **General Adus**, take *Trarthan Powder*
+          - Relog
+        hints:
+          - The Refinery is up-left or up-right
+          - The crafting recipe is down a sewer grate to the Refinery Tunnels, attached to the cart tracks
+          - General Adus is up-right, following the cart tracks
+      - id: 5
+        title: The Depraved Trinity
+        tasks:
+          - Waypoint to **The Quarry**
+          - Talk to **Sin**
+          - Get to **The Belly of the Beast**
+          - Get to **The Rotting Core**
+          - Get to **The Black Core**
+          - Talk to **Sin**
+          - Get to **Doedre's Despair**, kill **Doedre, Darksoul**
+          - Get to **Maligaro's Misery**, kill **Maligaro, the Broken**
+          - Get to **Shavronne's Sorrow**, kill **Shavronne, Unbound**
+          - Talk to **Sin**, get to **The Black Heart**, kill **The Depraved Trinity**
+          - Take Portal
+        infos:
+          - Defeating the Depraved Trinity ends Act 9.

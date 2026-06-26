@@ -1,0 +1,114 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 7
+title: 'Act 7: The Bridge Encampment to Arakaali'
+next: act8.yaml
+sections:
+  - title: The Bridge Encampment to Arakaali
+    steps:
+      - id: 1
+        title: Maligaro's Map
+        tasks:
+          - Waypoint to **The Bridge Encampment**
+          - Get to **The Broken Bridge**
+          - Find and take *Silver Locket*
+          - Get to **The Crossroads**
+          - Grab Waypoint
+          - Get to **The Fellshrine Ruins**
+          - text: Get to **The Crypt**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Get Crafting recipe
+          - Find the **Sarcophagus** to the next floor
+          - Find and take *Maligaro's Map*
+          - Relog
+        hints:
+          - Silver Locket — follow the road, look for the broken Waypoint
+          - The Fellshrine Ruins are down-right
+      - id: 2
+        title: Essence of the Artist
+        tasks:
+          - Waypoint to **The Crossroads**
+          - Get to **The Chamber of Sins Level 1**
+          - Get Crafting recipe
+          - Grab Waypoint
+          - Activate the **Map Device** with *Maligaro's Map*
+          - Get to **Maligaro's Sanctum**
+          - Get to **Maligaro's Workshop**, kill **Maligaro, the Artist**, take *Black Venom*
+          - Relog
+        quests:
+          - { name: Essence of the Artist, status: completed }
+          - { name: The Silver Locket, status: completed }
+        hints:
+          - The Chamber of Sins L1 is up-left
+          - Maligaro's Workshop — follow the edges and cross bridges in the corners (usually opposite diagonal corners)
+      - id: 3
+        title: Web of Secrets
+        tasks:
+          - Waypoint to **The Chamber of Sins Level 1**
+          - Hand in **Web of Secrets**, take *Obsidian Key*
+          - text: Get to **The Chamber of Sins Level 2**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Get Crafting recipe
+          - Open the **Secret Passage**, get to **The Den**
+          - Get to **The Ashen Fields**
+          - Get to **The Forest Encampment**, kill **Greust, Lord of the Forest**
+          - Get to **The Northern Forest**
+          - Waypoint to **The Bridge Encampment**
+        quests:
+          - { name: Web of Secrets, status: completed }
+          - { name: The Master of a Million Faces, status: completed }
+        hints:
+          - The Chamber of Sins L2 — go in the same direction as the Waypoint
+          - Greust is down-left
+      - id: 4
+        title: The Cloven One
+        tasks:
+          - Waypoint to **Prisoner's Gate**
+          - Get to the **Valley of the Fire Drinker**, kill **Abberath, the Cloven One**
+          - Take Portal
+        quests:
+          - { name: The Cloven One, status: completed }
+        hints:
+          - Go down the ledge next to the road
+      - id: 5
+        title: Queen of Despair
+        tasks:
+          - Waypoint to **The Northern Forest**
+          - Get to **The Causeway**
+          - Get Crafting recipe
+          - Find and take *Kishara's Star*
+          - Get to **The Vaal City**
+          - Find the Waypoint
+          - Waypoint to **The Northern Forest**
+          - Get to **The Dread Thicket**
+          - Find and take 7x *Firefly*
+          - Get Crafting recipe
+          - Get to the **Den of Despair**, kill **Gruthkul, Mother of Despair**
+          - Take Portal
+        quests:
+          - { name: Queen of Despair, status: completed }
+          - { name: Kishara's Star, status: completed }
+      - id: 6
+        title: The Labyrinth (Cruel Ascendancy)
+        tasks:
+          - Waypoint to the **Aspirants' Plaza**
+          - text: Complete the **Labyrinth** (Cruel)
+            info: Grants 2 more **Ascendancy** points.
+          - Get Crafting recipe
+      - id: 7
+        title: 'Arakaali, Spinner of Shadows'
+        tasks:
+          - Waypoint to **The Vaal City**
+          - Get to **The Temple of Decay Level 1**
+          - Get to **The Temple of Decay Level 2**
+          - Get Crafting recipe
+          - Get to **Arakaali's Web**, kill **Arakaali, Spinner of Shadows**
+        quests:
+          - { name: Lighting the Way, status: completed }
+        infos:
+          - Defeating Arakaali ends Act 7.
