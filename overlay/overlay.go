@@ -109,7 +109,7 @@ func (o *Overlay) restoreWindowPos(ctx context.Context) {
 		anchorTopRight(ctx)
 		return
 	}
-	x, y := clampToScreen(ctx, pos.X, pos.Y)
+	x, y := clampToScreen(ctx, pos.X, pos.Y, overlayWidth, overlayHeight)
 	runtime.WindowSetPosition(ctx, x, y)
 }
 
@@ -119,15 +119,15 @@ func anchorTopRight(ctx context.Context) {
 	}
 }
 
-// clampToScreen keeps a window's top-left corner within the primary screen so
-// the overlay stays reachable. It mirrors the maxX/maxY clamp the frontend uses
-// while dragging (Wails' Screen exposes only size, not monitor origin, so a
-// precise multi-monitor clamp isn't possible — this is the same primary-screen
-// approximation the drag handler already relies on).
-func clampToScreen(ctx context.Context, x, y int) (int, int) {
+// clampToScreen keeps a window of the given size (logical px) within the primary
+// screen so the overlay stays reachable. It mirrors the maxX/maxY clamp the
+// frontend uses while dragging (Wails' Screen exposes only size, not monitor
+// origin, so a precise multi-monitor clamp isn't possible — this is the same
+// primary-screen approximation the drag handler already relies on).
+func clampToScreen(ctx context.Context, x, y, winW, winH int) (int, int) {
 	w, h := primaryScreenSize(ctx)
 	if w > 0 {
-		maxX := w - overlayWidth
+		maxX := w - winW
 		if maxX < 0 {
 			maxX = 0
 		}
@@ -138,7 +138,7 @@ func clampToScreen(ctx context.Context, x, y int) (int, int) {
 		}
 	}
 	if h > 0 {
-		maxY := h - overlayHeight
+		maxY := h - winH
 		if maxY < 0 {
 			maxY = 0
 		}
