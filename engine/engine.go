@@ -1,11 +1,11 @@
 // Package engine manages step state for an active walkthrough session.
 //
-// A walkthrough may contain branches (decision points that fork into named
-// options and re-converge afterwards). The engine resolves the document into a
-// flat, linear sequence of Items for the chosen path: shared steps, then the
-// chosen option's steps, then the shared steps that follow the branch. An
-// undecided branch appears as a decision Item and the sequence stops there until
-// the user picks an option.
+// A walkthrough may contain choices (flat decision points that record an answer
+// under a key). Steps elsewhere in the file opt into a choice via their `when`
+// condition. The engine resolves the document into a flat, linear sequence of
+// Items: every choice is emitted (so it stays navigable for re-answering), and a
+// step is included only when its `when` condition is satisfied by the recorded
+// answers. An unanswered choice simply hides its dependent steps.
 package engine
 
 import (
@@ -18,34 +18,34 @@ var (
 	ErrAlreadyFirst = errors.New("already at first step")
 	ErrAlreadyLast  = errors.New("already at last step")
 	ErrOutOfRange   = errors.New("step index out of range")
-	ErrNotABranch   = errors.New("current item is not the named branch")
-	ErrBadOption    = errors.New("unknown branch option")
+	ErrNotAChoice   = errors.New("current item is not the named choice")
+	ErrBadOption    = errors.New("unknown choice option")
 )
 
-// Persister records the user's position and branch choices so they can be
+// Persister records the user's position and choice answers so they can be
 // restored in a later session. It is bound to a single walkthrough. Implemented
 // by *progress.Handle.
 type Persister interface {
-	Save(index, stepID int, branches map[string]string) error
+	Save(index, stepID int, choices map[string]string) error
 }
 
-// Item is one position in the resolved sequence: either a Step or a Branch
-// decision (never both). A branch decision stays in the sequence even after a
-// choice is made — its Selected field then holds the chosen option label — so
-// the user can navigate back onto it and re-choose. Section is the group title
-// for HUD rendering (empty for a flat, sections-less config).
+// Item is one position in the resolved sequence: either a Step or a Choice
+// (never both). A choice stays in the sequence even after it is answered — its
+// Selected field then holds the chosen option value — so the user can navigate
+// back onto it and re-choose. Section is the group title for HUD rendering
+// (empty for a flat, sections-less config).
 type Item struct {
 	Step     *config.Step
-	Branch   *config.Branch
-	Selected string // chosen option label ("" while undecided)
+	Choice   *config.Choice
+	Selected string // chosen option value ("" while undecided)
 	Section  string
 }
 
-// IsBranch reports whether this item is a branch decision (decided or not).
-func (it Item) IsBranch() bool { return it.Branch != nil }
+// IsChoice reports whether this item is a choice (answered or not).
+func (it Item) IsChoice() bool { return it.Choice != nil }
 
-// Engine tracks which item the user is currently on and the branch options
-// chosen so far (persistKey -> option label).
+// Engine tracks which item the user is currently on and the choice answers
+// recorded so far (choice key -> option value).
 type Engine struct {
 	walkthrough *config.Walkthrough
 	index       int
@@ -68,34 +68,41 @@ func (e *Engine) UsePersister(p Persister) {
 	e.store = p
 }
 
-// optionIndex returns the chosen option index for a branch, or ok=false if the
-// branch has no (valid) recorded choice yet.
-func (e *Engine) optionIndex(b *config.Branch) (int, bool) {
-	label, ok := e.selections[b.PersistKey]
-	if !ok || label == "" {
-		return 0, false
-	}
-	for i, o := range b.Options {
-		if o.Label == label {
-			return i, true
+// stepVisible reports whether a step's `when` condition is satisfied by the
+// current answers. A step with no condition is always visible; a condition
+// referencing an unanswered choice is never satisfied.
+func (e *Engine) stepVisible(s *config.Step) bool {
+	for key, accepted := range s.When {
+		val, ok := e.selections[key]
+		if !ok || val == "" {
+			return false
+		}
+		match := false
+		for _, a := range accepted {
+			if a == val {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return false
 		}
 	}
-	return 0, false
+	return true
 }
 
 // flatten rebuilds the linear sequence from the walkthrough outline and the
-// current branch selections, stopping at the first undecided branch.
+// current choice answers: every choice is emitted, and each step is included
+// only if its `when` condition is satisfied.
 func (e *Engine) flatten() {
 	var seq []Item
 	for _, on := range e.walkthrough.Outline() {
-		if on.Step != nil {
-			seq = append(seq, Item{Step: on.Step, Section: on.Section})
+		if on.Choice != nil {
+			seq = append(seq, Item{Choice: on.Choice, Section: on.Section, Selected: e.selections[on.Choice.Key]})
 			continue
 		}
-		sub, stopped := e.expandBranch(on.Branch, on.Section)
-		seq = append(seq, sub...)
-		if stopped {
-			break
+		if e.stepVisible(on.Step) {
+			seq = append(seq, Item{Step: on.Step, Section: on.Section})
 		}
 	}
 	e.seq = seq
@@ -107,50 +114,19 @@ func (e *Engine) flatten() {
 	}
 }
 
-// expandBranch resolves a branch for the current selections. The decision Item
-// is always emitted (so it stays navigable for re-choosing). If undecided,
-// nothing follows it and stopped=true halts flattening (the shared suffix stays
-// hidden until a choice is made). If decided, the chosen option's nodes are
-// inlined after the decision (recursively, so nested branches are handled).
-func (e *Engine) expandBranch(b *config.Branch, section string) (items []Item, stopped bool) {
-	idx, ok := e.optionIndex(b)
-	if !ok {
-		return []Item{{Branch: b, Section: section}}, true
-	}
-	decision := Item{Branch: b, Section: section, Selected: b.Options[idx].Label}
-	sub, st := e.expandNodes(b.Options[idx].Steps, section)
-	return append([]Item{decision}, sub...), st
-}
-
-func (e *Engine) expandNodes(nodes []config.Node, section string) (items []Item, stopped bool) {
-	var out []Item
-	for _, n := range nodes {
-		if n.Step != nil {
-			out = append(out, Item{Step: n.Step, Section: section})
-			continue
-		}
-		sub, st := e.expandBranch(n.Branch, section)
-		out = append(out, sub...)
-		if st {
-			return out, true
-		}
-	}
-	return out, false
-}
-
-// Choose records the option for the branch the user is currently on (which may
-// already be decided — this is how re-choosing works) and advances into the
-// chosen option. The current item must be that branch (ErrNotABranch
-// otherwise); the label must name a real option (ErrBadOption otherwise). On
+// Choose records the answer for the choice the user is currently on (which may
+// already be answered — this is how re-choosing works) and advances to the item
+// right after it. The current item must be that choice (ErrNotAChoice
+// otherwise); the value must name a real option (ErrBadOption otherwise). On
 // success the sequence is re-flattened and the new position persisted.
-func (e *Engine) Choose(persistKey, label string) error {
+func (e *Engine) Choose(key, value string) error {
 	cur := e.Current()
-	if cur == nil || cur.Branch == nil || cur.Branch.PersistKey != persistKey {
-		return ErrNotABranch
+	if cur == nil || cur.Choice == nil || cur.Choice.Key != key {
+		return ErrNotAChoice
 	}
 	valid := false
-	for _, o := range cur.Branch.Options {
-		if o.Label == label {
+	for _, o := range cur.Choice.Options {
+		if o.Value == value {
 			valid = true
 			break
 		}
@@ -158,23 +134,29 @@ func (e *Engine) Choose(persistKey, label string) error {
 	if !valid {
 		return ErrBadOption
 	}
-	pos := e.index // the decision item stays put; we step into the option after it
-	e.selections[persistKey] = label
+	e.selections[key] = value
 	e.flatten()
-	if pos+1 < len(e.seq) {
-		e.index = pos + 1
-	} else if pos < len(e.seq) {
-		e.index = pos
+	// Re-find the choice (its index can shift if answering it changed earlier
+	// steps' visibility) and step into the item that follows it.
+	for i := range e.seq {
+		if c := e.seq[i].Choice; c != nil && c.Key == key {
+			if i+1 < len(e.seq) {
+				e.index = i + 1
+			} else {
+				e.index = i
+			}
+			break
+		}
 	}
 	return e.persist()
 }
 
 // Restore positions the engine at a previously saved step and replays the saved
-// branch choices. It prefers to match by step ID (resilient to steps being
+// choice answers. It prefers to match by step ID (resilient to steps being
 // inserted or removed) and falls back to the saved index, clamped to range.
-func (e *Engine) Restore(index, stepID int, branches map[string]string) {
+func (e *Engine) Restore(index, stepID int, choices map[string]string) {
 	e.selections = map[string]string{}
-	for k, v := range branches {
+	for k, v := range choices {
 		e.selections[k] = v
 	}
 	e.flatten()
@@ -194,7 +176,7 @@ func (e *Engine) Restore(index, stepID int, branches map[string]string) {
 	e.index = index
 }
 
-// persist writes the current position and branch choices through the configured
+// persist writes the current position and choice answers through the configured
 // Persister, if any.
 func (e *Engine) persist() error {
 	if e.store == nil {
@@ -215,9 +197,7 @@ func (e *Engine) Current() *Item {
 	return &e.seq[e.index]
 }
 
-// Next advances to the next item. Returns ErrAlreadyLast if at the end (which
-// includes sitting on an undecided branch — the sequence stops there until a
-// choice is made).
+// Next advances to the next item. Returns ErrAlreadyLast if at the end.
 func (e *Engine) Next() error {
 	if e.index >= len(e.seq)-1 {
 		return ErrAlreadyLast
@@ -262,7 +242,7 @@ func (e *Engine) Title() string { return e.walkthrough.Title }
 // Variant returns the walkthrough variant label (empty if unset).
 func (e *Engine) Variant() string { return e.walkthrough.Variant }
 
-// Next returns the follow-up file reference (empty if none).
+// NextFile returns the follow-up file reference (empty if none).
 func (e *Engine) NextFile() string { return e.walkthrough.Next }
 
 // Progress returns 1-based current position and total item count.
@@ -271,10 +251,10 @@ func (e *Engine) Progress() (current, total int) {
 }
 
 // Done reports whether the user is on the final item AND it is a real step
-// (an undecided branch is never "done" — it needs a choice).
+// (sitting on a choice is never "done").
 func (e *Engine) Done() bool {
 	if len(e.seq) == 0 {
 		return false
 	}
-	return e.index == len(e.seq)-1 && !e.seq[e.index].IsBranch()
+	return e.index == len(e.seq)-1 && !e.seq[e.index].IsChoice()
 }

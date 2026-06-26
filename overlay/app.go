@@ -33,16 +33,26 @@ type QuestInfo struct {
 	Note   string `json:"note,omitempty"`
 }
 
-// BranchOptionInfo is one selectable path of a branch decision.
-type BranchOptionInfo struct {
+// ChoiceOptionInfo is one selectable answer of a choice.
+type ChoiceOptionInfo struct {
+	Value       string `json:"value"`
 	Label       string `json:"label"`
 	Description string `json:"description,omitempty"`
 }
 
+// TaskInfo is one actionable sub-step within a step, with optional per-task
+// callouts. Text is Markdown.
+type TaskInfo struct {
+	Text    string `json:"text"`
+	Info    string `json:"info,omitempty"`
+	Warning string `json:"warning,omitempty"`
+	Hint    string `json:"hint,omitempty"`
+}
+
 // StepInfo is the data shape sent to the Wails frontend. It represents one
-// position in the resolved sequence: a normal step, OR a branch decision when
-// IsBranch is true (in which case Title is the decision question, BranchKey
-// identifies it, and Options are the choices). Description is Markdown.
+// position in the resolved sequence: a normal step, OR a choice when IsChoice is
+// true (in which case Title is the prompt, ChoiceKey identifies it, and Options
+// are the answers). Description is Markdown.
 type StepInfo struct {
 	Current int    `json:"current"`
 	Total   int    `json:"total"`
@@ -50,20 +60,22 @@ type StepInfo struct {
 	IsLast  bool   `json:"isLast"`
 	Section string `json:"section,omitempty"`
 
-	// Branch decision (IsBranch == true)
-	IsBranch  bool               `json:"isBranch,omitempty"`
-	BranchKey string             `json:"branchKey,omitempty"`
-	Selected  string             `json:"selected,omitempty"` // chosen option label ("" while undecided)
-	Options   []BranchOptionInfo `json:"options,omitempty"`
+	// Choice (IsChoice == true)
+	IsChoice  bool               `json:"isChoice,omitempty"`
+	ChoiceKey string             `json:"choiceKey,omitempty"`
+	Selected  string             `json:"selected,omitempty"` // chosen option value ("" while undecided)
+	Options   []ChoiceOptionInfo `json:"options,omitempty"`
 
-	// Step content (IsBranch == false)
+	// Step content (IsChoice == false)
 	ID          int         `json:"id,omitempty"`
 	Title       string      `json:"title"`
 	Description string      `json:"description,omitempty"`
+	Tasks       []TaskInfo  `json:"tasks,omitempty"`
 	Optional    bool        `json:"optional,omitempty"`
 	Quests      []QuestInfo `json:"quests,omitempty"`
 	Hints       []string    `json:"hints,omitempty"`
 	Warnings    []string    `json:"warnings,omitempty"`
+	Infos       []string    `json:"infos,omitempty"`
 }
 
 // MetaInfo describes the loaded walkthrough for the HUD header.
@@ -212,7 +224,7 @@ func (a *App) Meta() MetaInfo {
 }
 
 // Steps returns every item in the resolved sequence so the HUD can render its
-// (section-grouped) checklist. Branch decisions appear as items too.
+// (section-grouped) checklist. Choices appear as items too.
 func (a *App) Steps() []StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -228,15 +240,15 @@ func (a *App) Steps() []StepInfo {
 	return out
 }
 
-// Choose records the option for the branch the user is currently facing and
-// returns the new active item (the chosen option's first step).
-func (a *App) Choose(persistKey, label string) StepInfo {
+// Choose records the answer for the choice the user is currently facing and
+// returns the new active item (the item right after the choice).
+func (a *App) Choose(choiceKey, value string) StepInfo {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.eng == nil {
 		return StepInfo{}
 	}
-	_ = a.eng.Choose(persistKey, label)
+	_ = a.eng.Choose(choiceKey, value)
 	return a.stepInfo()
 }
 
@@ -374,6 +386,23 @@ func (a *App) SaveTheme(theme string) (settings.Settings, error) {
 	return ns, nil
 }
 
+// SaveLanguage persists the HUD interface language (en | de) and returns the
+// updated settings. An unknown code is rejected so the frontend can't store a
+// value its string table doesn't define.
+func (a *App) SaveLanguage(lang string) (settings.Settings, error) {
+	switch lang {
+	case "en", "de":
+	default:
+		return a.set.Get(), fmt.Errorf("unknown language %q", lang)
+	}
+	ns := a.set.Get()
+	ns.Language = lang
+	if err := a.set.Save(ns); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
+	}
+	return ns, nil
+}
+
 // validateHotkeys checks that every binding resolves to a real key/modifier
 // combination before it is persisted or registered.
 func validateHotkeys(hk settings.Hotkeys) error {
@@ -480,13 +509,13 @@ func itemInfo(it engine.Item, pos, total int, last bool) StepInfo {
 		IsLast:  last,
 		Section: it.Section,
 	}
-	if it.IsBranch() {
-		info.IsBranch = true
-		info.Title = it.Branch.Title
-		info.BranchKey = it.Branch.PersistKey
+	if it.IsChoice() {
+		info.IsChoice = true
+		info.Title = it.Choice.Prompt
+		info.ChoiceKey = it.Choice.Key
 		info.Selected = it.Selected
-		for _, o := range it.Branch.Options {
-			info.Options = append(info.Options, BranchOptionInfo{Label: o.Label, Description: o.Description})
+		for _, o := range it.Choice.Options {
+			info.Options = append(info.Options, ChoiceOptionInfo{Value: o.Value, Label: o.Label, Description: o.Description})
 		}
 		return info
 	}
@@ -497,6 +526,10 @@ func itemInfo(it engine.Item, pos, total int, last bool) StepInfo {
 	info.Optional = s.Optional
 	info.Hints = s.Hints
 	info.Warnings = s.Warnings
+	info.Infos = s.Infos
+	for _, t := range s.Tasks {
+		info.Tasks = append(info.Tasks, TaskInfo{Text: t.Text, Info: t.Info, Warning: t.Warning, Hint: t.Hint})
+	}
 	for _, q := range s.Quests {
 		info.Quests = append(info.Quests, QuestInfo{Name: q.Name, Status: q.Status, Note: q.Note})
 	}
@@ -516,8 +549,8 @@ func attachProgress(eng *engine.Engine, wt *config.Walkthrough, fresh bool) {
 	}
 	h := store.For(wt)
 	if !fresh {
-		if index, stepID, branches, ok := h.Load(); ok {
-			eng.Restore(index, stepID, branches)
+		if index, stepID, choices, ok := h.Load(); ok {
+			eng.Restore(index, stepID, choices)
 		}
 	}
 	eng.UsePersister(h)

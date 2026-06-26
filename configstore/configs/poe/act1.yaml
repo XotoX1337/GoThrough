@@ -1,0 +1,113 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 1
+title: 'Act 1: The Coast to Merveil'
+next: act2.yaml
+sections:
+  - title: The Coast to Merveil
+    steps:
+      - id: 1
+        title: Lioneye's Watch
+        tasks:
+          - Find and kill **Hillock**
+          - Get to **Lioneye's Watch**
+          - Hand in *Enemy at the Gate*
+          - Exit to The Coast
+          - Get to **The Mud Flats**
+          - text: Grab Waypoint
+            info: Waypoints let you fast-travel back here later — always grab them.
+      - id: 5
+        title: Get to The Submerged Passage
+        tasks:
+          - Find 3x *Glyph*
+          - Get to **The Submerged Passage**
+          - Grab Waypoint
+        hints:
+          - Little streams connect the 3 Rhoa nests
+          - Usually form a triangle, but will rarely form a line
+      - id: 6
+        title: Kill Hailrake
+        tasks:
+          - Waypoint to **The Coast**
+          - Go right to **The Tidal Island**
+          - Find and kill **Hailrake**, take *Medicine Chest*
+          - text: Relog
+            info: Relogging resets the layout so the next zone is freshly rolled.
+        quests:
+          - { name: Breaking some Eggs, status: completed }
+          - { name: Mercy Mission, status: completed }
+      - id: 8
+        title: Get to The Climb
+        tasks:
+          - Waypoint to **The Submerged Passage**
+          - Find bridge, place Portal
+          - Get to **The Ledge**
+          - Get to **The Climb**
+          - Get to **The Lower Prison**
+          - Grab Waypoint, port to Lioneye's Watch
+          - Take **Portal** to **The Submerged Passage**
+        hints:
+          - For The Ledge -> The Climb -> Lower Prison go up
+      - id: 9
+        title: Kill The Dweller of the Deep
+        tasks:
+          - Get to **The Flooded Depths**
+          - Find and kill **The Dweller of the Deep**
+          - Relog
+          - Waypoint to **The Lower Prison**
+        quests:
+          - { name: The Dweller of the Deep, status: completed }
+          - { name: The Caged Brute, status: completed }
+      - id: 10
+        title: 'Brutus, Lord Incarcerator'
+        tasks:
+          - text: Get to **The Upper Prison**
+            warning: Complete the **Trial of Ascendancy** here before moving on.
+          - Get to **The Warden's Quarters**
+          - Kill **Brutus, Lord Incarcerator**
+          - Relog
+          - Waypoint to **Prisoner's Gate**
+        quests:
+          - { name: The Caged Brute, status: completed }
+        hints:
+          - For the Chemist's Strongbox look for a map icon, access with nearby switch
+      - id: 17
+        title: Get to The Ship Graveyard
+        tasks:
+          - Get to **The Ship Graveyard**
+          - Find **The Ship Graveyard Cave**, place Portal
+          - Get to **The Cavern of Wrath**
+          - Waypoint to **Lioneye's Watch**
+          - Take Portal to **The Ship Graveyard**
+        hints:
+          - Go down the ledge next to the road
+      - id: 18
+        title: Captain Fairgraves
+        tasks:
+          - Find **Slave Girl**, take **Allflame**
+          - Exit the **Ship Graveyard**
+          - Talk to **Captain Fairgraves**, complete Quest
+          - Relog
+          - Waypoint to **Merveil's Caverns**
+        quests:
+          - { name: The Marooned Mariner, status: completed }
+          - { name: The Siren's Cadence, status: completed }
+        hints:
+          - Search opposite the entrance
+      - id: 19
+        title: Merveil
+        tasks:
+          - Get to **The Cavern of Anger**
+          - Get to **Merveil's Lair**
+          - Kill **Merveil, the Siren**
+          - Exit to **The Southern Forest**
+        infos:
+          - Killing Merveil ends Act 1 and opens the way into Act 2.
+        hints:
+          - Follow the water
+          - Treasure chests spawn enemies

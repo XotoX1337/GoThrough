@@ -1,0 +1,199 @@
+# Schema v3 (v0.9): tasks, choice (Bandit reward) + when-gated kills, infos/warnings.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 2
+title: 'Act 2: The Old Fields to the Vaal Oversoul'
+next: act3.yaml
+sections:
+  - title: The Old Fields to the Vaal Oversoul
+    steps:
+      - id: 1
+        title: Get to The Crossroads
+        tasks:
+          - Get to **The Southern Forest**
+          - Get to **The Forest Encampment**
+          - Get to **The Old Fields**
+          - Find **The Den**, place Portal
+          - Get to **The Crossroads**
+          - Grab Waypoint
+        hints:
+          - Go up-right
+          - Follow the road
+      - id: 6
+        title: Kill The Great White Beast
+        tasks:
+          - Waypoint to **The Forest Encampment**
+          - Take Portal to **The Den**
+          - Find and kill **The Great White Beast**
+          - Relog
+          - Waypoint to **The Crossroads**
+        quests:
+          - { name: The Great White Beast, status: completed }
+        hints:
+          - Follow the road to find **The Great White Beast**
+      - id: 9
+        title: Get to The Chamber of Sins Level 2
+        tasks:
+          - Get to **The Chamber of Sins Level 1**
+          - text: Get to **The Chamber of Sins Level 2**
+            warning: Complete the **Trial of Ascendancy** here.
+        hints:
+          - Go up-left
+          - Go in same direction as Waypoint
+      - id: 12
+        title: Kill Fidelitas, the Mourning
+        tasks:
+          - Kill **Fidelitas, the Mourning**, take *Baleful Gem*
+          - Relog
+        quests:
+          - { name: Intruders in Black, status: completed }
+        hints:
+          - Look for the long hallway
+      - id: 13
+        title: Get to The Crypt Level 1
+        tasks:
+          - Waypoint to **The Crossroads**
+          - Get to **The Fellshrine Ruins**
+          - Get to **The Crypt Level 1**
+          - text: Get to **The Crypt Level 2**
+            warning: Complete the **Trial of Ascendancy** here.
+          - Find *Altar*, take *Golden Hand*
+          - Relog
+        quests:
+          - { name: Through Sacred Ground, status: completed }
+        hints:
+          - Go down-right
+          - Follow the road
+      - id: 17
+        title: Get to The Western Forest
+        tasks:
+          - Waypoint to **The Crossroads**
+          - Get to **The Riverways**
+          - Grab Waypoint
+          - Get to **The Western Forest**
+          - Grab Waypoint
+        hints:
+          - Go down-left
+          - Follow the road
+      - id: 18
+        title: Kill The Weaver
+        tasks:
+          - Get to **The Weaver's Chambers**
+          - Get to **The Weaver's Nest**
+          - Kill **The Weaver**, take *Maligaro's Spike*
+          - Relog
+        quests:
+          - { name: Sharp and Cruel, status: completed }
+        hints:
+          - Search the side of road opposite Waypoint
+          - Try go left, if it's blocked go up-right
+
+  - title: Deal with the Bandits
+    steps:
+      - choice:
+          key: bandit
+          prompt: 'Bandit reward — kill all three, or spare one for a permanent buff?'
+          options:
+            - value: kill_all
+              label: Kill all three
+              description: 'Oak, Kraityn and Alira all die — grants **2 passive skill points**.'
+            - value: oak
+              label: Spare Oak (Skullbreaker)
+              description: '**+life** and **+physical damage**. You still kill Kraityn & Alira.'
+            - value: kraityn
+              label: Spare Kraityn (Scarbearer)
+              description: '**+attack/cast/move speed**. You still kill Oak & Alira.'
+            - value: alira
+              label: Spare Alira (Darktongue)
+              description: '**+mana regen, +crit multi, +resistances**. You still kill Oak & Kraityn.'
+
+      - id: 19
+        title: Kill Kraityn, Scarbearer
+        when: { bandit: [kill_all, oak, alira] }
+        tasks:
+          - Waypoint to **The Crossroads**
+          - Get to **The Broken Bridge**
+          - Kill **Kraityn, Scarbearer**, take *Kraityn's Amulet*
+          - Relog
+        hints:
+          - Go up-right to find **Kraityn, Scarbearer**
+          - Follow the road
+      - id: 25
+        title: Kill Oak, Skullbreaker
+        when: { bandit: [kill_all, kraityn, alira] }
+        tasks:
+          - Waypoint to **The Riverways**
+          - Get to **The Wetlands**
+          - Find and kill **Oak, Skullbreaker**, take *Oak's Amulet*
+        hints:
+          - Look for 2 pillars near Waypoint, follow the trail
+      - id: 26
+        title: Kill Alira, Darktongue
+        when: { bandit: [kill_all, oak, kraityn] }
+        tasks:
+          - Waypoint to **The Western Forest**
+          - Kill **Alira Darktongue**, take *Alira's Amulet*
+        hints:
+          - Search opposite direction of the encampment entrance
+      - id: 27
+        title: Claim your bandit reward
+        when: { bandit: [oak, kraityn, alira] }
+        tasks:
+          - text: Return to the bandit you spared to receive the permanent buff.
+            info: Sparing one bandit gives their personal bonus instead of 2 passive points.
+
+      - id: 20
+        title: Deal with the Bandits
+        tasks:
+          - Get to **The Western Forest** encampment
+          - Kill **Captain Arteri**
+          - Take *Thaumetic Emblem*, activate *Thaumetic Seal*
+          - Relog, take *The Apex*
+        quests:
+          - { name: Deal with the Bandits, status: completed }
+        infos:
+          - All bandit paths re-converge here — the quest completes either way.
+        hints:
+          - Go down look for the torch touching the road
+          - Follow the trail in the direction of the torch
+          - Follow the road down-left
+
+  - title: The Vaal Oversoul
+    steps:
+      - id: 21
+        title: 'Hand in: The Way Forward'
+        tasks:
+          - Waypoint to **Lioneye's Watch**
+          - Relog
+        quests:
+          - { name: The Way Forward, status: completed }
+      - id: 22
+        title: Get to The Vaal Ruins
+        tasks:
+          - Waypoint to **The Wetlands**
+          - Poison the *Tree Roots*
+          - Get to **The Vaal Ruins**
+      - id: 23
+        title: Get to The Caverns
+        tasks:
+          - Get to **The Northern Forest**
+          - Get to **The Caverns**
+          - Get Crafting recipe
+        hints:
+          - S shape or L shape leads to exit
+      - id: 24
+        title: Kill Vaal Oversoul
+        tasks:
+          - Get to **The Ancient Pyramid**
+          - Get to **Pyramid Apex**
+          - Kill **Vaal Oversoul**
+          - Get Crafting recipe
+        infos:
+          - Killing the Vaal Oversoul ends Act 2.
+        hints:
+          - First floor exit will be in one of the 3 corners
+          - Remaining floors will have the exit diagonally across from the entrance

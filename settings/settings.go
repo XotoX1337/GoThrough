@@ -63,6 +63,7 @@ type Settings struct {
 	Hotkeys    Hotkeys    `json:"hotkeys"`
 	Opacity    float64    `json:"opacity"`
 	Theme      string     `json:"theme"`
+	Language   string     `json:"language"`
 	LastConfig LastConfig `json:"lastConfig"`
 }
 
@@ -80,8 +81,9 @@ func Defaults() Settings {
 			FocusOverlay: Binding{Mods: ctrlAlt(), Key: "m"},
 			Quit:         Binding{Mods: ctrlAlt(), Key: "q"},
 		},
-		Opacity: 1.0,
-		Theme:   "dark",
+		Opacity:  1.0,
+		Theme:    "dark",
+		Language: "en",
 	}
 }
 

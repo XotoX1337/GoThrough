@@ -1,0 +1,101 @@
+# Schema v3 (v0.9): tasks (Sub-Steps), per-task & step-level infos/warnings/hints.
+# Manueller Trigger ist Default -> kein `trigger:`-Block.
+schema: 3
+game: Path of Exile
+version: Leveling Guide
+author: exile-leveling (heartofphos) + poe-leveling.com
+source: https://heartofphos.github.io/exile-leveling/
+chapter: 4
+title: 'Act 4: The Aqueduct to Malachai'
+next: act5.yaml
+sections:
+  - title: The Aqueduct to Malachai
+    steps:
+      - id: 1
+        title: Breaking the Seal
+        tasks:
+          - Get to **The Aqueduct**
+          - Get to **Highgate**
+          - Get to **The Dried Lake**
+          - Find and kill **Voll, Emperor of Purity**, take *Deshret's Banner*
+          - Get Crafting recipe
+          - Relog
+          - Break *Deshret's Seal*
+        quests:
+          - { name: Breaking the Seal, status: completed }
+      - id: 2
+        title: An Indomitable Spirit
+        tasks:
+          - Get to **The Mines Level 1**
+          - Get Crafting recipe
+          - Get to **The Mines Level 2**
+          - Free *Deshret*
+          - Get to **The Crystal Veins**
+          - Get Crafting recipe
+          - Waypoint to **Highgate**
+        quests:
+          - { name: An Indomitable Spirit, status: completed }
+      - id: 3
+        title: The Labyrinth (Normal Ascendancy)
+        tasks:
+          - Waypoint to **The Sarn Encampment**
+          - Get to the **Aspirants' Plaza**, grab Waypoint
+          - text: Complete the **Labyrinth** (Normal)
+            info: Finishing the Labyrinth grants your first **Ascendancy** — choose your subclass and 2 points.
+          - Get Crafting recipe
+        infos:
+          - Requires all 6 **Trials of Ascendancy** from Acts 1–3 to enter.
+      - id: 4
+        title: 'King Kaom'
+        tasks:
+          - Waypoint to **The Crystal Veins**
+          - Get to **Daresso's Dream**
+          - Get to **The Grand Arena**
+          - Get Crafting recipe
+          - Waypoint to **The Crystal Veins**
+          - Get to **Kaom's Dream**
+          - Get to **Kaom's Stronghold**
+          - Get Crafting recipe
+          - Get to the **Caldera of the King**, kill **King Kaom**, take *The Eye of Fury*
+          - Take Portal
+        hints:
+          - Kaom's Stronghold is up-right, follow the bridges
+      - id: 5
+        title: 'Daresso, King of Swords'
+        tasks:
+          - Waypoint to **The Grand Arena**
+          - Get to **The Ring of Blades**, kill **Daresso, King of Swords**, take *The Eye of Desire*
+          - Relog
+        hints:
+          - Go down-left, follow the exits keeping left
+      - id: 6
+        title: Corpus Malachus
+        tasks:
+          - Waypoint to **The Crystal Veins**
+          - Talk to **Lady Dialla**
+          - Get to **The Belly of the Beast Level 1**
+          - Get to **The Belly of the Beast Level 2**
+          - Get to **The Bowels of the Beast**, kill **Piety, the Abomination**
+          - Talk to **Piety**
+          - Get Crafting recipe
+          - Get to **The Harvest**
+          - Find and kill **Doedre Darktongue**, take *Malachai's Lungs*
+          - Find and kill **Maligaro, the Inquisitor**, take *Malachai's Heart*
+          - Find and kill **Shavronne of Umbra**, take *Malachai's Entrails*
+        quests:
+          - { name: Corpus Malachus, status: completed }
+      - id: 7
+        title: 'Malachai, the Nightmare'
+        tasks:
+          - Get to **The Black Core**, kill **Malachai, the Nightmare**
+          - Relog
+        quests:
+          - { name: The Eternal Nightmare, status: completed }
+      - id: 8
+        title: Into Act 5
+        tasks:
+          - Get to **The Ascent**
+          - Get Crafting recipe
+          - Activate **The Resonator**, use the *Oriath Portal*
+        infos:
+          - This ends Act 4 and sends you to Oriath for Act 5.

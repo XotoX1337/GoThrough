@@ -22,56 +22,125 @@ type Quest struct {
 	Note   string `yaml:"note,omitempty"`
 }
 
-// Step is a single instruction in the walkthrough sequence. Description is
-// Markdown (rendered in the HUD). Hints carry loot/XP detail; Warnings are
-// rendered distinctly (e.g. "don't enter the back room").
-type Step struct {
-	ID          int      `yaml:"id"`
-	Title       string   `yaml:"title"`
-	Description string   `yaml:"description"`
-	Optional    bool     `yaml:"optional,omitempty"`
-	Quests      []Quest  `yaml:"quests,omitempty"`
-	Hints       []string `yaml:"hints,omitempty"`
-	Warnings    []string `yaml:"warnings,omitempty"`
-	Trigger     Trigger  `yaml:"trigger"`
+// Task is one actionable sub-step within a Step. In YAML it is written either as
+// a bare string (just the instruction text) or as a mapping carrying per-task
+// callouts, so an info/warning/hint can attach to a single sub-step rather than
+// the whole step:
+//
+//	tasks:
+//	  - Waypoint to **The Crossroads**
+//	  - text: Get to **The Crypt Level 2**
+//	    warning: Complete **Trial of Ascendancy**
+//
+// Text is Markdown (rendered inline in the HUD).
+type Task struct {
+	Text    string `yaml:"text"`
+	Info    string `yaml:"info,omitempty"`
+	Warning string `yaml:"warning,omitempty"`
+	Hint    string `yaml:"hint,omitempty"`
 }
 
-// BranchOption is one selectable path of a Branch. Its Steps become part of the
-// active sequence once the option is chosen.
-type BranchOption struct {
+// UnmarshalYAML accepts either a scalar (→ Text) or a mapping with explicit
+// fields.
+func (t *Task) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		return value.Decode(&t.Text)
+	}
+	type raw Task // avoid recursion into this method
+	var r raw
+	if err := value.Decode(&r); err != nil {
+		return err
+	}
+	*t = Task(r)
+	return nil
+}
+
+// StringList accepts either a single scalar or a sequence of scalars, so a
+// condition value can be written as `key: value` or `key: [a, b]`.
+type StringList []string
+
+// UnmarshalYAML decodes a scalar into a one-element list, or a sequence as-is.
+func (sl *StringList) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		var s string
+		if err := value.Decode(&s); err != nil {
+			return err
+		}
+		*sl = StringList{s}
+		return nil
+	}
+	var ss []string
+	if err := value.Decode(&ss); err != nil {
+		return err
+	}
+	*sl = ss
+	return nil
+}
+
+// Condition gates a step on recorded choice answers: choiceKey → accepted
+// values. A step is shown only when, for every key, the recorded answer is one
+// of the accepted values (AND across keys, OR within a key's value list). An
+// unanswered choice never matches, so dependent steps stay hidden until the
+// user decides.
+type Condition map[string]StringList
+
+// Step is a single instruction in the walkthrough sequence. Description is an
+// optional Markdown intro; Tasks is the actionable checklist within the step
+// (each task may carry its own info/warning/hint). Step-level Hints/Warnings/
+// Infos apply to the whole step. When, if set, gates the step on choice answers.
+type Step struct {
+	ID          int       `yaml:"id"`
+	Title       string    `yaml:"title"`
+	Description string    `yaml:"description,omitempty"`
+	Tasks       []Task    `yaml:"tasks,omitempty"`
+	When        Condition `yaml:"when,omitempty"`
+	Optional    bool      `yaml:"optional,omitempty"`
+	Quests      []Quest   `yaml:"quests,omitempty"`
+	Hints       []string  `yaml:"hints,omitempty"`
+	Warnings    []string  `yaml:"warnings,omitempty"`
+	Infos       []string  `yaml:"infos,omitempty"`
+	Trigger     Trigger   `yaml:"trigger"`
+}
+
+// ChoiceOption is one selectable answer of a Choice. Value is the stable key
+// recorded in progress and referenced by step `when` conditions; Label is the
+// human-readable text shown in the HUD.
+type ChoiceOption struct {
+	Value       string `yaml:"value"`
 	Label       string `yaml:"label"`
 	Description string `yaml:"description,omitempty"`
-	Steps       []Node `yaml:"steps"`
 }
 
-// Branch is a decision point: the walkthrough forks into named Options and
-// re-converges on whatever nodes follow the branch. The chosen option is
-// persisted under PersistKey so it survives a restart.
-type Branch struct {
-	PersistKey string         `yaml:"persistKey"`
-	Title      string         `yaml:"title"`
-	Options    []BranchOption `yaml:"options"`
+// Choice is a flat decision point that appears inline in the step list: it asks
+// a question (Prompt) and records the answer under Key. Unlike the old branch
+// node it carries no nested steps — instead, ordinary steps elsewhere in the
+// file opt in via their `when` condition. The answer is persisted so it survives
+// a restart.
+type Choice struct {
+	Key     string         `yaml:"key"`
+	Prompt  string         `yaml:"prompt"`
+	Options []ChoiceOption `yaml:"options"`
 }
 
-// Node is one entry in a steps list: either a plain Step or a Branch. The two
-// are mutually exclusive; UnmarshalYAML decides by the presence of a `branch:`
+// Node is one entry in a steps list: either a plain Step or a Choice. The two
+// are mutually exclusive; UnmarshalYAML decides by the presence of a `choice:`
 // key.
 type Node struct {
 	Step   *Step
-	Branch *Branch
+	Choice *Choice
 }
 
-// UnmarshalYAML distinguishes a branch node (`- branch: {...}`) from a plain
-// step node by probing for the `branch` key first.
+// UnmarshalYAML distinguishes a choice node (`- choice: {...}`) from a plain
+// step node by probing for the `choice` key first.
 func (n *Node) UnmarshalYAML(value *yaml.Node) error {
 	var probe struct {
-		Branch *Branch `yaml:"branch"`
+		Choice *Choice `yaml:"choice"`
 	}
 	if err := value.Decode(&probe); err != nil {
 		return err
 	}
-	if probe.Branch != nil {
-		n.Branch = probe.Branch
+	if probe.Choice != nil {
+		n.Choice = probe.Choice
 		return nil
 	}
 	var s Step
@@ -113,24 +182,23 @@ type Walkthrough struct {
 type OutlineNode struct {
 	Section string
 	Step    *Step
-	Branch  *Branch
+	Choice  *Choice
 }
 
 // Outline returns every top-level node in document order, tagged with its
-// section. Branch option steps are NOT expanded here — that is the engine's job
-// once a branch is chosen.
+// section.
 func (w *Walkthrough) Outline() []OutlineNode {
 	var out []OutlineNode
 	if len(w.Sections) > 0 {
 		for _, sec := range w.Sections {
 			for _, n := range sec.Steps {
-				out = append(out, OutlineNode{Section: sec.Title, Step: n.Step, Branch: n.Branch})
+				out = append(out, OutlineNode{Section: sec.Title, Step: n.Step, Choice: n.Choice})
 			}
 		}
 		return out
 	}
 	for _, n := range w.Steps {
-		out = append(out, OutlineNode{Step: n.Step, Branch: n.Branch})
+		out = append(out, OutlineNode{Step: n.Step, Choice: n.Choice})
 	}
 	return out
 }
@@ -175,16 +243,47 @@ func validate(wt *Walkthrough) error {
 		return fmt.Errorf("walkthrough must have at least one step")
 	}
 
+	// Pass 1: collect choices so step `when` conditions can be checked against
+	// real keys/values.
+	choices := map[string]map[string]bool{}
+	for _, n := range outline {
+		if n.Choice == nil {
+			continue
+		}
+		c := n.Choice
+		if c.Key == "" {
+			return fmt.Errorf("choice %q: missing key", c.Prompt)
+		}
+		if _, dup := choices[c.Key]; dup {
+			return fmt.Errorf("duplicate choice key %q", c.Key)
+		}
+		if len(c.Options) < 2 {
+			return fmt.Errorf("choice %q: needs at least 2 options", c.Key)
+		}
+		values := map[string]bool{}
+		for i, o := range c.Options {
+			if o.Value == "" {
+				return fmt.Errorf("choice %q: option %d missing value", c.Key, i+1)
+			}
+			if o.Label == "" {
+				return fmt.Errorf("choice %q: option %q missing label", c.Key, o.Value)
+			}
+			if values[o.Value] {
+				return fmt.Errorf("choice %q: duplicate option value %q", c.Key, o.Value)
+			}
+			values[o.Value] = true
+		}
+		choices[c.Key] = values
+	}
+
+	// Pass 2: steps (IDs, titles, triggers, quests, tasks, when references).
 	seen := make(map[int]bool)
 	count := 0
 	for _, n := range outline {
-		if n.Branch != nil {
-			if err := validateBranch(n.Branch, seen, &count); err != nil {
-				return err
-			}
+		if n.Choice != nil {
 			continue
 		}
-		if err := validateStep(n.Step, seen, &count); err != nil {
+		if err := validateStep(n.Step, seen, &count, choices); err != nil {
 			return err
 		}
 	}
@@ -196,8 +295,9 @@ func validate(wt *Walkthrough) error {
 
 // validateStep checks a single step and records its ID. count is the running
 // 1-based step number used in error messages and to confirm the file is
-// non-empty.
-func validateStep(s *Step, seen map[int]bool, count *int) error {
+// non-empty. choices is the set of declared choice keys→values, used to validate
+// `when` conditions.
+func validateStep(s *Step, seen map[int]bool, count *int, choices map[string]map[string]bool) error {
 	*count++
 	if s.ID == 0 {
 		return fmt.Errorf("step %d: missing id", *count)
@@ -215,6 +315,22 @@ func validateStep(s *Step, seen map[int]bool, count *int) error {
 	default:
 		return fmt.Errorf("step %d (id=%d): unknown trigger type %q", *count, s.ID, s.Trigger.Type)
 	}
+	for i, t := range s.Tasks {
+		if t.Text == "" {
+			return fmt.Errorf("step %d (id=%d): task %d missing text", *count, s.ID, i+1)
+		}
+	}
+	for key, vals := range s.When {
+		accepted, ok := choices[key]
+		if !ok {
+			return fmt.Errorf("step %d (id=%d): when references unknown choice %q", *count, s.ID, key)
+		}
+		for _, v := range vals {
+			if !accepted[v] {
+				return fmt.Errorf("step %d (id=%d): when choice %q has unknown value %q", *count, s.ID, key, v)
+			}
+		}
+	}
 	for _, q := range s.Quests {
 		if q.Name == "" {
 			return fmt.Errorf("step %d (id=%d): quest without name", *count, s.ID)
@@ -224,40 +340,6 @@ func validateStep(s *Step, seen map[int]bool, count *int) error {
 			// valid
 		default:
 			return fmt.Errorf("step %d (id=%d): quest %q has unknown status %q", *count, s.ID, q.Name, q.Status)
-		}
-	}
-	return nil
-}
-
-func validateBranch(b *Branch, seen map[int]bool, count *int) error {
-	if b.PersistKey == "" {
-		return fmt.Errorf("branch %q: missing persistKey", b.Title)
-	}
-	if len(b.Options) < 2 {
-		return fmt.Errorf("branch %q: needs at least 2 options", b.Title)
-	}
-	labels := make(map[string]bool)
-	for i, o := range b.Options {
-		if o.Label == "" {
-			return fmt.Errorf("branch %q: option %d missing label", b.Title, i+1)
-		}
-		if labels[o.Label] {
-			return fmt.Errorf("branch %q: duplicate option label %q", b.Title, o.Label)
-		}
-		labels[o.Label] = true
-		if len(o.Steps) == 0 {
-			return fmt.Errorf("branch %q: option %q has no steps", b.Title, o.Label)
-		}
-		for _, n := range o.Steps {
-			if n.Branch != nil {
-				if err := validateBranch(n.Branch, seen, count); err != nil {
-					return err
-				}
-				continue
-			}
-			if err := validateStep(n.Step, seen, count); err != nil {
-				return err
-			}
 		}
 	}
 	return nil

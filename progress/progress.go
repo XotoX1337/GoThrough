@@ -19,19 +19,19 @@ import (
 )
 
 // fileVersion tags the on-disk schema so future formats can be migrated.
-// v2 added the per-walkthrough Branches map (v0.7); v1 files (no Branches)
-// still load — the field simply unmarshals to nil, meaning "no choices yet".
-const fileVersion = 2
+// v3 (v0.9) replaced the old per-walkthrough Branches map with Choices
+// (choiceKey -> option value); v2's "branches" key is simply ignored on load.
+const fileVersion = 3
 
 // record is the saved position for one walkthrough. StepID is kept alongside
 // the index so progress survives steps being inserted or removed from the
 // config: on restore we prefer to re-find the step by ID and only fall back to
-// the raw index. Branches records chosen branch options (persistKey -> option
-// label) so a branching walkthrough resumes on the same path.
+// the raw index. Choices records answered choices (choice key -> option value)
+// so a walkthrough with conditional steps resumes on the same path.
 type record struct {
 	StepIndex int               `json:"stepIndex"`
 	StepID    int               `json:"stepId"`
-	Branches  map[string]string `json:"branches,omitempty"`
+	Choices   map[string]string `json:"choices,omitempty"`
 	UpdatedAt time.Time         `json:"updatedAt"`
 }
 
@@ -98,34 +98,34 @@ func (s *Store) For(wt *config.Walkthrough) *Handle {
 	return &Handle{store: s, key: Key(wt)}
 }
 
-// Load returns the saved step index, ID, and branch choices for this
+// Load returns the saved step index, ID, and choice answers for this
 // walkthrough. ok is false when no progress has been recorded yet.
-func (h *Handle) Load() (index, stepID int, branches map[string]string, ok bool) {
+func (h *Handle) Load() (index, stepID int, choices map[string]string, ok bool) {
 	h.store.mu.Lock()
 	defer h.store.mu.Unlock()
 	rec, ok := h.store.doc.Entries[h.key]
-	return rec.StepIndex, rec.StepID, rec.Branches, ok
+	return rec.StepIndex, rec.StepID, rec.Choices, ok
 }
 
-// Save records the current position and branch choices and atomically rewrites
+// Save records the current position and choice answers and atomically rewrites
 // the progress file. It satisfies engine.Persister.
-func (h *Handle) Save(index, stepID int, branches map[string]string) error {
+func (h *Handle) Save(index, stepID int, choices map[string]string) error {
 	h.store.mu.Lock()
 	defer h.store.mu.Unlock()
 
 	// Copy the map so later engine mutations can't alias the stored record.
-	var b map[string]string
-	if len(branches) > 0 {
-		b = make(map[string]string, len(branches))
-		for k, v := range branches {
-			b[k] = v
+	var c map[string]string
+	if len(choices) > 0 {
+		c = make(map[string]string, len(choices))
+		for k, v := range choices {
+			c[k] = v
 		}
 	}
 
 	h.store.doc.Entries[h.key] = record{
 		StepIndex: index,
 		StepID:    stepID,
-		Branches:  b,
+		Choices:   c,
 		UpdatedAt: time.Now().UTC(),
 	}
 	return h.store.writeLocked()
