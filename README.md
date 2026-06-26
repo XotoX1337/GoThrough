@@ -117,6 +117,55 @@ Bundled walkthroughs live under `configstore/configs/`, meant to grow into a
 community-maintained library. Wrote one? Open a PR — see the
 [config format reference](docs/config-format.md).
 
+### Generating configs with AI
+
+Most games already have detailed text walkthroughs (forum threads, wikis, guide
+sites). An LLM (Claude, ChatGPT, …) can turn that source prose into a GoThrough
+YAML config — you curate and verify, the model does the formatting grunt work.
+
+1. **Gather the source.** Copy the walkthrough text for **one** chapter. One
+   chapter → one YAML file, chained to the next with `next:`. Feeding a whole
+   game at once produces worse results — the model loses consistency and drifts.
+2. **Give the model the schema.** Paste the
+   [config format reference](docs/config-format.md) (or link it) so the output
+   matches the current schema (v3).
+3. **Prompt** — something like:
+
+   > You convert game walkthroughs into GoThrough YAML configs. Follow the schema
+   > in the reference I gave you exactly. Turn the walkthrough below into one YAML
+   > file. Rules:
+   > - Group steps into `sections` by area/objective. One step = one meaningful
+   >   location or goal — not one sentence, and not a whole region.
+   > - Short imperative `title`; break the prose into `tasks`.
+   > - Put loot/gold/EXP/stat values in `info` or `hint`, dangers in `warning` —
+   >   per-task when it belongs to one task, else step-level.
+   > - Record quest pickups/turn-ins under `quests` (`status: received|completed`).
+   > - Mark detours `optional: true`. Model "do X or Y" forks as a `choice` with
+   >   `when` guards.
+   > - Quote any task string containing a colon-space (`": "`) — unquoted it
+   >   parses as a YAML mapping and breaks the file.
+   > - Copy numbers (EXP, gold, damage) verbatim from the source; never invent or
+   >   round them. If the source is unclear, leave it out.
+   > - Keep the walkthrough's original language. Set `source:` to the attribution
+   >   I give you. Output only valid YAML, nothing else.
+   >
+   > Walkthrough: <paste here>
+
+4. **Review every step against the source.** This is the real work — the model is
+   a formatter, not an authority. From doing this by hand, the recurring failure
+   modes are:
+   - **Invented or rounded numbers.** EXP/gold/damage values are where models
+     hallucinate most. Check each against the source.
+   - **Dropped branches.** Class/guild/route forks get flattened into one path —
+     make sure every "or" became a `choice`/`when`, not a silent choice.
+   - **Wrong granularity.** Either one giant step per region or a step per
+     sentence. Aim for one objective per step.
+   - **YAML breakage.** Unquoted `": "` in tasks, and stray prose outside the
+     YAML. Run `GoThrough.exe run file.yaml` once — it won't load if the YAML is
+     malformed, and you can eyeball that it renders.
+
+   Always fill in `source:` to credit the original author.
+
 ### Building from source
 
 Requirements:
