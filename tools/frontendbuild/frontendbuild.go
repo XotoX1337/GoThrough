@@ -1,16 +1,12 @@
 // Package frontendbuild transpiles the overlay HUD's frontend sources into the
-// committed, //go:embed'd bundles using the esbuild Go API: the TypeScript
-// source (overlay/frontend/src/app.ts → app.js) and the CSS source
-// (overlay/frontend/src/app.css → app.css). esbuild is written in Go and pulled
-// via go.mod (checksum-verified, no npm / no node_modules / no lifecycle
-// scripts), keeping the project a single Go toolchain — see CLAUDE.md. esbuild
-// only strips TS types here (no type-checking), which is sufficient for the
-// build. Both bundles are minified — the committed app.js/app.css are shipped
-// artifacts (smaller for the WebView to load), not meant to be read as diffs;
-// the readable source stays in src/app.ts and src/app.css.
+// committed, //go:embed'd bundles using the esbuild Go API: app.ts → app.js and
+// app.css → app.css. esbuild is pulled via go.mod (no npm/node_modules/lifecycle
+// scripts), keeping the project a single Go toolchain; it only strips TS types
+// (no type-checking). Both bundles are minified shipped artifacts — the readable
+// source stays in src/.
 //
-// Both the buildfrontend command (run via `go generate` / `go run`) and devui
-// call Build, so the transpile path can't drift between them.
+// Both the buildfrontend command and devui call Build, so the transpile path
+// can't drift between them.
 package frontendbuild
 
 import (

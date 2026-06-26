@@ -22,17 +22,9 @@ type Quest struct {
 	Note   string `yaml:"note,omitempty"`
 }
 
-// Task is one actionable sub-step within a Step. In YAML it is written either as
-// a bare string (just the instruction text) or as a mapping carrying per-task
-// callouts, so an info/warning/hint can attach to a single sub-step rather than
-// the whole step:
-//
-//	tasks:
-//	  - Waypoint to **The Crossroads**
-//	  - text: Get to **The Crypt Level 2**
-//	    warning: Complete **Trial of Ascendancy**
-//
-// Text is Markdown (rendered inline in the HUD).
+// Task is one actionable sub-step within a Step. In YAML it is either a bare
+// string (the instruction) or a mapping that attaches an info/warning/hint
+// callout to that single sub-step. Text is Markdown (rendered inline in the HUD).
 type Task struct {
 	Text    string `yaml:"text"`
 	Info    string `yaml:"info,omitempty"`
@@ -112,10 +104,9 @@ type ChoiceOption struct {
 }
 
 // Choice is a flat decision point that appears inline in the step list: it asks
-// a question (Prompt) and records the answer under Key. Unlike the old branch
-// node it carries no nested steps — instead, ordinary steps elsewhere in the
-// file opt in via their `when` condition. The answer is persisted so it survives
-// a restart.
+// a question (Prompt) and records the answer under Key (persisted across
+// restarts). It carries no nested steps — ordinary steps elsewhere in the file
+// opt in via their `when` condition.
 type Choice struct {
 	Key     string         `yaml:"key"`
 	Prompt  string         `yaml:"prompt"`

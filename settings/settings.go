@@ -1,15 +1,13 @@
 // Package settings persists user-configurable application settings.
 //
 // State lives in a single JSON file under the user config dir
-// (e.g. %AppData%\GoThrough\settings.json on Windows), a sibling of the
-// progress file. It mirrors the progress package's mechanics — atomic
-// temp-file+rename writes, missing file means defaults — rather than inventing a
-// new store. JSON keeps the data CGo-free and human-inspectable.
+// (e.g. %AppData%\GoThrough\settings.json on Windows), mirroring the progress
+// package's mechanics (atomic temp-file+rename writes, missing file → defaults).
 //
-// The package is deliberately ignorant of the hotkey library: a Binding is a
-// pair of plain strings (modifier names + key name). Translating those into
-// golang.design/x/hotkey constants is the overlay layer's job, which keeps this
-// package pure Go and unit-testable without the Wails/CGo toolchain.
+// The package is deliberately ignorant of the hotkey library — a Binding is just
+// modifier/key/button name strings — so it stays pure Go and unit-testable
+// without the Wails/CGo toolchain; the overlay layer maps names to
+// golang.design/x/hotkey constants.
 package settings
 
 import (

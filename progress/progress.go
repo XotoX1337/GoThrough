@@ -1,10 +1,8 @@
 // Package progress persists how far the user has advanced in each walkthrough.
 //
 // State lives in a single JSON file under the user config dir
-// (e.g. %AppData%\GoThrough\progress.json on Windows). JSON is chosen over
-// SQLite to stay CGo-free — this project keeps its only CGo dependencies
-// isolated to the capture package — and because the data is tiny and worth
-// keeping human-inspectable.
+// (e.g. %AppData%\GoThrough\progress.json on Windows). JSON over SQLite keeps
+// the store CGo-free and human-inspectable.
 package progress
 
 import (

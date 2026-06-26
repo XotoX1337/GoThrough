@@ -554,12 +554,9 @@ func validateHotkeys(hk settings.Hotkeys) error {
 }
 
 // FitWindow shrink-wraps the OS window to the given content size (logical px),
-// keeping the window's current top-left corner fixed — the same corner
-// SaveWindowPos/restoreWindowPos persist. Anchoring the top-right instead made
-// the boot-time resize (the window is created at overlayWidth, then the frontend
-// fits it to its real, wider size) drag the restored window left by the width
-// difference. The result is clamped so a fresh-install top-right placement that
-// grows wider can't clip off the screen edge.
+// keeping the current top-left corner fixed (the same corner
+// SaveWindowPos/restoreWindowPos persist — anchoring top-right instead dragged
+// the restored window left on the boot-time resize) and clamping to the screen.
 func (a *App) FitWindow(width, height int) {
 	a.mu.Lock()
 	ctx := a.ctx
