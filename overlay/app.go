@@ -520,6 +520,19 @@ func (a *App) SaveLanguage(lang string) (settings.Settings, error) {
 	return ns, nil
 }
 
+// SaveWindowPos persists the overlay window's on-screen position (logical px,
+// top-left corner) so it is restored on the next launch instead of re-anchoring
+// to the top-right corner. Called by the frontend at the end of a window drag.
+// Best-effort: a write failure is reported but never blocks dragging.
+func (a *App) SaveWindowPos(x, y int) error {
+	ns := a.set.Get()
+	ns.WindowPos = settings.WindowPos{X: x, Y: y, Set: true}
+	if err := a.set.Save(ns); err != nil {
+		return fmt.Errorf("saving window position: %w", err)
+	}
+	return nil
+}
+
 // validateHotkeys checks that every binding resolves to a real key/modifier
 // combination before it is persisted or registered.
 func validateHotkeys(hk settings.Hotkeys) error {
@@ -541,7 +554,12 @@ func validateHotkeys(hk settings.Hotkeys) error {
 }
 
 // FitWindow shrink-wraps the OS window to the given content size (logical px),
-// keeping the window's current top-right corner fixed.
+// keeping the window's current top-left corner fixed — the same corner
+// SaveWindowPos/restoreWindowPos persist. Anchoring the top-right instead made
+// the boot-time resize (the window is created at overlayWidth, then the frontend
+// fits it to its real, wider size) drag the restored window left by the width
+// difference. The result is clamped so a fresh-install top-right placement that
+// grows wider can't clip off the screen edge.
 func (a *App) FitWindow(width, height int) {
 	a.mu.Lock()
 	ctx := a.ctx
@@ -550,10 +568,9 @@ func (a *App) FitWindow(width, height int) {
 		return
 	}
 	x, y := runtime.WindowGetPosition(ctx)
-	curW, _ := runtime.WindowGetSize(ctx)
-	right := x + curW
 	runtime.WindowSetSize(ctx, width, height)
-	runtime.WindowSetPosition(ctx, right-width, y)
+	x, y = clampToScreen(ctx, x, y, width, height)
+	runtime.WindowSetPosition(ctx, x, y)
 }
 
 // next/prev are the hotkey-driven counterparts to Next/Prev. When "next" is

@@ -65,6 +65,59 @@ func TestOpenPartialFileKeepsDefaults(t *testing.T) {
 	}
 }
 
+// WindowPos defaults to unset (Set == false) so a fresh install falls back to
+// the top-right anchor rather than placing the window at (0,0).
+func TestDefaultsWindowPosUnset(t *testing.T) {
+	if got := Defaults().WindowPos; got.Set || got.X != 0 || got.Y != 0 {
+		t.Fatalf("WindowPos should default to the unset zero value, got %+v", got)
+	}
+}
+
+func TestWindowPosRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	store, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	ns := Defaults()
+	ns.WindowPos = WindowPos{X: 123, Y: 456, Set: true}
+	if err := store.Save(ns); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	reopened, err := Open(path)
+	if err != nil {
+		t.Fatalf("reopen: %v", err)
+	}
+	got := reopened.Get().WindowPos
+	if !got.Set || got.X != 123 || got.Y != 456 {
+		t.Fatalf("WindowPos round-trip mismatch: got %+v", got)
+	}
+}
+
+// A file written before WindowPos existed must not error and must yield the
+// unset zero value, so the overlay falls back to the top-right anchor.
+func TestOpenPartialFileWindowPosUnset(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	partial := `{"theme":"light"}`
+	if err := os.WriteFile(path, []byte(partial), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	got := store.Get()
+	if got.Theme != "light" {
+		t.Fatalf("explicit theme lost: %q", got.Theme)
+	}
+	if got.WindowPos.Set {
+		t.Fatalf("WindowPos should stay unset for an older file, got %+v", got.WindowPos)
+	}
+}
+
 func TestOpenCorruptFileErrors(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
 	if err := os.WriteFile(path, []byte("{not json"), 0o644); err != nil {
