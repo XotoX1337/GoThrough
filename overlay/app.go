@@ -211,7 +211,7 @@ func (a *App) LoadConfig(path string, embedded bool) error {
 	}
 
 	eng := engine.New(wt)
-	attachProgress(eng, wt, false)
+	attachProgress(eng, wt)
 
 	a.mu.Lock()
 	a.eng = eng
@@ -237,6 +237,66 @@ func (a *App) UnloadConfig() {
 	a.mu.Unlock()
 	// Returning to the picker is now the remembered state; clear the auto-load.
 	a.saveLastConfig(settings.LastConfig{})
+}
+
+// progressStore opens the on-disk progress store at its default path.
+func progressStore() (*progress.Store, error) {
+	path, err := progress.DefaultPath()
+	if err != nil {
+		return nil, err
+	}
+	return progress.Open(path)
+}
+
+// ClearChapterProgress deletes the saved progress for a single cached chapter,
+// identified by its catalog-relative path (as listed in the picker). The
+// chapter's YAML is read from the cache to recover its progress key.
+func (a *App) ClearChapterProgress(relpath string) error {
+	data, err := configstore.ReadCached(relpath)
+	if err != nil {
+		return fmt.Errorf("reading cached config: %w", err)
+	}
+	wt, err := config.LoadBytes(data)
+	if err != nil {
+		return err
+	}
+	store, err := progressStore()
+	if err != nil {
+		return err
+	}
+	return store.Delete(progress.Key(wt))
+}
+
+// ClearGameProgress deletes the saved progress for every chapter of a game.
+func (a *App) ClearGameProgress(game string) error {
+	store, err := progressStore()
+	if err != nil {
+		return err
+	}
+	return store.DeleteGame(game)
+}
+
+// ClearCache removes every downloaded config from the on-disk cache, so games
+// must be re-downloaded from the catalog before their chapters load again.
+func (a *App) ClearCache() error {
+	return configstore.ClearCache()
+}
+
+// ResetSettings restores all user settings to their defaults (also clearing the
+// remembered last walkthrough), re-registers the default hotkeys live, and
+// returns the fresh settings so the frontend can re-render theme/language/opacity.
+func (a *App) ResetSettings() (settings.Settings, error) {
+	def := settings.Defaults()
+	if err := a.set.Save(def); err != nil {
+		return a.set.Get(), fmt.Errorf("saving settings: %w", err)
+	}
+	a.mu.Lock()
+	hm := a.hotkeys
+	a.mu.Unlock()
+	if hm != nil {
+		hm.apply(def.Hotkeys)
+	}
+	return def, nil
 }
 
 // saveLastConfig persists the last-loaded walkthrough reference. It is
@@ -593,9 +653,9 @@ func itemInfo(it engine.Item, pos, total int, last bool) StepInfo {
 	return info
 }
 
-// attachProgress wires the engine to the on-disk progress store. fresh=true
-// skips restoring saved position (used by the CLI --fresh flag).
-func attachProgress(eng *engine.Engine, wt *config.Walkthrough, fresh bool) {
+// attachProgress wires the engine to the on-disk progress store, restoring any
+// saved position. Progress is reset via the clear bindings, not at load time.
+func attachProgress(eng *engine.Engine, wt *config.Walkthrough) {
 	path, err := progress.DefaultPath()
 	if err != nil {
 		return
@@ -605,10 +665,8 @@ func attachProgress(eng *engine.Engine, wt *config.Walkthrough, fresh bool) {
 		return
 	}
 	h := store.For(wt)
-	if !fresh {
-		if index, stepID, choices, ok := h.Load(); ok {
-			eng.Restore(index, stepID, choices)
-		}
+	if index, stepID, choices, ok := h.Load(); ok {
+		eng.Restore(index, stepID, choices)
 	}
 	eng.UsePersister(h)
 }

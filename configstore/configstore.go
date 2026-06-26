@@ -207,6 +207,21 @@ func atomicWrite(dst string, data []byte) error {
 	return os.Rename(tmpName, dst)
 }
 
+// ClearCache removes the entire on-disk config cache (every downloaded YAML and
+// the local cache index). A missing cache directory is not an error. After this
+// the picker treats every game as not-yet-downloaded, so games are re-fetched
+// from the catalog on demand.
+func ClearCache() error {
+	dir, err := CacheDir()
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("clearing config cache: %w", err)
+	}
+	return nil
+}
+
 // DownloadGame downloads every chapter of game (from the given catalog) into the
 // cache and records each chapter's hash in the local cache index, so the chapter
 // list loads from disk — instant, offline-capable, and including `next:`

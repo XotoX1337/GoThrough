@@ -2,6 +2,8 @@ package configstore
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -34,6 +36,38 @@ func TestEmbeddedIndexValid(t *testing.T) {
 		if len(e.Hash) != 64 {
 			t.Errorf("config %d (%s): hash %q is not a 64-char sha256-hex", i, e.Path, e.Hash)
 		}
+	}
+}
+
+// TestClearCache verifies the cache directory (and everything in it) is removed,
+// and that clearing an already-absent cache is not an error. The user-config dir
+// is redirected to a temp dir so the real cache is never touched.
+func TestClearCache(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("AppData", tmp)         // Windows: os.UserConfigDir uses %AppData%
+	t.Setenv("XDG_CONFIG_HOME", tmp) // Linux: os.UserConfigDir uses $XDG_CONFIG_HOME
+
+	dir, err := CacheDir()
+	if err != nil {
+		t.Fatalf("CacheDir: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "gothic2"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "gothic2", "day1.yaml"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ClearCache(); err != nil {
+		t.Fatalf("ClearCache: %v", err)
+	}
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Fatalf("cache dir still present after ClearCache (stat err=%v)", err)
+	}
+
+	// A second clear, with the cache already gone, must be a no-op.
+	if err := ClearCache(); err != nil {
+		t.Fatalf("ClearCache on missing dir: %v", err)
 	}
 }
 

@@ -510,6 +510,9 @@
         .picker-kicker { font-size: 8.5px; letter-spacing: 0.14em; color: rgba(var(--gt-fg), 0.45); text-transform: uppercase; margin-bottom: 8px; }
         .picker-list { }
         .picker-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 9px 10px;
             border-radius: 8px;
             cursor: pointer;
@@ -518,6 +521,19 @@
         }
         .picker-row:last-child { border-bottom: none; }
         .picker-row:hover { background: rgba(var(--gt-fg), 0.08); }
+        .picker-row-main { flex: 1; min-width: 0; }
+        /* Per-row reset affordance (game + chapter). Subtle until hovered. */
+        .picker-clear {
+            flex: 0 0 auto;
+            font-size: 14px;
+            line-height: 1;
+            color: rgba(var(--gt-fg), 0.28);
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: color 0.18s ease, background 0.18s ease;
+        }
+        .picker-clear:hover { color: #ffb4b4; background: rgba(255, 110, 110, 0.13); }
         .picker-game { font-size: 8.5px; letter-spacing: 0.1em; color: rgba(var(--gt-fg), 0.42); text-transform: uppercase; }
         .picker-title { font-size: 15.5px; font-weight: 600; margin-top: 3px; }
         .picker-meta { font-size: 9.5px; color: rgba(var(--gt-fg), 0.38); margin-top: 2px; }
@@ -533,6 +549,31 @@
             transition: all 0.18s ease;
         }
         .picker-browse:hover { background: rgba(var(--gt-fg), 0.08); color: rgba(var(--gt-fg), 0.9); }
+        .picker-clearcache {
+            margin-top: 8px;
+            font-size: 10.5px;
+            color: rgba(var(--gt-fg), 0.42);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-align: center;
+            transition: color 0.18s ease, background 0.18s ease;
+        }
+        .picker-clearcache:hover { color: #ffb4b4; background: rgba(255, 110, 110, 0.10); }
+        /* Reset-to-defaults button at the foot of the settings view. */
+        .settings-reset {
+            margin-top: 12px;
+            width: 100%;
+            font-size: 11px;
+            color: rgba(var(--gt-fg), 0.6);
+            cursor: pointer;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(var(--gt-fg), 0.14);
+            background: transparent;
+            transition: all 0.18s ease;
+        }
+        .settings-reset:hover { color: #ffb4b4; border-color: rgba(255, 110, 110, 0.4); background: rgba(255, 110, 110, 0.08); }
         .picker-back {
             font-size: 10.5px; color: rgba(var(--gt-fg), 0.5); cursor: pointer;
             padding: 6px 2px 8px; letter-spacing: 0.04em;
@@ -568,6 +609,77 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(var(--gt-fg), 0.20); }
             50% { box-shadow: 0 0 0 4px rgba(var(--gt-fg), 0); }
         }
+
+        /* Confirmation modal — a glass card centred over the whole window with a
+           dimmed/blurred backdrop. Lives in #modal (a persistent overlay sibling of
+           .panel) so it survives panel.innerHTML re-renders. Empty #modal = no-op. */
+        .modal-host {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.42);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            border-radius: 12px; /* match .panel so the dimmed corners stay rounded */
+            animation: gt-fade 0.14s ease;
+        }
+        .modal-host:empty { display: none; }
+        @keyframes gt-fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes gt-pop { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: none; } }
+        .modal-card {
+            width: 100%;
+            max-width: 300px;
+            background: rgba(var(--gt-panel-rgb), 0.97);
+            backdrop-filter: blur(18px) saturate(125%);
+            -webkit-backdrop-filter: blur(18px) saturate(125%);
+            border: 1px solid rgba(var(--gt-fg), 0.14);
+            border-radius: 12px;
+            box-shadow: 0 18px 44px var(--gt-shadow), inset 0 1px 0 rgba(var(--gt-fg), 0.08);
+            padding: 18px 18px 14px;
+            animation: gt-pop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .modal-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(var(--gt-fg), 0.95);
+            margin-bottom: 7px;
+        }
+        .modal-msg {
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(var(--gt-fg), 0.72);
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        .modal-btn {
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 7px 14px;
+            border-radius: 7px;
+            border: 1px solid transparent;
+            transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+            user-select: none;
+        }
+        .modal-btn.ghost {
+            color: rgba(var(--gt-fg), 0.62);
+            border-color: rgba(var(--gt-fg), 0.16);
+        }
+        .modal-btn.ghost:hover { background: rgba(var(--gt-fg), 0.08); color: rgba(var(--gt-fg), 0.9); }
+        .modal-btn.danger {
+            color: #ffd9d9;
+            background: rgba(225, 80, 80, 0.22);
+            border-color: rgba(255, 110, 110, 0.45);
+        }
+        .modal-btn.danger:hover { background: rgba(225, 80, 80, 0.38); color: #fff; border-color: rgba(255, 110, 110, 0.7); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(var(--gt-fg), 0.14); border-radius: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -577,6 +689,7 @@
     <div class="mover" id="mover">
         <div class="panel" id="panel"></div>
         <div class="resize-handle" id="resize"></div>
+        <div class="modal-host" id="modal"></div>
     </div>
 
     <script>
@@ -616,6 +729,7 @@
         // --- settings ---
         settings: null,           // {version, hotkeys, opacity, theme} from App.Settings()
         capturing: null,
+        confirm: null,            // {message, confirmLabel, onConfirm} for the modal (null = closed)
         settingsError: "",
         settingsFrom: "picker",   // view to return to when settings is closed ("picker" | "steps")
         // --- layout ---
@@ -631,6 +745,7 @@
     const mover = document.getElementById("mover");
     const panel = document.getElementById("panel");
     const resizeHandle = document.getElementById("resize");
+    const modalHost = document.getElementById("modal");
     mover.style.setProperty("--gt-nowh", NOWCARD_H + "px"); // fixed now-card height (≈38% desktop, golden ratio)
 
     // Chevron icon (▾), rotated via CSS when collapsed.
@@ -698,6 +813,12 @@
             noChapters: "No chapters found.",
             noConfigs: "No configs found.",
             downloading: g => "Downloading " + g + "…",
+            clearProgress: "Reset progress",
+            clearCache: "Clear cache",
+            resetSettings: "Reset to defaults",
+            confirmClearCache: "Delete all downloaded configs from the cache?",
+            confirmClearGame: g => "Reset all saved progress for " + g + "?",
+            confirmTitle: "Are you sure?", cancel: "Cancel", confirmDelete: "Delete", confirmReset: "Reset",
             switchWalkthrough: "Switch walkthrough", settingsTitle: "Settings", closeOverlay: "Close overlay",
             steps: "Steps", noSteps: "No steps loaded", now: "Now", decision: "Decision",
             stepCount: (a, b) => "Step " + a + " / " + b,
@@ -721,6 +842,12 @@
             noChapters: "Keine Kapitel gefunden.",
             noConfigs: "Keine Configs gefunden.",
             downloading: g => "Lade " + g + "…",
+            clearProgress: "Fortschritt zurücksetzen",
+            clearCache: "Cache leeren",
+            resetSettings: "Auf Standard zurücksetzen",
+            confirmClearCache: "Alle heruntergeladenen Configs aus dem Cache löschen?",
+            confirmClearGame: g => "Allen gespeicherten Fortschritt für " + g + " zurücksetzen?",
+            confirmTitle: "Bist du sicher?", cancel: "Abbrechen", confirmDelete: "Löschen", confirmReset: "Zurücksetzen",
             switchWalkthrough: "Anderes Walkthrough", settingsTitle: "Einstellungen", closeOverlay: "Overlay schließen",
             steps: "Schritte", noSteps: "Keine Schritte geladen", now: "Jetzt", decision: "Entscheidung",
             stepCount: (a, b) => "Schritt " + a + " / " + b,
@@ -888,7 +1015,46 @@
 
         applyLayout();
         wireEvents();
+        renderModal();
         scrollToCurrent();
+    }
+
+    // openConfirm shows the glass confirmation modal. onConfirm runs on accept;
+    // danger styles the primary button red (all current uses are destructive).
+    function openConfirm({ message, confirmLabel, onConfirm }) {
+        state.confirm = { message, confirmLabel, onConfirm };
+        render();
+    }
+    function closeConfirm() {
+        if (!state.confirm) return;
+        state.confirm = null;
+        render();
+    }
+
+    // renderModal paints (or clears) the persistent #modal overlay from
+    // state.confirm and wires its buttons + backdrop. Empty host = no modal.
+    function renderModal() {
+        const c = state.confirm;
+        if (!c) { modalHost.innerHTML = ""; return; }
+        modalHost.innerHTML = `
+            <div class="modal-card" id="modalCard">
+                <div class="modal-title">${t("confirmTitle")}</div>
+                <div class="modal-msg">${esc(c.message)}</div>
+                <div class="modal-actions">
+                    <div class="modal-btn ghost" id="modalCancel">${t("cancel")}</div>
+                    <div class="modal-btn danger" id="modalConfirm">${esc(c.confirmLabel)}</div>
+                </div>
+            </div>`;
+        // Swallow mousedown so clicks don't start a window drag underneath.
+        modalHost.addEventListener("mousedown", stopProp);
+        // Backdrop click (outside the card) cancels.
+        modalHost.onclick = e => { if (e.target === modalHost) closeConfirm(); };
+        document.getElementById("modalCancel").addEventListener("click", closeConfirm);
+        document.getElementById("modalConfirm").addEventListener("click", () => {
+            const fn = c.onConfirm;
+            closeConfirm();
+            if (fn) fn();
+        });
     }
 
     function renderPicker() {
@@ -902,9 +1068,12 @@
             kicker = esc(state.pickerGame);
             const rows = chapters.map(c => `
                 <div class="picker-row" data-path="${esc(c.path)}" data-embedded="true">
-                    ${c.chapter ? `<div class="picker-game mono">${esc(tf("chapterLabel", c.chapter))}</div>` : ''}
-                    <div class="picker-title">${esc(c.title)}</div>
-                    ${c.author ? `<div class="picker-meta mono">${esc(tf("by", c.author))}</div>` : ''}
+                    <div class="picker-row-main">
+                        ${c.chapter ? `<div class="picker-game mono">${esc(tf("chapterLabel", c.chapter))}</div>` : ''}
+                        <div class="picker-title">${esc(c.title)}</div>
+                        ${c.author ? `<div class="picker-meta mono">${esc(tf("by", c.author))}</div>` : ''}
+                    </div>
+                    <div class="picker-clear" data-clear-chapter="${esc(c.path)}" title="${t("clearProgress")}">⟲</div>
                 </div>`).join('');
             rowsHTML = `<div class="picker-back mono" id="pickerBack">${t("backToGames")}</div>` +
                 (rows || `<div class="picker-empty">${t("noChapters")}</div>`);
@@ -915,8 +1084,11 @@
                 ? games.map(g => {
                     const n = state.configs.filter(c => c.game === g).length;
                     return `<div class="picker-row" data-game="${esc(g)}">
-                        <div class="picker-title">${esc(g)}</div>
-                        <div class="picker-meta mono">${esc(tf("chaptersCount", n))}</div>
+                        <div class="picker-row-main">
+                            <div class="picker-title">${esc(g)}</div>
+                            <div class="picker-meta mono">${esc(tf("chaptersCount", n))}</div>
+                        </div>
+                        <div class="picker-clear" data-clear-game="${esc(g)}" title="${t("clearProgress")}">⟲</div>
                     </div>`;
                 }).join('')
                 : `<div class="picker-empty">${t("noConfigs")}</div>`;
@@ -944,6 +1116,7 @@
                 <div class="picker-list" id="pickerList">${rowsHTML}</div>
                 <div class="picker-actions">
                     <div class="picker-browse mono" id="pickerBrowse">${t("openFile")}</div>
+                    <div class="picker-clearcache mono" id="pickerClearCache">${t("clearCache")}</div>
                 </div>
                 ${state.pickerError ? `<div class="picker-error">${esc(state.pickerError)}</div>` : ''}
                 ${loadingBadge}
@@ -1110,6 +1283,7 @@
                 </div>
                 <div class="settings-error">${esc(state.settingsError)}</div>
                 <div class="settings-hint">${t("settingsHint")}</div>
+                <button class="settings-reset" id="resetSettings">${t("resetSettings")}</button>
             </div>`;
     }
 
@@ -1189,6 +1363,69 @@
             state.pickerLoading = "";
             state.pickerGame = game;
             state.pickerError = String(err && err.message ? err.message : err);
+            render();
+        });
+    }
+
+    // clearGameProgress resets every chapter's saved progress for a game (after
+    // confirmation). The picker shows no progress state, so there's nothing to
+    // re-render on success beyond clearing any prior error.
+    function clearGameProgress(game) {
+        openConfirm({
+            message: tf("confirmClearGame", game),
+            confirmLabel: t("confirmReset"),
+            onConfirm: () => {
+                state.pickerError = "";
+                App.ClearGameProgress(game).then(() => render()).catch(err => {
+                    state.pickerError = String(err && err.message ? err.message : err);
+                    render();
+                });
+            },
+        });
+    }
+
+    // clearChapterProgress resets one chapter's saved progress (no confirmation —
+    // it's a single, easily-redone reset).
+    function clearChapterProgress(path) {
+        state.pickerError = "";
+        App.ClearChapterProgress(path).then(() => render()).catch(err => {
+            state.pickerError = String(err && err.message ? err.message : err);
+            render();
+        });
+    }
+
+    // clearCache empties the on-disk config cache (after confirmation) and returns
+    // to the game list, where games are re-downloaded on demand.
+    function clearCache() {
+        openConfirm({
+            message: t("confirmClearCache"),
+            confirmLabel: t("confirmDelete"),
+            onConfirm: () => {
+                state.pickerError = "";
+                App.ClearCache().then(() => {
+                    state.pickerGame = null;
+                    render();
+                }).catch(err => {
+                    state.pickerError = String(err && err.message ? err.message : err);
+                    render();
+                });
+            },
+        });
+    }
+
+    // resetSettings restores all settings to their defaults and re-renders so
+    // theme/language/opacity reflect the reset immediately. Per spec this needs
+    // no confirmation.
+    function resetSettings() {
+        App.ResetSettings().then(s => {
+            state.settings = s;
+            applyOpacity(s.opacity ?? 1);
+            applyTheme(s.theme);
+            save();
+            state.settingsError = "";
+            render();
+        }).catch(err => {
+            state.settingsError = String(err && err.message ? err.message : err);
             render();
         });
     }
@@ -1282,6 +1519,14 @@
                     }
                 });
             });
+            panel.querySelectorAll(".picker-clear").forEach(btn => {
+                btn.addEventListener("mousedown", stopProp);
+                btn.addEventListener("click", e => {
+                    e.stopPropagation(); // don't trigger the row's load/download
+                    if (btn.dataset.clearGame) clearGameProgress(btn.dataset.clearGame);
+                    else if (btn.dataset.clearChapter) clearChapterProgress(btn.dataset.clearChapter);
+                });
+            });
             const back = document.getElementById("pickerBack");
             if (back) {
                 back.addEventListener("mousedown", stopProp);
@@ -1295,6 +1540,11 @@
                         if (path) loadConfig(path, false);
                     });
                 });
+            }
+            const clearCacheBtn = document.getElementById("pickerClearCache");
+            if (clearCacheBtn) {
+                clearCacheBtn.addEventListener("mousedown", stopProp);
+                clearCacheBtn.addEventListener("click", clearCache);
             }
             return; // no further event wiring needed in picker
         }
@@ -1362,6 +1612,12 @@
             btn.addEventListener("mousedown", stopProp);
             btn.addEventListener("click", () => selectLanguage(btn.dataset.lang));
         });
+
+        const resetBtn = document.getElementById("resetSettings");
+        if (resetBtn) {
+            resetBtn.addEventListener("mousedown", stopProp);
+            resetBtn.addEventListener("click", resetSettings);
+        }
     }
 
     // toggleSection flips a named section's open/closed state, recording an
@@ -1439,6 +1695,16 @@
     }
 
     function onCaptureKeydown(e) {
+        if (state.confirm) {
+            if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeConfirm(); }
+            else if (e.key === "Enter") {
+                e.preventDefault(); e.stopPropagation();
+                const fn = state.confirm.onConfirm;
+                closeConfirm();
+                if (fn) fn();
+            }
+            return;
+        }
         if (!state.capturing) return;
         e.preventDefault();
         e.stopPropagation();
@@ -1500,7 +1766,7 @@
 
     async function startWindowDrag(e) {
         if (state.locked || e.button !== 0) return;
-        if (e.target.closest(".lock-btn, .icon-btn, .close-btn, .picker-browse, .picker-row, .picker-back")) return;
+        if (e.target.closest(".lock-btn, .icon-btn, .close-btn, .picker-browse, .picker-clearcache, .picker-row, .picker-back")) return;
         const rt = window.runtime;
         if (!rt || !rt.WindowGetPosition) return;
         e.preventDefault();

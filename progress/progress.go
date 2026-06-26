@@ -12,11 +12,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/XotoX1337/GoThrough/config"
 )
+
+// keySep separates the game, chapter and title segments of a progress key.
+// It is a control character so it can't collide with text in those fields.
+const keySep = "\x1f"
 
 // fileVersion tags the on-disk schema so future formats can be migrated.
 // v3 (v0.9) replaced the old per-walkthrough Branches map with Choices
@@ -84,7 +89,16 @@ func Open(path string) (*Store, error) {
 // from the walkthrough's identity rather than its file path, so progress
 // follows the walkthrough even if the config file is moved or renamed.
 func Key(wt *config.Walkthrough) string {
-	return fmt.Sprintf("%s\x1fch%d\x1f%s", wt.Game, wt.Chapter, wt.Title)
+	return fmt.Sprintf("%s%sch%d%s%s", wt.Game, keySep, wt.Chapter, keySep, wt.Title)
+}
+
+// gameOfKey extracts the game segment (everything before the first separator)
+// from a progress key produced by Key.
+func gameOfKey(key string) string {
+	if i := strings.Index(key, keySep); i >= 0 {
+		return key[:i]
+	}
+	return key
 }
 
 // Handle is a per-walkthrough view of a Store. It satisfies engine.Persister.
@@ -129,6 +143,68 @@ func (h *Handle) Save(index, stepID int, choices map[string]string) error {
 		UpdatedAt: time.Now().UTC(),
 	}
 	return h.store.writeLocked()
+}
+
+// Delete removes the progress record for the given key (see Key) and rewrites
+// the file atomically. Deleting a key that isn't present is a no-op.
+func (s *Store) Delete(key string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.doc.Entries[key]; !ok {
+		return nil
+	}
+	delete(s.doc.Entries, key)
+	return s.writeLocked()
+}
+
+// DeleteGame removes every progress record belonging to the named game (all of
+// its chapters). The game is the key segment before the first separator.
+func (s *Store) DeleteGame(game string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	removed := false
+	for k := range s.doc.Entries {
+		if gameOfKey(k) == game {
+			delete(s.doc.Entries, k)
+			removed = true
+		}
+	}
+	if !removed {
+		return nil
+	}
+	return s.writeLocked()
+}
+
+// DeleteChapter removes the progress record(s) for one chapter of a game,
+// matching on the game + chapter prefix of the key (the title is not needed).
+// This is the CLI's chapter-granularity reset, where only game and chapter are
+// known.
+func (s *Store) DeleteChapter(game string, chapter int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	prefix := fmt.Sprintf("%s%sch%d%s", game, keySep, chapter, keySep)
+	removed := false
+	for k := range s.doc.Entries {
+		if strings.HasPrefix(k, prefix) {
+			delete(s.doc.Entries, k)
+			removed = true
+		}
+	}
+	if !removed {
+		return nil
+	}
+	return s.writeLocked()
+}
+
+// Clear removes every progress record. A no-op (no rewrite) on an empty store.
+func (s *Store) Clear() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.doc.Entries) == 0 {
+		return nil
+	}
+	s.doc.Entries = map[string]record{}
+	return s.writeLocked()
 }
 
 // writeLocked serializes the document and writes it atomically (temp file +

@@ -309,6 +309,23 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
     SaveOpacity:  (v) => { settings.opacity = v; return Promise.resolve(settings); },
     SaveTheme:    (t) => { settings.theme = t; return Promise.resolve(settings); },
     SaveLanguage: (l) => { settings.language = l; return Promise.resolve(settings); },
+    // Clear/reset bindings — no progress store or cache exists in devui (the
+    // catalog is the single live config), so these are no-ops; ResetSettings
+    // restores the mock settings to defaults like the real binding does.
+    ClearChapterProgress: () => Promise.resolve(),
+    ClearGameProgress:    () => Promise.resolve(),
+    ClearCache:           () => Promise.resolve(),
+    ResetSettings:        () => {
+      settings.opacity = 1.0; settings.theme = 'dark'; settings.language = 'en';
+      settings.hotkeys = {
+        next:         { mods: ['ctrl', 'alt'], key: 'right' },
+        prev:         { mods: ['ctrl', 'alt'], key: 'left'  },
+        toggleHide:   { mods: ['ctrl', 'alt'], key: 'h'     },
+        focusOverlay: { mods: ['ctrl', 'alt'], key: 'm'     },
+        quit:         { mods: ['ctrl', 'alt'], key: 'q'     },
+      };
+      return Promise.resolve(settings);
+    },
   } } };
   window.runtime = {
     Quit: () => console.log('[devui] runtime.Quit() (no-op in browser)'),
