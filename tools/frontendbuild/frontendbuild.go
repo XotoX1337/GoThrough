@@ -5,8 +5,9 @@
 // via go.mod (checksum-verified, no npm / no node_modules / no lifecycle
 // scripts), keeping the project a single Go toolchain — see CLAUDE.md. esbuild
 // only strips TS types here (no type-checking), which is sufficient for the
-// build; the CSS pass lowers nesting etc. for the target without minifying, so
-// the committed app.css stays a readable diff.
+// build. Both bundles are minified — the committed app.js/app.css are shipped
+// artifacts (smaller for the WebView to load), not meant to be read as diffs;
+// the readable source stays in src/app.ts and src/app.css.
 //
 // Both the buildfrontend command (run via `go generate` / `go run`) and devui
 // call Build, so the transpile path can't drift between them.
@@ -63,7 +64,12 @@ func Build() (string, error) {
 		Format:      api.FormatIIFE, // classic <script>, no ESM needed
 		Target:      api.ES2020,     // WebView2 / Chromium-Edge → modern JS is fine
 		Charset:     api.CharsetUTF8,
-		LogLevel:    api.LogLevelSilent,
+		// Minified shipped artifact; window.go/window.runtime are external
+		// globals, so MinifyIdentifiers never touches them.
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		LogLevel:          api.LogLevelSilent,
 	})
 	if len(js.Errors) > 0 {
 		return "", esbuildError(js.Errors)
@@ -77,8 +83,11 @@ func Build() (string, error) {
 		Loader:      map[string]api.Loader{".css": api.LoaderCSS},
 		Target:      api.ES2020,  // lower CSS nesting etc. for WebView2
 		Charset:     api.CharsetUTF8,
-		// Not minified on purpose: the committed app.css stays a readable diff.
-		LogLevel: api.LogLevelSilent,
+		// Minified shipped artifact (see the JS build above).
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		LogLevel:          api.LogLevelSilent,
 	})
 	if len(css.Errors) > 0 {
 		return "", esbuildError(css.Errors)
