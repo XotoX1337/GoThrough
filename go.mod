@@ -3,6 +3,7 @@ module github.com/XotoX1337/GoThrough
 go 1.26.4
 
 require (
+	github.com/evanw/esbuild v0.28.1
 	github.com/jezek/xgb v1.3.1
 	github.com/spf13/cobra v1.10.2
 	github.com/wailsapp/wails/v2 v2.12.0

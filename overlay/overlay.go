@@ -22,6 +22,12 @@ const (
 	screenMargin  = 12
 )
 
+// The HUD's JS is authored in TypeScript (frontend/src/app.ts) and transpiled to
+// the committed frontend/app.js by tools/buildfrontend (esbuild Go API, no npm).
+// Run `go generate ./...` before `wails build -s` after editing app.ts. app.js is
+// committed, so a plain build needs no generate step; CI runs generate to catch drift.
+//go:generate go run github.com/XotoX1337/GoThrough/tools/buildfrontend
+
 //go:embed frontend
 var assets embed.FS
 
