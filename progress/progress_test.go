@@ -33,15 +33,15 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reopen: %v", err)
 	}
-	index, stepID, branches, ok := reopened.For(wt).Load()
+	index, stepID, choices, ok := reopened.For(wt).Load()
 	if !ok {
 		t.Fatal("expected saved progress after reopen")
 	}
 	if index != 3 || stepID != 42 {
 		t.Fatalf("got index=%d stepID=%d, want 3/42", index, stepID)
 	}
-	if branches["guild"] != "A" {
-		t.Fatalf("got branches=%v, want guild=A", branches)
+	if choices["guild"] != "A" {
+		t.Fatalf("got choices=%v, want guild=A", choices)
 	}
 }
 
@@ -62,27 +62,27 @@ func TestSaveOverwrites(t *testing.T) {
 	}
 }
 
-func TestSaveCopiesBranchMap(t *testing.T) {
+func TestSaveCopiesChoiceMap(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "progress.json")
 	store, _ := Open(path)
 	h := store.For(sampleWalkthrough())
 
-	b := map[string]string{"guild": "A"}
-	if err := h.Save(0, 1, b); err != nil {
+	c := map[string]string{"guild": "A"}
+	if err := h.Save(0, 1, c); err != nil {
 		t.Fatalf("save: %v", err)
 	}
-	b["guild"] = "MUTATED" // must not affect the stored record
+	c["guild"] = "MUTATED" // must not affect the stored record
 	_, _, got, _ := h.Load()
 	if got["guild"] != "A" {
-		t.Fatalf("stored branch aliased caller's map: got %v", got)
+		t.Fatalf("stored choices aliased caller's map: got %v", got)
 	}
 }
 
-func TestLoadsV1FileWithoutBranches(t *testing.T) {
+func TestLoadsOldFileWithoutChoices(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "progress.json")
-	// A v1 document: version 1 and a record with no "branches" field (nil map
-	// is omitted by `omitempty`, reproducing the old on-disk shape).
-	v1, err := json.Marshal(document{
+	// An old document with no "choices" field (nil map is omitted by
+	// `omitempty`, reproducing the pre-v0.9 on-disk shape) must still load.
+	old, err := json.Marshal(document{
 		Version: 1,
 		Entries: map[string]record{
 			Key(sampleWalkthrough()): {StepIndex: 2, StepID: 30},
@@ -91,19 +91,19 @@ func TestLoadsV1FileWithoutBranches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, v1, 0o644); err != nil {
+	if err := os.WriteFile(path, old, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	store, err := Open(path)
 	if err != nil {
-		t.Fatalf("Open v1: %v", err)
+		t.Fatalf("Open old: %v", err)
 	}
-	index, stepID, branches, ok := store.For(sampleWalkthrough()).Load()
+	index, stepID, choices, ok := store.For(sampleWalkthrough()).Load()
 	if !ok || index != 2 || stepID != 30 {
-		t.Fatalf("v1 load: index=%d stepID=%d ok=%v, want 2/30/true", index, stepID, ok)
+		t.Fatalf("old load: index=%d stepID=%d ok=%v, want 2/30/true", index, stepID, ok)
 	}
-	if branches != nil {
-		t.Fatalf("v1 load: branches=%v, want nil", branches)
+	if choices != nil {
+		t.Fatalf("old load: choices=%v, want nil", choices)
 	}
 }
 

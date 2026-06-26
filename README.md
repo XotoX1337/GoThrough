@@ -95,16 +95,18 @@ Progression is user-driven: steps advance on a Next click or hotkey. `trigger`
 defaults to `manual` and can be omitted. Automatic triggers (OCR, memory-reading)
 were intentionally left out — a game-agnostic tool has no reliable way to read quest state.
 
-### Sections, branches & richer steps (schema 2)
+### Sections, choices & richer steps (schema 3)
 
-Larger walkthroughs can group steps into **sections**, fork into **branches**
-(decision points that re-converge), and chain across files with **`next`**.
-Steps support **Markdown** descriptions plus `hints`, `warnings`, `quests`, and
-an `optional` flag. Everything is additive — flat `steps`-only configs keep
-loading unchanged.
+Larger walkthroughs can group steps into **sections**, branch on flat
+**`choices`** (a decision is recorded under a key; steps opt in via a `when`
+condition), and chain across files with **`next`**. Steps carry a checklist of
+**`tasks`** — each task can attach its own `info`/`warning`/`hint` — plus
+step-level `hints`, `warnings`, `infos`, `quests`, an optional Markdown
+`description`, and an `optional` flag. Everything is additive — flat
+`steps`-only configs keep loading unchanged.
 
 ```yaml
-schema: 2
+schema: 3
 game: Gothic 2
 version: Die Nacht des Raben
 variant: Drachenjäger          # whole-file path label
@@ -121,29 +123,34 @@ sections:                      # use EITHER sections OR a flat `steps:` list
       - id: 1
         title: "Reach the city"
         optional: true
-        description: |         # Markdown: bullets, **bold**, *italic*
+        tasks:                 # actionable sub-steps (Markdown: **bold**, *italic*)
           - Follow the path **south**.
-          - Avoid the *field raiders*.
+          - text: Avoid the *field raiders*.
+            warning: They hit hard at low level.   # per-task callout
+          - text: Grab the chest by the gate.
+            info: Holds **50 gold**.
         quests:
           - { name: "Into the city", status: received }   # received | completed
-        hints:    ["Chest near the gate holds **50 gold**."]
+        infos:    ["Town opens up after this."]           # step-level (blue)
+        hints:    ["Talk to the gate guard first."]
         warnings: ["Don't enter the back room — an orc waits there."]
 
   - title: "Guild choice"
     steps:
-      - branch:                # fork; the choice is saved in progress.json
-          persistKey: guild
-          title: "Which guild do you join?"
+      - choice:                # decision recorded under `key`, saved in progress.json
+          key: guild
+          prompt: "Which guild do you join?"
           options:
-            - label: "Militia"
-              description: "City & order."
-              steps:
-                - { id: 100, title: "Join the militia" }
-            - label: "Mercenary"
-              steps:
-                - { id: 200, title: "Join the mercenaries" }
+            - { value: militia,   label: "Militia",   description: "City & order." }
+            - { value: mercenary, label: "Mercenary" }
+      - id: 100
+        title: "Join the militia"
+        when: { guild: militia }        # shown only for this answer
+      - id: 200
+        title: "Join the mercenaries"
+        when: { guild: mercenary }
       - id: 2
-        title: "Shared ending"  # steps after the branch re-converge for every option
+        title: "Shared ending"          # no `when` → always shown (re-converges)
 ```
 
 ## Roadmap
@@ -155,6 +162,8 @@ sections:                      # use EITHER sections OR a flat `steps:` list
 - [x] v0.5 — Settings: persistent user config + rebindable hotkeys (in-HUD panel)
 - [x] v0.6 — UX & distribution polish: config picker, double-click launch, opacity, reopen last walkthrough, binary signing
 - [x] v0.7 — Branching & sections in the config format (Gothic 2's guild choice), Markdown steps, hints/warnings/quests, `next`-file chaining
+- [x] v0.8 — HUD UI pass: collapsible sections, auto-scroll, themes (dark/light/contrast), focus-overlay hotkey
+- [x] v0.9 — Config schema v3: flat `choices` + `when` (replacing nested branches), per-task `tasks` with info/warning/hint callouts, two-level picker (game → chapter)
 - [ ] v1.0 — First full Gothic 2 walkthrough config
 
 ## Community Configs

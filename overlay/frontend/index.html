@@ -15,7 +15,7 @@
            Colours are tokenised so the HUD can switch skins at runtime via
            html[data-theme]. Most surfaces use rgba(var(--gt-fg), α) for text/
            borders/hover, so flipping --gt-fg + --gt-panel-rgb inverts the bulk
-           of the UI; coloured callouts (warnings/branch) get explicit overrides
+           of the UI; coloured callouts (warnings/infos/choice) get explicit overrides
            per theme. --gt-panel-rgb feeds the opacity slider (see .panel). */
         :root, html[data-theme="dark"] {
             --gt-panel-rgb: 15, 17, 21;
@@ -24,7 +24,8 @@
             --gt-accent-rgb: 236, 237, 240;  /* progress fill, done mark, primary btn */
             --gt-accent-fg: #0d1014;         /* text on the accent */
             --gt-good: 126, 211, 159;        /* completed / "abgeschlossen" green */
-            --gt-branch-rgb: 150, 180, 255;  /* decision/branch accent */
+            --gt-choice-rgb: 150, 180, 255;  /* decision/choice accent */
+            --gt-info-rgb: 96, 165, 250;     /* info callout (blue) */
             --gt-shadow: rgba(0, 0, 0, 0.5);
         }
         html[data-theme="light"] {
@@ -34,7 +35,8 @@
             --gt-accent-rgb: 45, 104, 232;   /* vivid blue — progress fill, done mark, primary btn */
             --gt-accent-fg: #ffffff;          /* white reads on the blue accent */
             --gt-good: 22, 128, 76;
-            --gt-branch-rgb: 64, 96, 196;
+            --gt-choice-rgb: 64, 96, 196;
+            --gt-info-rgb: 37, 99, 195;
             --gt-shadow: rgba(20, 24, 34, 0.28);
         }
         html[data-theme="contrast"] {
@@ -44,7 +46,8 @@
             --gt-accent-rgb: 255, 214, 0;    /* high-vis signal yellow */
             --gt-accent-fg: #000000;
             --gt-good: 64, 230, 140;
-            --gt-branch-rgb: 120, 190, 255;
+            --gt-choice-rgb: 120, 190, 255;
+            --gt-info-rgb: 120, 190, 255;
             --gt-shadow: rgba(0, 0, 0, 0.85);
         }
 
@@ -53,9 +56,11 @@
         html[data-theme="light"] .info-block.warnings { background: rgba(241, 138, 90, 0.16); border-color: rgba(200, 110, 60, 0.5); }
         html[data-theme="light"] .info-block.warnings .info-head { color: rgba(170, 78, 28, 0.95); }
         html[data-theme="light"] .info-block.warnings .info-list { color: rgba(140, 64, 24, 0.95); }
-        html[data-theme="light"] .branch-card { background: rgba(64, 96, 196, 0.1); }
-        html[data-theme="light"] .row.is-branch .row-label { color: rgba(48, 78, 170, 0.95); }
-        html[data-theme="light"] .branch-opt-tag { background: rgba(var(--gt-branch-rgb), 0.9); color: #fff; }
+        html[data-theme="light"] .task-callout.warning { background: rgba(241, 138, 90, 0.16); color: rgba(140, 64, 24, 0.95); }
+        html[data-theme="light"] .task-callout.hint { color: rgba(var(--gt-fg), 0.75); }
+        html[data-theme="light"] .choice-card { background: rgba(64, 96, 196, 0.1); }
+        html[data-theme="light"] .row.is-choice .row-label { color: rgba(48, 78, 170, 0.95); }
+        html[data-theme="light"] .choice-opt-tag { background: rgba(var(--gt-choice-rgb), 0.9); color: #fff; }
         html[data-theme="light"] .combo.capturing { color: #1b3a66; border-color: rgba(64, 96, 196, 0.7); }
 
         /* Light theme: dark-on-light text at the dark theme's low alphas washes
@@ -80,14 +85,15 @@
 
         html[data-theme="contrast"] .panel { border-color: rgba(var(--gt-fg), 0.6); }
         html[data-theme="contrast"] .now-card,
-        html[data-theme="contrast"] .branch-opt,
+        html[data-theme="contrast"] .choice-opt,
         html[data-theme="contrast"] .combo,
         html[data-theme="contrast"] .lock-btn,
         html[data-theme="contrast"] .picker-browse { border-color: rgba(var(--gt-fg), 0.45); }
         html[data-theme="contrast"] .info-block.warnings { background: rgba(241, 138, 90, 0.2); border-color: rgba(255, 160, 90, 0.9); }
         html[data-theme="contrast"] .info-block.warnings .info-head,
         html[data-theme="contrast"] .info-block.warnings .info-list { color: rgba(255, 190, 140, 1); }
-        html[data-theme="contrast"] .row.is-branch .row-label { color: rgba(150, 200, 255, 1); }
+        html[data-theme="contrast"] .task-callout.warning { background: rgba(241, 138, 90, 0.2); color: rgba(255, 190, 140, 1); }
+        html[data-theme="contrast"] .row.is-choice .row-label { color: rgba(150, 200, 255, 1); }
 
         body {
             font-family: 'Hanken Grotesk', system-ui, sans-serif;
@@ -297,7 +303,7 @@
         }
         .row-opt { margin-left: 6px; font-size: 8px; padding: 0 4px; }
 
-        /* --- Info blocks (quests / hints / warnings) ---------------------- */
+        /* --- Info blocks (quests / hints / warnings / infos) -------------- */
         .info-block { margin-top: 10px; }
         .info-head { font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--gt-fg), 0.42); margin-bottom: 3px; }
         .info-block.hints .info-list { color: rgba(var(--gt-fg), 0.66); font-size: 14px; }
@@ -307,6 +313,25 @@
         }
         .info-block.warnings .info-head { color: rgba(244, 162, 122, 0.95); }
         .info-block.warnings .info-list { color: rgba(247, 198, 173, 0.95); font-size: 14px; }
+        .info-block.infos {
+            background: rgba(var(--gt-info-rgb), 0.1); border: 1px solid rgba(var(--gt-info-rgb), 0.3);
+            border-radius: 8px; padding: 7px 9px;
+        }
+        .info-block.infos .info-head { color: rgba(var(--gt-info-rgb), 0.95); }
+        .info-block.infos .info-list { color: rgba(var(--gt-info-rgb), 1); font-size: 14px; }
+
+        /* --- Tasks (sub-steps with optional per-task callouts) ------------ */
+        .task-list { list-style: none; }
+        .task { font-size: 15px; line-height: 1.5; padding-left: 16px; position: relative; margin-bottom: 3px; }
+        .task::before { content: "•"; position: absolute; left: 2px; color: rgba(var(--gt-fg), 0.45); }
+        .task-callout {
+            display: block; margin-top: 3px; font-size: 13px; line-height: 1.4;
+            border-radius: 6px; padding: 4px 8px;
+        }
+        .task-callout.info    { background: rgba(var(--gt-info-rgb), 0.12);    color: rgba(var(--gt-info-rgb), 1); }
+        .task-callout.warning { background: rgba(241, 138, 90, 0.14); color: rgba(247, 198, 173, 0.97); }
+        .task-callout.hint    { color: rgba(var(--gt-fg), 0.6); padding: 2px 0; }
+        .task-callout-tag { font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; margin-right: 5px; }
         .quest { font-size: 15px; margin-bottom: 4px; line-height: 1.45; }
         .quest-name { color: rgba(var(--gt-fg), 0.82); }
         .quest-status { font-size: 12px; color: rgba(var(--gt-fg), 0.45); }
@@ -314,23 +339,23 @@
         .quest-note { font-size: 14px; color: rgba(var(--gt-fg), 0.5); margin-top: 1px; }
 
         /* --- Branch decision --------------------------------------------- */
-        .branch-card { border-color: rgba(var(--gt-branch-rgb), 0.3); background: rgba(120, 150, 230, 0.08); }
-        .branch-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-        .branch-opt {
+        .choice-card { border-color: rgba(var(--gt-choice-rgb), 0.3); background: rgba(120, 150, 230, 0.08); }
+        .choice-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .choice-opt {
             text-align: left; cursor: pointer; border-radius: 8px;
             padding: 8px 10px; color: inherit; font: inherit;
             background: rgba(var(--gt-fg), 0.07); border: 1px solid rgba(var(--gt-fg), 0.14);
             transition: background 0.16s ease, border-color 0.16s ease;
         }
-        .branch-opt:hover { background: rgba(var(--gt-fg), 0.13); border-color: rgba(var(--gt-branch-rgb), 0.5); }
-        .branch-opt.chosen { border-color: rgba(var(--gt-branch-rgb), 0.65); background: rgba(120, 150, 230, 0.18); }
-        .branch-opt-tag {
+        .choice-opt:hover { background: rgba(var(--gt-fg), 0.13); border-color: rgba(var(--gt-choice-rgb), 0.5); }
+        .choice-opt.chosen { border-color: rgba(var(--gt-choice-rgb), 0.65); background: rgba(120, 150, 230, 0.18); }
+        .choice-opt-tag {
             font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
             padding: 1px 5px; border-radius: 5px; vertical-align: middle;
-            background: rgba(var(--gt-branch-rgb), 0.28); color: rgba(210, 224, 255, 0.95);
+            background: rgba(var(--gt-choice-rgb), 0.28); color: rgba(210, 224, 255, 0.95);
         }
-        .branch-opt-label { display: block; font-size: 15px; font-weight: 600; }
-        .branch-opt-desc { display: block; font-size: 13px; color: rgba(var(--gt-fg), 0.58); margin-top: 2px; line-height: 1.4; }
+        .choice-opt-label { display: block; font-size: 15px; font-weight: 600; }
+        .choice-opt-desc { display: block; font-size: 13px; color: rgba(var(--gt-fg), 0.58); margin-top: 2px; line-height: 1.4; }
 
         /* --- End-of-walkthrough hand-off --------------------------------- */
         .next-file-btn {
@@ -341,7 +366,7 @@
         }
         .next-file-btn:hover { background: #fff; }
 
-        .row.is-branch .row-label { color: rgba(170, 195, 255, 0.92); font-style: italic; }
+        .row.is-choice .row-label { color: rgba(170, 195, 255, 0.92); font-style: italic; }
 
         .done-card {
             flex: 0 0 auto;
@@ -508,6 +533,11 @@
             transition: all 0.18s ease;
         }
         .picker-browse:hover { background: rgba(var(--gt-fg), 0.08); color: rgba(var(--gt-fg), 0.9); }
+        .picker-back {
+            font-size: 10.5px; color: rgba(var(--gt-fg), 0.5); cursor: pointer;
+            padding: 6px 2px 8px; letter-spacing: 0.04em;
+        }
+        .picker-back:hover { color: rgba(var(--gt-fg), 0.85); }
         .picker-error { font-size: 10.5px; color: #ffb4b4; margin-top: 8px; }
         .picker-remote-badge {
             font-size: 9.5px;
@@ -560,6 +590,7 @@
         view: "picker",           // "picker" | "steps" | "settings"
         // --- picker ---
         configs: [],              // []configstore.Entry from App.ListConfigs()
+        pickerGame: null,         // selected game in the two-level picker (null = game list)
         remoteCount: 0,           // new configs found in the remote repo
         pickerError: "",
         // --- steps ---
@@ -653,6 +684,20 @@
         if (!items || !items.length) return "";
         const lis = items.map(t => `<li>${mdInline(t)}</li>`).join("");
         return `<div class="info-block ${cls || ""}"><div class="info-head mono">${head}</div><ul class="info-list">${lis}</ul></div>`;
+    }
+    // renderTasks renders a step's actionable sub-steps. Each task is a bullet;
+    // an optional per-task info/warning/hint renders as a small callout beneath it.
+    const CALLOUT_TAG = { info: "Info", warning: "Achtung", hint: "Tipp" };
+    function taskCallout(kind, text) {
+        if (!text) return "";
+        const tag = kind === "hint" ? "" : `<span class="task-callout-tag mono">${CALLOUT_TAG[kind]}</span>`;
+        return `<span class="task-callout ${kind}">${tag}${mdInline(text)}</span>`;
+    }
+    function renderTasks(tasks) {
+        if (!tasks || !tasks.length) return "";
+        const items = tasks.map(t => `<li class="task">${mdInline(t.text)}${
+            taskCallout("warning", t.warning)}${taskCallout("info", t.info)}${taskCallout("hint", t.hint)}</li>`).join("");
+        return `<ul class="task-list">${items}</ul>`;
     }
 
     // --- Opacity ----------------------------------------------------------
@@ -755,14 +800,35 @@
     }
 
     function renderPicker() {
-        const rowsHTML = state.configs.length
-            ? state.configs.map(c => `
+        // Two levels: pick a game, then a chapter. The folder structure already
+        // groups configs by game (configs/<game>/...), surfaced here via c.game.
+        let kicker, rowsHTML;
+        if (state.pickerGame) {
+            const chapters = state.configs
+                .filter(c => c.game === state.pickerGame)
+                .sort((a, b) => (a.chapter || 0) - (b.chapter || 0));
+            kicker = esc(state.pickerGame);
+            const rows = chapters.map(c => `
                 <div class="picker-row" data-path="${esc(c.path)}" data-embedded="true">
-                    <div class="picker-game mono">${esc(c.game)}${c.chapter ? ` · Kapitel ${c.chapter}` : ''}</div>
+                    ${c.chapter ? `<div class="picker-game mono">Kapitel ${c.chapter}</div>` : ''}
                     <div class="picker-title">${esc(c.title)}</div>
                     ${c.author ? `<div class="picker-meta mono">von ${esc(c.author)}</div>` : ''}
-                </div>`).join('')
-            : `<div class="picker-empty">Keine eingebetteten Configs gefunden.</div>`;
+                </div>`).join('');
+            rowsHTML = `<div class="picker-back mono" id="pickerBack">← Spiele</div>` +
+                (rows || `<div class="picker-empty">Keine Kapitel gefunden.</div>`);
+        } else {
+            kicker = "Spiel wählen";
+            const games = [...new Set(state.configs.map(c => c.game))].sort();
+            rowsHTML = games.length
+                ? games.map(g => {
+                    const n = state.configs.filter(c => c.game === g).length;
+                    return `<div class="picker-row" data-game="${esc(g)}">
+                        <div class="picker-title">${esc(g)}</div>
+                        <div class="picker-meta mono">${n} Kapitel</div>
+                    </div>`;
+                }).join('')
+                : `<div class="picker-empty">Keine eingebetteten Configs gefunden.</div>`;
+        }
 
         const remoteBadge = state.remoteCount > 0
             ? `<div class="picker-remote-badge mono">↑ ${state.remoteCount} neue Config${state.remoteCount > 1 ? 's' : ''} verfügbar — GoThrough aktualisieren</div>`
@@ -781,7 +847,7 @@
                 </div>
             </div>
             <div class="picker-view">
-                <div class="picker-kicker mono">Walkthrough wählen</div>
+                <div class="picker-kicker mono">${kicker}</div>
                 <div class="picker-list" id="pickerList">${rowsHTML}</div>
                 <div class="picker-actions">
                     <div class="picker-browse mono" id="pickerBrowse">Datei öffnen…</div>
@@ -796,10 +862,10 @@
         const pos = i + 1;
         const done = pos < state.activePos;
         const isCurrent = pos === state.activePos;
-        const label = s.isBranch ? `⑂ ${esc(s.title)}` : esc(s.title);
+        const label = s.isChoice ? `⑂ ${esc(s.title)}` : esc(s.title);
         const optBadge = s.optional ? `<span class="row-opt">optional</span>` : "";
         return `
-            <div class="row${done ? " done" : ""}${isCurrent ? " current" : ""}${s.isBranch ? " is-branch" : ""}" data-index="${i}">
+            <div class="row${done ? " done" : ""}${isCurrent ? " current" : ""}${s.isChoice ? " is-choice" : ""}" data-index="${i}">
                 <div class="mark">${done ? '<span class="check">✓</span>' : ""}</div>
                 <div class="row-main">
                     <div class="row-label">${label}${optBadge}</div>
@@ -849,20 +915,20 @@
         let nowHTML;
         if (!current) {
             nowHTML = `<div class="done-card">Keine Schritte geladen</div>`;
-        } else if (current.isBranch) {
+        } else if (current.isChoice) {
             const opts = (current.options || []).map(o => {
-                const chosen = current.selected && o.label === current.selected;
+                const chosen = current.selected && o.value === current.selected;
                 return `
-                <button class="branch-opt${chosen ? " chosen" : ""}" data-key="${esc(current.branchKey)}" data-label="${esc(o.label)}">
-                    <span class="branch-opt-label">${esc(o.label)}${chosen ? ' <span class="branch-opt-tag">gewählt</span>' : ""}</span>
-                    ${o.description ? `<span class="branch-opt-desc">${mdInline(o.description)}</span>` : ""}
+                <button class="choice-opt${chosen ? " chosen" : ""}" data-key="${esc(current.choiceKey)}" data-value="${esc(o.value)}">
+                    <span class="choice-opt-label">${esc(o.label)}${chosen ? ' <span class="choice-opt-tag">gewählt</span>' : ""}</span>
+                    ${o.description ? `<span class="choice-opt-desc">${mdInline(o.description)}</span>` : ""}
                 </button>`;
             }).join("");
-            nowHTML = `<div class="now-card branch-card">
+            nowHTML = `<div class="now-card choice-card">
                    <div class="now-label mono">Entscheidung</div>
                    <div class="now-step">${esc(current.title)}</div>
                    <div class="now-meta mono">Schritt ${state.activePos} / ${total}${current.section ? " · " + esc(current.section) : ""}</div>
-                   <div class="branch-options">${opts}</div>
+                   <div class="choice-options">${opts}</div>
                </div>`;
         } else {
             const optBadge = current.optional ? `<span class="opt-badge">optional</span>` : "";
@@ -873,7 +939,9 @@
                    <div class="now-step">${esc(current.title)} ${optBadge}</div>
                    <div class="now-meta mono">Schritt ${state.activePos} / ${total}${current.section ? " · " + esc(current.section) : ""}</div>
                    ${current.description ? `<div class="now-desc">${md(current.description)}</div>` : ""}
+                   ${renderTasks(current.tasks)}
                    ${renderList(current.warnings, "Achtung", "warnings")}
+                   ${renderList(current.infos, "Info", "infos")}
                    ${renderQuests(current.quests)}
                    ${renderList(current.hints, "Hinweise", "hints")}
                    ${handoff}
@@ -1004,8 +1072,8 @@
         });
     }
 
-    // reloadSteps re-fetches the sequence after it changes shape (branch choice
-    // inlines option steps; a `next:` hand-off swaps the whole walkthrough).
+    // reloadSteps re-fetches the sequence after it changes shape (a choice
+    // reveals/hides gated steps; a `next:` hand-off swaps the whole walkthrough).
     function reloadSteps() {
         return Promise.all([App.Steps(), App.CurrentStep(), App.NextFile()])
             .then(([steps, current, nextFile]) => {
@@ -1018,8 +1086,8 @@
             });
     }
 
-    function chooseBranch(key, label) {
-        App.Choose(key, label).then(() => reloadSteps());
+    function chooseOption(key, value) {
+        App.Choose(key, value).then(() => reloadSteps());
     }
 
     // refreshAfterSwap re-fetches everything after the active walkthrough is
@@ -1037,6 +1105,7 @@
     function goHome() {
         App.UnloadConfig().then(() => {
             state.view = "picker";
+            state.pickerGame = null;
             state.configs = [];
             return App.ListConfigs();
         }).then(configs => {
@@ -1058,9 +1127,20 @@
 
         if (state.view === "picker") {
             panel.querySelectorAll(".picker-row").forEach(row => {
-                row.addEventListener("click", () =>
-                    loadConfig(row.dataset.path, row.dataset.embedded === "true"));
+                row.addEventListener("click", () => {
+                    if (row.dataset.game) {        // level 1: drill into a game
+                        state.pickerGame = row.dataset.game;
+                        render();
+                    } else if (row.dataset.path) { // level 2: load the chapter
+                        loadConfig(row.dataset.path, row.dataset.embedded === "true");
+                    }
+                });
             });
+            const back = document.getElementById("pickerBack");
+            if (back) {
+                back.addEventListener("mousedown", stopProp);
+                back.addEventListener("click", () => { state.pickerGame = null; render(); });
+            }
             const browse = document.getElementById("pickerBrowse");
             if (browse) {
                 browse.addEventListener("mousedown", stopProp);
@@ -1098,9 +1178,9 @@
         panel.querySelectorAll(".row").forEach(row =>
             row.addEventListener("click", () => gotoIndex(Number(row.dataset.index))));
 
-        panel.querySelectorAll(".branch-opt").forEach(btn => {
+        panel.querySelectorAll(".choice-opt").forEach(btn => {
             btn.addEventListener("mousedown", stopProp);
-            btn.addEventListener("click", () => chooseBranch(btn.dataset.key, btn.dataset.label));
+            btn.addEventListener("click", () => chooseOption(btn.dataset.key, btn.dataset.value));
         });
 
         const nextBtn = document.getElementById("nextFileBtn");
@@ -1252,7 +1332,7 @@
 
     async function startWindowDrag(e) {
         if (state.locked || e.button !== 0) return;
-        if (e.target.closest(".lock-btn, .icon-btn, .close-btn, .picker-browse, .picker-row")) return;
+        if (e.target.closest(".lock-btn, .icon-btn, .close-btn, .picker-browse, .picker-row, .picker-back")) return;
         const rt = window.runtime;
         if (!rt || !rt.WindowGetPosition) return;
         e.preventDefault();

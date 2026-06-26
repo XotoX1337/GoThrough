@@ -3,7 +3,7 @@
 //
 // It mocks the Wails bindings (window.go.overlay.App + window.runtime). Rather
 // than re-implementing navigation in JavaScript, the mock calls small HTTP
-// endpoints backed by the REAL engine.Engine — so branch flattening, choices
+// endpoints backed by the REAL engine.Engine — so `when` gating, choices
 // and `next` hand-off behave exactly as in the Wails build and the mock can't
 // drift from the engine. Only the StepInfo wire shape is mirrored here (it
 // belongs to the overlay package, which is CGo/Wails-only and can't be imported
@@ -86,23 +86,33 @@ type stepInfo struct {
 	IsLast  bool   `json:"isLast"`
 	Section string `json:"section,omitempty"`
 
-	IsBranch  bool               `json:"isBranch,omitempty"`
-	BranchKey string             `json:"branchKey,omitempty"`
+	IsChoice  bool               `json:"isChoice,omitempty"`
+	ChoiceKey string             `json:"choiceKey,omitempty"`
 	Selected  string             `json:"selected,omitempty"`
-	Options   []branchOptionInfo `json:"options,omitempty"`
+	Options   []choiceOptionInfo `json:"options,omitempty"`
 
 	ID          int         `json:"id,omitempty"`
 	Title       string      `json:"title"`
 	Description string      `json:"description,omitempty"`
+	Tasks       []taskInfo  `json:"tasks,omitempty"`
 	Optional    bool        `json:"optional,omitempty"`
 	Quests      []questInfo `json:"quests,omitempty"`
 	Hints       []string    `json:"hints,omitempty"`
 	Warnings    []string    `json:"warnings,omitempty"`
+	Infos       []string    `json:"infos,omitempty"`
 }
 
-type branchOptionInfo struct {
+type choiceOptionInfo struct {
+	Value       string `json:"value"`
 	Label       string `json:"label"`
 	Description string `json:"description,omitempty"`
+}
+
+type taskInfo struct {
+	Text    string `json:"text"`
+	Info    string `json:"info,omitempty"`
+	Warning string `json:"warning,omitempty"`
+	Hint    string `json:"hint,omitempty"`
 }
 
 type questInfo struct {
@@ -114,13 +124,13 @@ type questInfo struct {
 // itemInfo mirrors overlay.itemInfo — keep the two in sync.
 func itemInfo(it engine.Item, pos, total int, last bool) stepInfo {
 	info := stepInfo{Current: pos, Total: total, IsFirst: pos == 1, IsLast: last, Section: it.Section}
-	if it.IsBranch() {
-		info.IsBranch = true
-		info.Title = it.Branch.Title
-		info.BranchKey = it.Branch.PersistKey
+	if it.IsChoice() {
+		info.IsChoice = true
+		info.Title = it.Choice.Prompt
+		info.ChoiceKey = it.Choice.Key
 		info.Selected = it.Selected
-		for _, o := range it.Branch.Options {
-			info.Options = append(info.Options, branchOptionInfo{Label: o.Label, Description: o.Description})
+		for _, o := range it.Choice.Options {
+			info.Options = append(info.Options, choiceOptionInfo{Value: o.Value, Label: o.Label, Description: o.Description})
 		}
 		return info
 	}
@@ -131,6 +141,10 @@ func itemInfo(it engine.Item, pos, total int, last bool) stepInfo {
 	info.Optional = s.Optional
 	info.Hints = s.Hints
 	info.Warnings = s.Warnings
+	info.Infos = s.Infos
+	for _, t := range s.Tasks {
+		info.Tasks = append(info.Tasks, taskInfo{Text: t.Text, Info: t.Info, Warning: t.Warning, Hint: t.Hint})
+	}
 	for _, q := range s.Quests {
 		info.Quests = append(info.Quests, questInfo{Name: q.Name, Status: q.Status, Note: q.Note})
 	}
@@ -203,7 +217,7 @@ func (s *server) routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/choose", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		_ = s.eng.Choose(r.URL.Query().Get("key"), r.URL.Query().Get("label"))
+		_ = s.eng.Choose(r.URL.Query().Get("key"), r.URL.Query().Get("value"))
 		writeJSON(w, s.current())
 	})
 	mux.HandleFunc("/api/loadnext", func(w http.ResponseWriter, r *http.Request) {
@@ -286,7 +300,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
     Next:         () => api('/api/next', { method: 'POST' }),
     Prev:         () => api('/api/prev', { method: 'POST' }),
     Goto:         (idx) => api('/api/goto?i=' + idx, { method: 'POST' }),
-    Choose:       (key, label) => api('/api/choose?key=' + encodeURIComponent(key) + '&label=' + encodeURIComponent(label), { method: 'POST' }),
+    Choose:       (key, value) => api('/api/choose?key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(value), { method: 'POST' }),
     LoadNext:     () => api('/api/loadnext', { method: 'POST' }),
     FitWindow:    () => {}, // no-op: the browser can't resize the OS window
     Settings:     () => Promise.resolve(settings),
