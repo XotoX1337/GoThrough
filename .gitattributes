@@ -1,0 +1,12 @@
+# Enforce LF line endings for the entire project, on every platform, regardless
+# of a checkout's core.autocrlf/core.eol. `text=auto eol=lf` normalizes all text
+# files to LF in the repo AND checks them out as LF in the working tree — so a
+# Windows clone never rewrites anything to CRLF. This keeps builds, the esbuild
+# HUD bundle (overlay/frontend/app.js), and the CI drift-check byte-stable across
+# Windows/Linux.
+* text=auto eol=lf
+
+# Binary files: never touch line endings.
+*.png binary
+*.ico binary
+*.exe binary

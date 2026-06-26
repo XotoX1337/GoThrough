@@ -31,6 +31,7 @@ import (
 
 	"github.com/XotoX1337/GoThrough/config"
 	"github.com/XotoX1337/GoThrough/engine"
+	"github.com/XotoX1337/GoThrough/tools/frontendbuild"
 )
 
 const (
@@ -56,12 +57,21 @@ func main() {
 	}
 	srv := &server{eng: engine.New(wt), cfgDir: filepath.Dir(*configPath)}
 
+	// The HUD's JS is authored in TypeScript (frontend/src/app.ts) and transpiled
+	// to frontend/app.js. Build it once up front so devui serves fresh JS even if
+	// app.js is stale; the watcher rebuilds on every src change below.
+	if _, err := frontendbuild.Build(); err != nil {
+		log.Printf("devui: initial frontend build failed: %v", err)
+	}
+
 	hub := newReloadHub()
 	go watch(frontendDir, hub)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", serveHarness)
 	mux.HandleFunc("/app", serveApp)
+	mux.HandleFunc("/app.js", serveAppJS)
+	mux.HandleFunc("/app.css", serveAppCSS)
 	mux.HandleFunc("/__reload", hub.handleSSE)
 	srv.routes(mux)
 	if *bgPath != "" {
@@ -355,6 +365,25 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, html)
 }
 
+// serveAppJS serves the transpiled HUD bundle (frontend/app.js), which the
+// injected index.html loads via <script src="app.js">. The watcher keeps it in
+// sync with frontend/src/app.ts; here we just hand back the file on disk.
+func serveAppJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	http.ServeFile(w, r, filepath.Join(frontendDir, "app.js"))
+}
+
+// serveAppCSS serves the transpiled HUD stylesheet (frontend/app.css), which
+// the injected index.html loads via <link rel="stylesheet" href="app.css">. The
+// watcher keeps it in sync with frontend/src/app.css; here we just hand back the
+// file on disk.
+func serveAppCSS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	http.ServeFile(w, r, filepath.Join(frontendDir, "app.css"))
+}
+
 // serveHarness renders the faux game scene with the HUD framed at real size
 // (440x220, matching overlay.Run) and wires up live reload.
 func serveHarness(w http.ResponseWriter, r *http.Request) {
@@ -488,7 +517,14 @@ func watch(dir string, hub *reloadHub) {
 	last := fingerprint(dir)
 	for range time.Tick(300 * time.Millisecond) {
 		if fp := fingerprint(dir); fp != last {
-			last = fp
+			// Re-transpile app.ts → app.js before notifying browsers, so editing
+			// the TypeScript source live-reloads the running bundle. Re-baseline
+			// the fingerprint AFTER the build so the resulting app.js write doesn't
+			// retrigger the watcher (which would loop).
+			if _, err := frontendbuild.Build(); err != nil {
+				log.Printf("devui: frontend build failed: %v", err)
+			}
+			last = fingerprint(dir)
 			hub.broadcast()
 		}
 	}
