@@ -7,7 +7,7 @@
       "author": "XotoX1337",
       "chapter": 1,
       "path": "gothic2/day1.yaml",
-      "hash": "42fae117b469d44fc65741b82f652051a9f6be1d7873ca8fe28417e65d022079"
+      "hash": "24aa76530c6bc90a4430950175f8def287f173769edcf2772cb5c063f2424446"
     },
     {
       "game": "Gothic 2",
@@ -15,7 +15,7 @@
       "author": "XotoX1337",
       "chapter": 1,
       "path": "gothic2/day2.yaml",
-      "hash": "89f805e7ce0a44c4568e83e3b25376738ef831d5a687ace44a5142f30f61afcf"
+      "hash": "cf85692d21f832fcca72dac1afe885e654f4db0f6e1a61d11728a051dae92354"
     },
     {
       "game": "Path of Exile",
@@ -23,7 +23,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 1,
       "path": "poe/act1.yaml",
-      "hash": "e2879fdb03547d2dea13d68c75ed77217e5037e1b4ca96fd465d0a91f2fd1210"
+      "hash": "a49eb09408b91063fe3080f28d647baf471b9e73ae165c309eb006f2fb6f980a"
     },
     {
       "game": "Path of Exile",
@@ -31,7 +31,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 2,
       "path": "poe/act2.yaml",
-      "hash": "58f70026d3b0856fc72859f09af3d57ed426be50d03042a878e46729d0c4422b"
+      "hash": "e8fa3a2e88b1970b3ec8125cce7ede249eac11d9bd95be9684610bfcb528cadd"
     },
     {
       "game": "Path of Exile",
@@ -39,7 +39,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 3,
       "path": "poe/act3.yaml",
-      "hash": "78be0467de6d14d41abeb617bd14d08b55cb5b9f7d130e248d835fdf3e273f8e"
+      "hash": "a72ee5f0dadfe19ccdbcc0fcfc5c0dd643bbaa66348a2c76b1ef4fb3cf857899"
     },
     {
       "game": "Path of Exile",
@@ -47,7 +47,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 4,
       "path": "poe/act4.yaml",
-      "hash": "ec1ac11ee50d9483e42f508e39e75bd83021f1046eff47293b4055234d02703c"
+      "hash": "20b7052597e4cbd1d6ea83316a69bd55e8bcf891c027a6b6b0e0f9f79946d72d"
     },
     {
       "game": "Path of Exile",
@@ -55,7 +55,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 5,
       "path": "poe/act5.yaml",
-      "hash": "5ce49267a1a7aa427a8f5523aa76a2ac89cfe7f1c909544628737e3ad24a187c"
+      "hash": "8d5200df3df0b9e68e8fa239f14698d1f62f14357056bfb9a0a44e41124e78ae"
     },
     {
       "game": "Path of Exile",
@@ -63,7 +63,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 6,
       "path": "poe/act6.yaml",
-      "hash": "2455d79eaa5544ec92b6c1de1683a5c91152235291ba9c75854cbefe7b9be170"
+      "hash": "44f6c48586f127fb79a12b38071784707d102823e0803d851d7f8e16ebf76420"
     },
     {
       "game": "Path of Exile",
@@ -71,7 +71,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 7,
       "path": "poe/act7.yaml",
-      "hash": "53c926c6d408d9ee1f1f8aa102b62bbfdae43fbeaf83dde2c02dcca0fc235a6c"
+      "hash": "b0bd6e2e902c43f6ccd654e39deddf4a1cf0d1b6f41de060025b1a1bb72cf7ff"
     },
     {
       "game": "Path of Exile",
@@ -79,7 +79,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 8,
       "path": "poe/act8.yaml",
-      "hash": "792652b4aafc47bf3944b510212378601a2eae80dde24d83777fd5aa9db27922"
+      "hash": "132f05e1835168e7f1d777847b2584010da44b5ae36b9613049213cad4ab4d89"
     },
     {
       "game": "Path of Exile",
@@ -87,7 +87,7 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 9,
       "path": "poe/act9.yaml",
-      "hash": "0d14e0151f088a4cfbfbb37156aaa266da5c81234ed658390690ec7c1c8e2855"
+      "hash": "7a7c42fffc4a10110644e16c58bc97a44e736819db153b18e874f85ba49136a2"
     },
     {
       "game": "Path of Exile",
@@ -95,7 +95,15 @@
       "author": "exile-leveling (heartofphos) + poe-leveling.com",
       "chapter": 10,
       "path": "poe/act10.yaml",
-      "hash": "530a851e054b72eba4e9c4895de255a7b4d55d0f8ab8a978fe2c874846c56b61"
+      "hash": "77362c6339e3aeb1e3d7d7fd42a4ee131914b4418495e40a8324b528a0a85b07"
+    },
+    {
+      "game": "Path of Exile (Speed)",
+      "title": "PoE Speed: Passive-Point Route (Acts 1-10)",
+      "author": "derived from exile-leveling + poewiki passive-point list",
+      "chapter": 1,
+      "path": "poe-speed/poe-speed.yaml",
+      "hash": "0ea6f099e46fe548080f70aff6700734eb166643c0499d005c7aac79118c6801"
     }
   ]
 }

@@ -1,0 +1,633 @@
+# Schema v3 (v0.9): tasks, choice + when-gating, infos/warnings/hints.
+# Derived speed cut of the full poe/ leveling guide: keeps only boss/zone
+# progression + every quest that grants a PASSIVE SKILL POINT (poewiki list,
+# 23-24 total). Optional side-quests with no passive (The Den / Great White
+# Beast, ...) and flavor tasks (crafting-recipe pickups, relogs)
+# are dropped. Passive-point steps are marked with a leading "[+N PASSIVE]".
+# A single `leaguestart` choice at the very top gates the Ascendancy
+# Labyrinths and the Siosa gem-vendor detour (skip them on a rushed run).
+schema: 3
+game: Path of Exile (Speed)
+version: Speedrun / Passive Points
+author: derived from exile-leveling + poewiki passive-point list
+chapter: 1
+title: 'PoE Speed: Passive-Point Route (Acts 1-10)'
+
+sections:
+  - title: Before you start
+    steps:
+      - id: 1
+        title: How this route works
+        tasks:
+          - text: Follow the boss/zone path; do the **[+N PASSIVE]** steps for skill points.
+            info: There are 23-24 quest passive points total. Type **/passives** in chat to check what you still owe.
+          - text: Skipped vs. the full guide
+            info: This cut drops side-quests with no passive (The Den / Great White Beast, Maligaro/Weaver gem hand-ins) and the crafting-recipe & relog tasks.
+        infos:
+          - Answer the **League start?** question below first — it decides whether the Labs and Siosa are shown.
+
+      - choice:
+          key: leaguestart
+          prompt: 'League start? Show the Ascendancy Labyrinths and the Siosa gem-vendor detour?'
+          options:
+            - value: 'yes'
+              label: League start (full)
+              description: Include the 3 **Labyrinths** (Ascendancy points; Trials stay on the route) and **Siosa** (Act 3 — sells every gem so far).
+            - value: 'no'
+              label: Rushed / twink
+              description: Hide the Labs and Siosa. Pure passive-point + boss route only.
+
+  - title: 'Act 1: The Coast to Merveil'
+    steps:
+      - id: 2
+        title: Lioneye's Watch
+        tasks:
+          - Find and kill **Hillock**
+          - Get to **Lioneye's Watch**, hand in *Enemy at the Gate*
+          - Exit to **The Coast**, get to **The Mud Flats**
+          - Grab Waypoint
+      - id: 3
+        title: Get to The Submerged Passage
+        tasks:
+          - Find 3x *Glyph*
+          - Get to **The Submerged Passage**, grab Waypoint
+        hints:
+          - Little streams connect the 3 Rhoa nests (triangle, rarely a line)
+      - id: 4
+        title: Get to The Lower Prison
+        tasks:
+          - Find bridge, place **Portal**
+          - Get to **The Ledge** -> **The Climb** -> **The Lower Prison** (go up)
+          - Grab Waypoint, port to **Lioneye's Watch**
+          - Take **Portal** back to **The Submerged Passage**
+      - id: 5
+        title: '[+1 PASSIVE] The Dweller of the Deep'
+        tasks:
+          - Get to **The Flooded Depths**
+          - Find and kill **The Dweller of the Deep**
+          - Waypoint to **The Lower Prison**
+        quests:
+          - { name: The Dweller of the Deep, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 6
+        title: 'Brutus, Lord Incarcerator'
+        tasks:
+          - text: Get to **The Upper Prison**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Get to **The Warden's Quarters**, kill **Brutus**
+          - Waypoint to **Prisoner's Gate**
+      - id: 7
+        title: Get to The Ship Graveyard
+        tasks:
+          - Get to **The Ship Graveyard**, find **The Ship Graveyard Cave**, place Portal
+          - Get to **The Cavern of Wrath**
+          - Waypoint to **Lioneye's Watch**, take Portal back to **The Ship Graveyard**
+        hints:
+          - Go down the ledge next to the road
+      - id: 8
+        title: '[+1 PASSIVE] Captain Fairgraves'
+        tasks:
+          - Find **Slave Girl**, take **Allflame**
+          - Exit, talk to **Captain Fairgraves**
+          - Waypoint to **Merveil's Caverns**
+        quests:
+          - { name: The Marooned Mariner, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 9
+        title: Merveil
+        tasks:
+          - Get to **The Cavern of Anger** -> **Merveil's Lair**
+          - Kill **Merveil, the Siren**
+          - Exit to **The Southern Forest**
+        infos:
+          - Killing Merveil ends Act 1.
+
+  - title: 'Act 2: The Old Fields to the Vaal Oversoul'
+    steps:
+      - id: 10
+        title: Get to The Crossroads
+        tasks:
+          - Get to **The Southern Forest** -> **The Forest Encampment** -> **The Old Fields**
+          - Get to **The Crossroads**, grab Waypoint
+        hints:
+          - Go up-right, follow the road
+      - id: 11
+        title: Trial in the Chamber of Sins
+        tasks:
+          - Get to **The Chamber of Sins Level 1**
+          - text: Get to **The Chamber of Sins Level 2**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+        hints:
+          - Go up-left, same direction as the Waypoint
+      - id: 12
+        title: '[+1 PASSIVE] Through Sacred Ground'
+        tasks:
+          - Waypoint to **The Crossroads**, get to **The Fellshrine Ruins**
+          - Get to **The Crypt Level 1**
+          - text: Get to **The Crypt Level 2**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Find *Altar*, take *Golden Hand*
+        quests:
+          - { name: Through Sacred Ground, status: completed }
+        infos:
+          - Grants a **passive skill point** (and a respec point).
+      - id: 13
+        title: Get to The Western Forest
+        tasks:
+          - Waypoint to **The Crossroads**, get to **The Riverways**, grab Waypoint
+          - Get to **The Western Forest**, grab Waypoint
+        hints:
+          - Go down-left, follow the road
+
+      - id: 14
+        title: 'Sharp and Cruel (The Weaver)'
+        tasks:
+          - Get to **The Weaver's Chambers** (entrance in The Western Forest)
+          - Kill **The Weaver**, take *Maligaro's Spike*
+          - Hand in *Sharp and Cruel* to **Silk** at The Forest Encampment
+
+      - choice:
+          key: bandit
+          prompt: 'Bandit reward - kill all three for **1 passive point**, or spare one for a permanent buff?'
+          options:
+            - value: kill_all
+              label: Kill all three (+1 PASSIVE)
+              description: 'Oak, Kraityn and Alira all die - **Eramir** grants **1 passive skill point**.'
+            - value: oak
+              label: Spare Oak (Skullbreaker)
+              description: '**+40 to Maximum Life** (no passive point). You still kill Kraityn & Alira.'
+            - value: kraityn
+              label: Spare Kraityn (Scarbearer)
+              description: '**8% increased Movement Speed** (no passive point). You still kill Oak & Alira.'
+            - value: alira
+              label: Spare Alira (Darktongue)
+              description: '**+15% to all Elemental Resistances** (no passive point). You still kill Oak & Kraityn.'
+
+      - id: 15
+        title: Kill Kraityn, Scarbearer
+        when: { bandit: [kill_all, oak, alira] }
+        tasks:
+          - Waypoint to **The Crossroads**, get to **The Broken Bridge** (up-right)
+          - Kill **Kraityn, Scarbearer**, take *Kraityn's Amulet*
+      - id: 16
+        title: Kill Oak, Skullbreaker
+        when: { bandit: [kill_all, kraityn, alira] }
+        tasks:
+          - Waypoint to **The Riverways**, get to **The Wetlands**
+          - Find and kill **Oak, Skullbreaker**, take *Oak's Amulet*
+      - id: 17
+        title: Kill Alira, Darktongue
+        when: { bandit: [kill_all, oak, kraityn] }
+        tasks:
+          - Waypoint to **The Western Forest**
+          - Kill **Alira Darktongue**, take *Alira's Amulet*
+      - id: 19
+        title: 'The Apex'
+        tasks:
+          - Get to **The Western Forest** encampment
+          - Kill **Captain Arteri**, take *Thaumetic Emblem*, activate *Thaumetic Seal*,
+          - Get *The Apex* from Eramir
+        quests:
+          - { name: Deal with the Bandits, status: completed }
+        infos:
+          - 'Grants **1 passive skill point** if you killed all three bandits; otherwise the spared bandit''s buff.'
+      - id: 20
+        title: '[+1 PASSIVE] The Way Forward'
+        tasks:
+          - Waypoint to **Lioneye's Watch**, hand in *The Way Forward*
+        quests:
+          - { name: The Way Forward, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 21
+        title: Get to The Vaal Ruins
+        tasks:
+          - Waypoint to **The Wetlands**, poison the *Tree Roots*
+          - Get to **The Vaal Ruins**
+      - id: 22
+        title: Get to The Caverns
+        tasks:
+          - Get to **The Northern Forest** -> **The Caverns**
+        hints:
+          - S- or L-shape leads to the exit
+      - id: 23
+        title: Kill Vaal Oversoul
+        tasks:
+          - Get to **The Ancient Pyramid** -> **Pyramid Apex**
+          - Kill **Vaal Oversoul**
+        infos:
+          - Killing the Vaal Oversoul ends Act 2.
+
+  - title: 'Act 3: The City of Sarn to Dominus'
+    steps:
+      - id: 24
+        title: Lost in Love
+        tasks:
+          - Get to **The City of Sarn**, talk to **Clarissa**, get to **The Sarn Encampment**
+          - Get to **The Slums**
+          - text: Get to **The Crematorium**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Kill **Piety**, take *Tolman's Bracelet*; talk to **Clarissa**, take *Sewer Keys*
+        hints:
+          - Go up to The Slums; follow the stairs down in The Crematorium
+      - id: 25
+        title: "[+1 PASSIVE] Victario's Secrets"
+        tasks:
+          - Get to **The Sewers** (via The Slums), find 3x *Platinum Bust*
+          - Get to **The Marketplace**, grab Waypoint
+          - text: Get to **The Catacombs**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+        quests:
+          - { name: Victario's Secrets, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 26
+        title: The Ribbon Spool
+        tasks:
+          - Waypoint to **The Marketplace**, get to **The Battlefront**, grab Waypoint
+          - Find *Ribbon Spool*
+          - Get to **The Solaris Temple Level 1** -> **Level 2**, then the **Eternal Laboratory**
+        hints:
+          - Ribbon Spool is down-left; Solaris Temple is up-right
+      - id: 27
+        title: Fiery Dust
+        tasks:
+          - Waypoint to **The Battlefront**, get to **The Docks**, take *Thaumetic Sulphite*
+          - Waypoint to **The Solaris Temple Level 2**, talk to **Lady Dialla**, take *Infernal Talc*
+      - id: 28
+        title: "[+1 PASSIVE] Sever the Right Hand"
+        tasks:
+          - Waypoint to **The Sewers**, burn the *Undying Blockage* with *Infernal Talc*
+          - Get to **The Ebony Barracks**, grab Waypoint, kill **General Gravicius**
+          - Get to **The Lunaris Temple Level 1** -> **Level 2**, kill **Piety**, take *Tower Key*
+        quests:
+          - { name: Piety's Pets, status: completed }
+        infos:
+          - '*Piety''s Pets* grants a **passive skill point**.'
+        hints:
+          - In the Lunaris Temple follow the stairs up; at the wagon fork take the 1-wagon route
+      - id: 29
+        title: Trial in the Imperial Gardens
+        tasks:
+          - Waypoint to **The Ebony Barracks**
+          - text: Get to **The Imperial Gardens**, grab Waypoint
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+      - id: 30
+        title: 'Siosa: buy your gems (A Fixture of Fate)'
+        when: { leaguestart: ['yes'] }
+        tasks:
+          - Get to **The Library**, grab Waypoint
+          - Find the **Loose Candle**, get to **The Archives**, find 4x *Golden Page*
+          - Waypoint to **The Library**, hand in to **Siosa**
+        quests:
+          - { name: A Fixture of Fate, status: completed }
+        infos:
+          - No passive, but **Siosa** then sells every skill gem up to this point - keep currency ready.
+      - id: 31
+        title: 'Dominus, High Templar'
+        tasks:
+          - Waypoint to **The Imperial Gardens**
+          - Get to **The Sceptre of God** -> **Upper Sceptre of God** -> **Tower Rooftop**
+          - Kill **Dominus, High Templar**
+        infos:
+          - Killing Dominus ends Act 3.
+
+  - title: 'Act 4: The Aqueduct to Malachai'
+    steps:
+      - id: 32
+        title: Breaking the Seal
+        tasks:
+          - Get to **The Aqueduct** -> **Highgate** -> **The Dried Lake**
+          - Kill **Voll, Emperor of Purity**, take *Deshret's Banner*, break *Deshret's Seal*
+      - id: 33
+        title: '[+1 PASSIVE] An Indomitable Spirit'
+        tasks:
+          - Get to **The Mines Level 1** -> **Level 2**, free *Deshret*
+          - Get to **The Crystal Veins**, waypoint to **Highgate**
+        quests:
+          - { name: An Indomitable Spirit, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 34
+        title: The Labyrinth (Normal Ascendancy)
+        when: { leaguestart: ['yes'] }
+        tasks:
+          - Waypoint to **The Sarn Encampment**, get to the **Aspirants' Plaza**, grab Waypoint
+          - text: Complete the **Labyrinth** (Normal)
+            info: First **Ascendancy** - choose your subclass and 2 points. Needs all 6 Trials from Acts 1-3.
+      - id: 35
+        title: 'King Kaom'
+        tasks:
+          - Waypoint to **The Crystal Veins**, get to **Daresso's Dream** -> **The Grand Arena**
+          - Waypoint to **The Crystal Veins**, get to **Kaom's Dream** -> **Kaom's Stronghold**
+          - Get to the **Caldera of the King**, kill **King Kaom**, take *The Eye of Fury*, take Portal
+        hints:
+          - Kaom's Stronghold is up-right, follow the bridges
+      - id: 36
+        title: 'Daresso, King of Swords'
+        tasks:
+          - Waypoint to **The Grand Arena**, get to **The Ring of Blades**
+          - Kill **Daresso, King of Swords**, take *The Eye of Desire*
+      - id: 37
+        title: Corpus Malachus
+        tasks:
+          - Waypoint to **The Crystal Veins**, talk to **Lady Dialla**
+          - Get to **The Belly of the Beast Level 1** -> **Level 2** -> **The Bowels of the Beast**, kill **Piety, the Abomination**
+          - Get to **The Harvest**, kill **Doedre Darktongue**, **Maligaro, the Inquisitor** & **Shavronne of Umbra** (take the 3 Malachai organs)
+      - id: 38
+        title: 'Malachai, the Nightmare'
+        tasks:
+          - Get to **The Black Core**, kill **Malachai, the Nightmare**
+      - id: 39
+        title: Into Act 5
+        tasks:
+          - Get to **The Ascent**, activate **The Resonator**, use the *Oriath Portal*
+        infos:
+          - Ends Act 4 and sends you to Oriath.
+
+  - title: 'Act 5: The Slave Pens to Kitava'
+    steps:
+      - id: 40
+        title: Return to Oriath
+        tasks:
+          - Get to **The Slave Pens**, kill **Overseer Krow**, get to **Overseer's Tower**
+        hints:
+          - Go down to the hanged Kauri, then loop clockwise
+      - id: 41
+        title: '[+1 PASSIVE] The Chamber of Innocence'
+        tasks:
+          - Get to **The Control Blocks**, take *Miasmeter*, kill **Justicar Casticus**, take *Eyes of Zeal*
+          - Get to **Oriath Square** -> **The Templar Courts** -> **The Chamber of Innocence**
+          - Get to the **Sanctum of Innocence**, kill **High Templar Avarius**
+        quests:
+          - { name: In Service to Science, status: completed }
+        infos:
+          - '*In Service to Science* (the Miasmeter) grants a **passive skill point**.'
+      - id: 42
+        title: "[+1 PASSIVE] Kitava's Torments"
+        tasks:
+          - Waypoint to **The Chamber of Innocence**, get to **The Torched Courts** -> **The Ruined Square**, grab Waypoint
+          - Get to **The Ossuary**, take *Sign of Purity*
+          - Waypoint to **The Ruined Square**, get to **The Reliquary**, find 3x *Kitava's Torment*
+        quests:
+          - { name: Kitava's Torments, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 43
+        title: 'Kitava, the Insatiable'
+        tasks:
+          - Waypoint to **The Ruined Square**, get to **The Cathedral Rooftop** -> **Cathedral Apex**
+          - Kill **Kitava, the Insatiable**, talk to **Lilly Roth** and sail to Wraeclast
+        infos:
+          - Ends Act 5; first resistance penalty applies.
+
+  - title: 'Act 6: The Twilight Strand to the Brine King'
+    steps:
+      - id: 44
+        title: Fallen from Grace
+        tasks:
+          - Get to **Lioneye's Watch** -> **The Twilight Strand**, kill everything
+        infos:
+          - 'Unlocks Lilly as a gem vendor and gives 2 respec points.'
+      - id: 45
+        title: '[+1 PASSIVE] Tukohama, Karui God of War'
+        tasks:
+          - Get to **The Coast** -> **The Mud Flats**, kill **The Dishonoured Queen**, take *Eye of Conquest*
+          - Get to **The Karui Fortress** -> **Tukohama's Keep**, kill **Tukohama, Karui God of War**
+        quests:
+          - { name: The Father of War, status: completed }
+        infos:
+          - '*The Father of War* grants a **passive skill point**.'
+        hints:
+          - The Dishonoured Queen is in the up-right corner, usually by a house
+      - id: 46
+        title: Shavronne & Reassembled Brutus
+        tasks:
+          - text: Get to **The Ridge** -> **The Lower Prison**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** in The Lower Prison.'
+          - Get to **Shavronne's Tower** -> **Prison Rooftop**, kill **Shavronne the Returned** & **Reassembled Brutus**
+          - Get to **The Warden's Chambers**
+      - id: 47
+        title: '[+1 PASSIVE] The Puppet Mistress'
+        tasks:
+          - Get to **Prisoner's Gate** -> **The Western Forest** -> **The Riverways**, grab Waypoint
+          - Get to **The Wetlands** -> **The Spawning Ground**, kill **Ryslatha, the Puppet Mistress**
+        quests:
+          - { name: The Puppet Mistress, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 48
+        title: 'Tsoagoth, the Brine King'
+        tasks:
+          - Waypoint to **The Riverways**, get to **The Southern Forest** -> **The Cavern of Anger**, take *The Black Flag*
+          - Get to **The Beacon**, complete the *Pillar Push*, light the **Beacon** and throw in *The Black Flag*
+          - Talk to **Weylam Roth**, sail to **The Brine King's Reef** -> **The Brine King's Throne**, kill **Tsoagoth**
+          - Select your **Pantheon** power
+        infos:
+          - Ends Act 6 and unlocks Pantheon powers.
+
+  - title: 'Act 7: The Bridge Encampment to Arakaali'
+    steps:
+      - id: 49
+        title: Maligaro's Map
+        tasks:
+          - Waypoint to **The Bridge Encampment**, get to **The Broken Bridge**, take *Silver Locket*
+          - Get to **The Crossroads**, grab Waypoint, get to **The Fellshrine Ruins**
+          - text: Get to **The Crypt**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Find the **Sarcophagus**, take *Maligaro's Map*
+      - id: 50
+        title: Essence of the Artist
+        tasks:
+          - Waypoint to **The Chamber of Sins Level 1**, grab Waypoint
+          - Activate the **Map Device** with *Maligaro's Map*, get to **Maligaro's Sanctum** -> **Maligaro's Workshop**
+          - Kill **Maligaro, the Artist**, take *Black Venom*
+      - id: 51
+        title: '[+1 PASSIVE] Web of Secrets'
+        tasks:
+          - Waypoint to **The Chamber of Sins Level 1**, hand in *Web of Secrets*, take *Obsidian Key*
+          - text: Get to **The Chamber of Sins Level 2**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Open the **Secret Passage**, get to **The Den** -> **The Ashen Fields** -> **The Forest Encampment**, kill **Greust**
+          - Get to **The Northern Forest**
+        quests:
+          - { name: The Master of a Million Faces, status: completed }
+        infos:
+          - '*The Master of a Million Faces* grants a **passive skill point**.'
+      - id: 52
+        title: '[+1 PASSIVE] The Cloven One'
+        tasks:
+          - Waypoint to **Prisoner's Gate**, get to the **Valley of the Fire Drinker**
+          - Kill **Abberath, the Cloven One**, take Portal
+        quests:
+          - { name: The Cloven One, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 53
+        title: '[+2 PASSIVE] Queen of Despair & Kishara''s Star'
+        tasks:
+          - Waypoint to **The Northern Forest**, get to **The Causeway**, take *Kishara's Star*
+          - Get to **The Vaal City**, find the Waypoint
+          - Waypoint to **The Northern Forest**, get to **The Dread Thicket**, take 7x *Firefly*
+          - Get to the **Den of Despair**, kill **Gruthkul, Mother of Despair**
+        quests:
+          - { name: Queen of Despair, status: completed }
+          - { name: Kishara's Star, status: completed }
+        infos:
+          - '*Queen of Despair* and *Kishara''s Star* each grant a **passive skill point**.'
+      - id: 54
+        title: The Labyrinth (Cruel Ascendancy)
+        when: { leaguestart: ['yes'] }
+        tasks:
+          - Waypoint to the **Aspirants' Plaza**
+          - text: Complete the **Labyrinth** (Cruel)
+            info: Grants 2 more **Ascendancy** points.
+      - id: 55
+        title: 'Arakaali, Spinner of Shadows'
+        tasks:
+          - Waypoint to **The Vaal City**, get to **The Temple of Decay Level 1** -> **Level 2**
+          - Get to **Arakaali's Web**, kill **Arakaali, Spinner of Shadows**
+        infos:
+          - Defeating Arakaali ends Act 7.
+
+  - title: 'Act 8: The Sarn Ramparts to Yugul'
+    steps:
+      - id: 56
+        title: Doedre the Vile
+        tasks:
+          - Get to **The Sarn Ramparts** -> **The Sarn Encampment** -> **The Toxic Conduits** -> **Doedre's Cesspool**
+          - Get to **The Cauldron**, kill **Doedre the Vile**, get to the **Sewer Outlet**
+      - id: 57
+        title: Love is Dead
+        tasks:
+          - Get to **The Quay**, take *Ankh of Eternity*
+          - Get to the **Resurrection Site**, talk to **Clarissa**, kill **Tolman**
+      - id: 58
+        title: '[+2 PASSIVE] Dawn, Harbinger of Solaris'
+        tasks:
+          - Get to **The Grain Gate**, kill the **Gemling Legionnaires**
+          - Get to **The Imperial Fields** -> **The Solaris Temple Level 1**, grab Waypoint -> **Level 2**
+          - Kill **Dawn, Harbinger of Solaris**, take *Sun Orb*
+        quests:
+          - { name: The Gemling Legion, status: completed }
+          - { name: Love is Dead, status: completed }
+        infos:
+          - '*The Gemling Legion* and *Love is Dead* each grant a **passive skill point**.'
+      - id: 59
+        title: 'Dusk, Harbinger of Lunaris'
+        tasks:
+          - Waypoint to **The Solaris Temple Level 1**, get to **The Solaris Concourse** -> **The Harbour Bridge** -> **The Lunaris Concourse**, grab Waypoint
+          - Get to **The Lunaris Temple Level 1** -> **Level 2**, kill **Dusk, Harbinger of Lunaris**, take *Moon Orb*
+      - id: 60
+        title: Lunaris and Solaris
+        tasks:
+          - Waypoint to **The Lunaris Concourse**, get to **The Harbour Bridge** -> **Sky Shrine**
+          - Activate the **Statue of the Sisters**, kill **Lunaris, Eternal Moon** & **Solaris, Eternal Sun**
+      - id: 61
+        title: '[+1 PASSIVE] Reflection of Terror'
+        tasks:
+          - Get to **The Blood Aqueduct** -> **Highgate**
+          - Waypoint to **The Lunaris Concourse**
+          - text: Get to **The Bath House** (search the left side)
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Get to **The High Gardens** -> **The Pools of Terror**, kill **Yugul, Reflection of Terror**, take Portal
+        quests:
+          - { name: Reflection of Terror, status: completed }
+        infos:
+          - Grants a **passive skill point**. Reaching Highgate opens Act 9.
+
+  - title: 'Act 9: Highgate to the Depraved Trinity'
+    steps:
+      - id: 62
+        title: The Basilisk
+        tasks:
+          - Get to **The Descent** -> **The Vastiri Desert**, grab Waypoint, take *The Storm Blade*
+          - Get to **The Foothills**, grab Waypoint, get to **The Boiling Lake**, kill **The Basilisk**, take *Basilisk Acid*
+          - Talk to **Sin**, hand in quests, take *Bottled Storm*
+        hints:
+          - The Basilisk is up-right - look for petrified soldiers
+      - id: 63
+        title: '[+1 PASSIVE] Queen of the Sands'
+        tasks:
+          - Waypoint to **The Vastiri Desert**, get to **The Oasis** -> **Sand Pit**
+          - Kill **Shakari, Queen of the Sands**
+        quests:
+          - { name: Queen of the Sands, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 64
+        title: '[+1 PASSIVE] The Ruler of Highgate'
+        tasks:
+          - Waypoint to **The Foothills**
+          - text: Get to **The Tunnel**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here (before the Waypoint).'
+          - Get to **The Quarry**, grab Waypoint
+          - Get to the **Shrine of the Winds**, kill **Garukhan, Queen of the Winds**, take *Sekhema Feather*
+        quests:
+          - { name: The Ruler of Highgate, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 65
+        title: General Adus
+        tasks:
+          - Waypoint to **The Quarry**, get to **The Refinery**
+          - Kill **General Adus**, take *Trarthan Powder*
+        hints:
+          - General Adus is up-right, following the cart tracks
+      - id: 66
+        title: The Depraved Trinity
+        tasks:
+          - Waypoint to **The Quarry**, talk to **Sin**, get to **The Belly of the Beast** -> **The Rotting Core** -> **The Black Core**
+          - Kill **Doedre, Darksoul**, **Maligaro, the Broken** & **Shavronne, Unbound**
+          - Talk to **Sin**, get to **The Black Heart**, kill **The Depraved Trinity**, take Portal
+        infos:
+          - Defeating the Depraved Trinity ends Act 9.
+
+  - title: 'Act 10: Oriath Docks to Kitava'
+    steps:
+      - id: 67
+        title: Safe Passage
+        tasks:
+          - Get to **The Cathedral Rooftop** -> **Cathedral Apex**, kill **Plaguewing**
+          - Get to **The Ravaged Square**, place a Portal, get to **The Control Blocks**
+          - Waypoint to **Oriath Docks**, take Portal, grab Waypoint
+      - id: 68
+        title: "[+1 PASSIVE] Vilenta's Vengeance"
+        tasks:
+          - text: Get to **The Ossuary**
+            warning: 'Ascendancy: complete the **Trial of Ascendancy** here.'
+          - Waypoint to **The Control Blocks**, find and kill **Vilenta**
+        quests:
+          - { name: Vilenta's Vengeance, status: completed }
+        infos:
+          - Grants a **passive skill point**.
+      - id: 69
+        title: The Labyrinth (Merciless Ascendancy)
+        when: { leaguestart: ['yes'] }
+        tasks:
+          - Waypoint to the **Aspirants' Plaza**
+          - text: Complete the **Labyrinth** (Merciless)
+            info: Grants 2 more **Ascendancy** points (6 total once finished).
+      - id: 70
+        title: Death and Rebirth
+        tasks:
+          - Waypoint to **The Ravaged Square**, get to **The Torched Courts** -> **The Desecrated Chambers**
+          - Get to the **Sanctum of Innocence**, kill **Avarius, Reassembled**, take *The Staff of Purity*, talk to **Bannon**
+      - id: 71
+        title: 'Kitava, the Insatiable'
+        tasks:
+          - Waypoint to **The Ravaged Square**, talk to **Innocence**, get to **The Canals** -> **The Feeding Trough**
+          - Talk to **Sin**, get to the **Altar of Hunger**, kill **Kitava, the Insatiable**
+          - Get to **Oriath Docks**, talk to **Lilly Roth** and set sail
+        infos:
+          - Ends the campaign; second resistance penalty applies and maps open up.
+      - id: 72
+        title: '[+2 PASSIVE] An End to Hunger (Epilogue)'
+        tasks:
+          - Get to **Karui Shores**, hand in *An End to Hunger*
+        quests:
+          - { name: An End to Hunger, status: completed }
+        infos:
+          - Grants **2 passive skill points**. Type **/passives** to confirm you collected all 23-24.
