@@ -315,6 +315,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
     LoadNext:     () => api('/api/loadnext', { method: 'POST' }),
     FitWindow:    () => {}, // no-op: the browser can't resize the OS window
     SaveWindowPos: () => Promise.resolve(), // no-op: the browser can't move the OS window
+    MoveWindow:   (x, y) => Promise.resolve({ x, y }), // no-op: echo back; the browser can't move the OS window
     Settings:     () => Promise.resolve(settings),
     SaveHotkeys:  (hk) => { settings.hotkeys = hk; return Promise.resolve(settings); },
     SaveOpacity:  (v) => { settings.opacity = v; return Promise.resolve(settings); },

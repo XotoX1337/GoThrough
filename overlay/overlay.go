@@ -107,15 +107,18 @@ func (o *Overlay) onShutdown(_ context.Context) {
 
 // restoreWindowPos places the window where the user last left it, or anchors it
 // to the top-right corner when no position has been saved yet. A saved position
-// is clamped to the primary screen so a window saved on a monitor that is no
-// longer present can't end up off-screen.
+// is clamped to the virtual screen (the union of all monitors on Windows; the
+// primary screen elsewhere) so a window saved on a monitor that is no longer
+// present can't end up off-screen. At startup the window still sits on the
+// primary monitor, where Wails' monitor-relative WindowSetPosition matches the
+// absolute coordinates we store, so a plain SetPosition restores correctly.
 func (o *Overlay) restoreWindowPos(ctx context.Context) {
 	pos := o.app.set.Get().WindowPos
 	if !pos.Set {
 		anchorTopRight(ctx)
 		return
 	}
-	x, y := clampToScreen(ctx, pos.X, pos.Y, overlayWidth, overlayHeight)
+	x, y := clampToWorkArea(ctx, pos.X, pos.Y, overlayWidth, overlayHeight)
 	runtime.WindowSetPosition(ctx, x, y)
 }
 
@@ -126,10 +129,10 @@ func anchorTopRight(ctx context.Context) {
 }
 
 // clampToScreen keeps a window of the given size (logical px) within the primary
-// screen so the overlay stays reachable. It mirrors the maxX/maxY clamp the
-// frontend uses while dragging (Wails' Screen exposes only size, not monitor
-// origin, so a precise multi-monitor clamp isn't possible — this is the same
-// primary-screen approximation the drag handler already relies on).
+// screen so the overlay stays reachable. This is the non-Windows fallback used
+// by screen_other.go — Wails' Screen exposes only size, not monitor origin, so a
+// precise multi-monitor clamp isn't possible there. Windows uses the
+// virtual-screen clamp in screen_windows.go instead.
 func clampToScreen(ctx context.Context, x, y, winW, winH int) (int, int) {
 	w, h := primaryScreenSize(ctx)
 	if w > 0 {

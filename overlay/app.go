@@ -520,10 +520,12 @@ func (a *App) SaveLanguage(lang string) (settings.Settings, error) {
 	return ns, nil
 }
 
-// SaveWindowPos persists the overlay window's on-screen position (logical px,
-// top-left corner) so it is restored on the next launch instead of re-anchoring
-// to the top-right corner. Called by the frontend at the end of a window drag.
-// Best-effort: a write failure is reported but never blocks dragging.
+// SaveWindowPos persists the overlay window's on-screen position (absolute
+// screen px on Windows, primary-relative elsewhere; top-left corner) so it is
+// restored on the next launch instead of re-anchoring to the top-right corner.
+// Called by the frontend at the end of a window drag with the position
+// MoveWindow already clamped. Best-effort: a write failure is reported but
+// never blocks dragging.
 func (a *App) SaveWindowPos(x, y int) error {
 	ns := a.set.Get()
 	ns.WindowPos = settings.WindowPos{X: x, Y: y, Set: true}
@@ -557,6 +559,8 @@ func validateHotkeys(hk settings.Hotkeys) error {
 // keeping the current top-left corner fixed (the same corner
 // SaveWindowPos/restoreWindowPos persist — anchoring top-right instead dragged
 // the restored window left on the boot-time resize) and clamping to the screen.
+// moveOverlayAbs re-pins the top-left in absolute coordinates so the resize
+// behaves correctly even when the window has been dragged onto another monitor.
 func (a *App) FitWindow(width, height int) {
 	a.mu.Lock()
 	ctx := a.ctx
@@ -566,8 +570,31 @@ func (a *App) FitWindow(width, height int) {
 	}
 	x, y := runtime.WindowGetPosition(ctx)
 	runtime.WindowSetSize(ctx, width, height)
-	x, y = clampToScreen(ctx, x, y, width, height)
-	runtime.WindowSetPosition(ctx, x, y)
+	moveOverlayAbs(ctx, x, y, width, height)
+}
+
+// WinPos is the overlay window's top-left in absolute screen coordinates.
+type WinPos struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
+// MoveWindow moves the overlay to the given absolute screen position, clamped so
+// it stays fully on-screen across the whole virtual desktop (all monitors on
+// Windows), and returns the clamped position. The frontend drag handler calls
+// this per move and trusts the returned coordinates — keeping the clamp and the
+// monitor-relative ↔ absolute conversion in Go (see screen_windows.go), since
+// Wails' WindowSetPosition alone can't place the window across monitors.
+func (a *App) MoveWindow(x, y int) WinPos {
+	a.mu.Lock()
+	ctx := a.ctx
+	a.mu.Unlock()
+	if ctx == nil {
+		return WinPos{X: x, Y: y}
+	}
+	w, h := runtime.WindowGetSize(ctx)
+	nx, ny := moveOverlayAbs(ctx, x, y, w, h)
+	return WinPos{X: nx, Y: ny}
 }
 
 // next/prev are the hotkey-driven counterparts to Next/Prev. When "next" is

@@ -136,12 +136,14 @@ interface OverlayApp {
     SaveTheme(theme: string): Promise<Settings>;
     SaveLanguage(lang: string): Promise<Settings>;
     SaveWindowPos(x: number, y: number): Promise<void>;
+    MoveWindow(x: number, y: number): Promise<{ x: number; y: number }>;
     FitWindow(width: number, height: number): Promise<void>;
 }
 
 // WailsRuntime is the subset of window.runtime the HUD uses.
 interface WailsRuntime {
     Quit?(): void;
+    WindowGetPosition(): Promise<{ x: number; y: number }>;
     WindowSetPosition(x: number, y: number): void;
     EventsOn(event: string, cb: (...data: any[]) => void): void;
 }
@@ -1241,7 +1243,15 @@ window.addEventListener("mousemove", onMove);
 window.addEventListener("mouseup", onUp);
 
 // --- Window drag ------------------------------------------------------
+// The move + clamp happen in Go (App.MoveWindow): Wails' WindowSetPosition is
+// relative to the current monitor and can't carry the window across monitors,
+// so Go does the absolute placement and virtual-screen clamp and hands back the
+// final position. We capture the window's absolute start position once, then on
+// each mousemove compute the desired absolute position from the mouse delta and
+// flush it through MoveWindow on the next animation frame (so a fast drag fires
+// at most one binding call per frame rather than flooding the IPC bridge).
 let winDrag = null;
+let winRaf = 0;
 
 async function startWindowDrag(e) {
     if (state.locked || e.button !== 0) return;
@@ -1249,36 +1259,39 @@ async function startWindowDrag(e) {
     const rt = window.runtime;
     if (!rt || !rt.WindowGetPosition) return;
     e.preventDefault();
-    const [pos, size, screens] = await Promise.all([
-        rt.WindowGetPosition(), rt.WindowGetSize(), rt.ScreenGetAll(),
-    ]);
-    const scr = (screens || []).find(s => s.isPrimary) || (screens || [])[0];
-    const sw = scr ? (scr.size?.width || scr.width) : Infinity;
-    const sh = scr ? (scr.size?.height || scr.height) : Infinity;
-    winDrag = {
-        sx: e.screenX, sy: e.screenY, ox: pos.x, oy: pos.y,
-        maxX: isFinite(sw) ? Math.max(0, sw - size.w) : Infinity,
-        maxY: isFinite(sh) ? Math.max(0, sh - size.h) : Infinity,
-    };
+    const pos = await rt.WindowGetPosition();
+    winDrag = { sx: e.screenX, sy: e.screenY, ox: pos.x, oy: pos.y, tx: pos.x, ty: pos.y };
 }
 
 function onWinMove(e) {
     if (!winDrag) return;
-    const nx = Math.max(0, Math.min(winDrag.ox + (e.screenX - winDrag.sx), winDrag.maxX));
-    const ny = Math.max(0, Math.min(winDrag.oy + (e.screenY - winDrag.sy), winDrag.maxY));
-    winDrag.lastX = Math.round(nx);
-    winDrag.lastY = Math.round(ny);
-    window.runtime.WindowSetPosition(winDrag.lastX, winDrag.lastY);
+    winDrag.tx = Math.round(winDrag.ox + (e.screenX - winDrag.sx));
+    winDrag.ty = Math.round(winDrag.oy + (e.screenY - winDrag.sy));
+    if (!winRaf) winRaf = requestAnimationFrame(flushWinMove);
+}
+
+async function flushWinMove() {
+    winRaf = 0;
+    if (!winDrag) return;
+    const p = await App.MoveWindow?.(winDrag.tx, winDrag.ty);
+    if (p && winDrag) { winDrag.lastX = p.x; winDrag.lastY = p.y; }
 }
 
 // Persist the position only once, at the end of a drag (not on every
-// mousemove), so the overlay reopens where the user left it. lastX is unset
-// if the window never actually moved, so a plain click won't write.
-function onWinUp() {
-    if (winDrag && winDrag.lastX != null) {
-        App.SaveWindowPos?.(winDrag.lastX, winDrag.lastY);
-    }
+// mousemove), so the overlay reopens where the user left it. A final
+// MoveWindow flushes the last frame the rAF throttle may have skipped and
+// yields the authoritative clamped position to save; lastX stays unset if the
+// window never moved, so a plain click won't write.
+async function onWinUp() {
+    if (winRaf) { cancelAnimationFrame(winRaf); winRaf = 0; }
+    const d = winDrag;
     winDrag = null;
+    if (!d) return;
+    const moved = d.tx !== d.ox || d.ty !== d.oy;
+    if (!moved) return;
+    const p = await App.MoveWindow?.(d.tx, d.ty);
+    const x = p ? p.x : d.lastX, y = p ? p.y : d.lastY;
+    if (x != null) App.SaveWindowPos?.(x, y);
 }
 
 window.addEventListener("mousemove", onWinMove);
